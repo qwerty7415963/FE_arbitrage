@@ -7,3 +7,12 @@ This version has breaking changes — APIs, conventions, and file structure may 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
+
+## Testing Rules
+
+- Mỗi feature mới **bắt buộc** có unit test trong `tests/unit/`
+- Mỗi flow mới **bắt buộc** có E2E test trong `tests/e2e/`
+- Cập nhật `docs/test-cases.md` khi thêm test mới
+- Chạy `pnpm test` trước khi commit
+- Chạy `pnpm type-check` để kiểm tra type
+- E2E tests cần backend `localhost:8080` + frontend `localhost:3000` đang chạy
