@@ -16,5 +16,29 @@
     "dashboard": "Dashboard",
     "settings": "Settings",
     "logout": "Logout"
+  },
+  "auth": {
+    "loginTitle": "Sign in",
+    "loginSubtitle": "Enter your email and password to sign in",
+    "registerTitle": "Create account",
+    "registerSubtitle": "Create a new account",
+    "email": "Email",
+    "emailPlaceholder": "email@example.com",
+    "password": "Password",
+    "passwordPlaceholder": "Enter your password",
+    "confirmPassword": "Confirm password",
+    "confirmPasswordPlaceholder": "Re-enter your password",
+    "loginButton": "Sign in",
+    "registerButton": "Create account",
+    "loading": "Processing...",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?",
+    "registerLink": "Sign up",
+    "loginLink": "Sign in",
+    "emailExists": "Email is already taken",
+    "invalidCredentials": "Invalid email or password",
+    "validationError": "Invalid data",
+    "passwordMismatch": "Passwords do not match",
+    "unknownError": "An error occurred, please try again"
   }
 }

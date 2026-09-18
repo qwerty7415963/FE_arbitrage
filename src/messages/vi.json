@@ -16,5 +16,29 @@
     "dashboard": "Dashboard",
     "settings": "Cài đặt",
     "logout": "Đăng xuất"
+  },
+  "auth": {
+    "loginTitle": "Đăng nhập",
+    "loginSubtitle": "Nhập email và mật khẩu để đăng nhập",
+    "registerTitle": "Đăng ký",
+    "registerSubtitle": "Tạo tài khoản mới",
+    "email": "Email",
+    "emailPlaceholder": "email@example.com",
+    "password": "Mật khẩu",
+    "passwordPlaceholder": "Nhập mật khẩu",
+    "confirmPassword": "Xác nhận mật khẩu",
+    "confirmPasswordPlaceholder": "Nhập lại mật khẩu",
+    "loginButton": "Đăng nhập",
+    "registerButton": "Đăng ký",
+    "loading": "Đang xử lý...",
+    "noAccount": "Chưa có tài khoản?",
+    "hasAccount": "Đã có tài khoản?",
+    "registerLink": "Đăng ký",
+    "loginLink": "Đăng nhập",
+    "emailExists": "Email đã được sử dụng",
+    "invalidCredentials": "Email hoặc mật khẩu không đúng",
+    "validationError": "Dữ liệu không hợp lệ",
+    "passwordMismatch": "Mật khẩu xác nhận không khớp",
+    "unknownError": "Đã xảy ra lỗi, vui lòng thử lại"
   }
 }
