@@ -1,0 +1,20 @@
+{
+  "common": {
+    "appName": "Arbitrage",
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "search": "Search",
+    "noData": "No data",
+    "menu": "Menu"
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "settings": "Settings",
+    "logout": "Logout"
+  }
+}

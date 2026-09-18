@@ -1,0 +1,20 @@
+{
+  "common": {
+    "appName": "Arbitrage",
+    "loading": "Đang tải...",
+    "error": "Đã xảy ra lỗi",
+    "save": "Lưu",
+    "cancel": "Hủy",
+    "delete": "Xóa",
+    "edit": "Chỉnh sửa",
+    "create": "Tạo mới",
+    "search": "Tìm kiếm",
+    "noData": "Không có dữ liệu",
+    "menu": "Menu"
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "settings": "Cài đặt",
+    "logout": "Đăng xuất"
+  }
+}
