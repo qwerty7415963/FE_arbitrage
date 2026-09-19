@@ -43,13 +43,14 @@
 
 ### Coverage Summary
 
-| Module                         | File                                           | Tests  | Status |
-| ------------------------------ | ---------------------------------------------- | ------ | ------ |
-| `lib/token.ts`                 | `tests/unit/lib/token.test.ts`                 | 14     | ✅     |
-| `stores/auth.ts` (merged)      | `tests/unit/stores/auth.test.ts`               | 16     | ✅     |
-| `services/auth.ts`             | `tests/unit/services/auth.test.ts`             | 12     | ✅     |
-| `infrastructure/api-client.ts` | `tests/unit/infrastructure/api-client.test.ts` | 14     | ✅     |
-| **Total**                      |                                                | **56** |        |
+| Module                          | File                                            | Tests  | Status |
+| ------------------------------- | ----------------------------------------------- | ------ | ------ |
+| `lib/token.ts`                  | `tests/unit/lib/token.test.ts`                  | 14     | ✅     |
+| `stores/auth.ts` (merged)       | `tests/unit/stores/auth.test.ts`                | 16     | ✅     |
+| `services/auth.ts`              | `tests/unit/services/auth.test.ts`              | 12     | ✅     |
+| `services/funding-arbitrage.ts` | `tests/unit/services/funding-arbitrage.test.ts` | 12     | ✅     |
+| `infrastructure/api-client.ts`  | `tests/unit/infrastructure/api-client.test.ts`  | 14     | ✅     |
+| **Total**                       |                                                 | **68** |        |
 
 ### Test Details
 
@@ -87,6 +88,23 @@
 | getWallets calls endpoint     | GET /auth/wallet/list      |
 | linkWallet calls endpoint     | POST /auth/wallet/link     |
 | unlinkWallet calls endpoint   | DELETE /auth/wallet/{id}   |
+
+#### `services/funding-arbitrage.ts` (12 tests)
+
+| Test                               | Description                   |
+| ---------------------------------- | ----------------------------- |
+| getVenues calls endpoint           | GET /api/v1/venues            |
+| getVenues throws on no data        | Empty response                |
+| getVenues throws on error          | Network error                 |
+| getFundingArbitrage calls endpoint | GET /api/v1/funding/arbitrage |
+| getFundingArbitrage with sort      | Includes sort param           |
+| getFundingArbitrage with limit     | Includes limit param          |
+| getFundingArbitrage with cursor    | Includes cursor param         |
+| getFundingArbitrage returns data   | Returns data + meta           |
+| getFundingArbitrage < 2 venues     | Validation error              |
+| getFundingArbitrage > 10 venues    | Validation error              |
+| getFundingArbitrage no data        | Empty response                |
+| getFundingArbitrage API error      | Network error                 |
 
 #### `stores/auth.ts` (merged - 16 tests)
 
