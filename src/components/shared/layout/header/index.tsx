@@ -31,7 +31,7 @@ export function Header() {
           <span className="text-lg font-semibold">{t('appName')}</span>
         </Link>
 
-        <div className="hidden lg:flex">
+        <div className="ml-auto hidden lg:flex">
           <ConnectWalletButton />
         </div>
       </div>
