@@ -7,12 +7,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useWalletStore, formatAddress } from '@/lib/stores/wallet';
+import { useAuthStore, formatAddress } from '@/lib/stores/auth';
 import { useTranslations } from 'next-intl';
 import { WalletIcon, LogOutIcon, Loader2Icon } from 'lucide-react';
 
 export function ConnectWalletButton() {
-  const { address, isConnecting, connect, disconnect } = useWalletStore();
+  const { address, isConnecting, connectWallet, disconnectWallet } = useAuthStore();
   const t = useTranslations('wallet');
 
   if (isConnecting) {
@@ -34,7 +34,7 @@ export function ConnectWalletButton() {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-48">
-          <DropdownMenuItem variant="destructive" onClick={disconnect}>
+          <DropdownMenuItem variant="destructive" onClick={disconnectWallet}>
             <LogOutIcon className="mr-2 h-4 w-4" />
             {t('disconnect')}
           </DropdownMenuItem>
@@ -44,7 +44,7 @@ export function ConnectWalletButton() {
   }
 
   return (
-    <Button variant="outline" onClick={connect}>
+    <Button variant="outline" onClick={connectWallet}>
       <WalletIcon className="mr-2 h-4 w-4" />
       {t('connect')}
     </Button>

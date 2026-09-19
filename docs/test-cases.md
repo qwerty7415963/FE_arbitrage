@@ -46,11 +46,10 @@
 | Module                         | File                                           | Tests  | Status |
 | ------------------------------ | ---------------------------------------------- | ------ | ------ |
 | `lib/token.ts`                 | `tests/unit/lib/token.test.ts`                 | 14     | ✅     |
-| `lib/stores/wallet.ts`         | `tests/unit/lib/wallet.test.ts`                | 2      | ✅     |
+| `stores/auth.ts` (merged)      | `tests/unit/stores/auth.test.ts`               | 16     | ✅     |
 | `services/auth.ts`             | `tests/unit/services/auth.test.ts`             | 12     | ✅     |
-| `stores/auth.ts`               | `tests/unit/stores/auth.test.ts`               | 12     | ✅     |
 | `infrastructure/api-client.ts` | `tests/unit/infrastructure/api-client.test.ts` | 14     | ✅     |
-| **Total**                      |                                                | **54** |        |
+| **Total**                      |                                                | **56** |        |
 
 ### Test Details
 
@@ -72,13 +71,6 @@
 | hasTokens false with one      | Only access or refresh              |
 | hasTokens true with both      | Both tokens exist                   |
 
-#### `lib/stores/wallet.ts` (2 tests)
-
-| Test                  | Description          |
-| --------------------- | -------------------- |
-| formatAddress formats | Shows 0x1234...5678  |
-| formatAddress empty   | Returns empty string |
-
 #### `services/auth.ts` (12 tests)
 
 | Test                          | Description                |
@@ -96,22 +88,24 @@
 | linkWallet calls endpoint     | POST /auth/wallet/link     |
 | unlinkWallet calls endpoint   | DELETE /auth/wallet/{id}   |
 
-#### `stores/auth.ts` (12 tests)
+#### `stores/auth.ts` (merged - 16 tests)
 
-| Test                          | Description              |
-| ----------------------------- | ------------------------ |
-| login sets tokens and user    | Success flow             |
-| login sets isLoading          | Loading state            |
-| login throws on error         | Error handling           |
-| register sets tokens and user | Success flow             |
-| register throws on error      | Error handling           |
-| logout clears tokens          | Calls API + clears       |
-| logout clears on API error    | Clears even if API fails |
-| fetchUser sets user           | Gets user from API       |
-| fetchUser clears on error     | Clears tokens on 401     |
-| initialize loads user         | Token exists             |
-| initialize clears on error    | getMe fails              |
-| initialize no token           | Skips loading            |
+| Test                          | Description               |
+| ----------------------------- | ------------------------- |
+| login sets tokens and user    | Success flow              |
+| login sets isLoading          | Loading state             |
+| login throws on error         | Error handling            |
+| register sets tokens and user | Success flow              |
+| register throws on error      | Error handling            |
+| logout clears tokens          | Calls API + wagmi + clear |
+| logout clears on API error    | Clears even if API fails  |
+| fetchUser sets user           | Gets user from API        |
+| fetchUser clears on error     | Clears tokens on 401      |
+| initialize loads user         | Token exists              |
+| initialize clears on error    | getMe fails               |
+| initialize no token           | Skips loading             |
+| formatAddress formats         | Shows 0x1234...5678       |
+| formatAddress empty           | Returns empty string      |
 
 #### `infrastructure/api-client.ts` (14 tests)
 

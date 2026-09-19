@@ -1,10 +1,10 @@
 'use client';
 
-import { useWalletStore } from '@/lib/stores/wallet';
+import { useAuthStore } from '@/lib/stores/auth';
 import { useTranslations } from 'next-intl';
 
 export default function FundingArbitragePage() {
-  const { address, isAuthenticated } = useWalletStore();
+  const { address, isAuthenticated } = useAuthStore();
   const t = useTranslations('wallet');
 
   return (
