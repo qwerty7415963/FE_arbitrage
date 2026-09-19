@@ -250,7 +250,15 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'auth',
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(() =>
+        typeof window !== 'undefined'
+          ? localStorage
+          : {
+              getItem: () => null,
+              setItem: () => {},
+              removeItem: () => {},
+            },
+      ),
       partialize: (state) => ({
         address: state.address,
         chainId: state.chainId,
