@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { connect, disconnect, getAccount, signMessage } from 'wagmi/actions';
-import { metaMask } from 'wagmi/connectors';
+import { walletConnect } from 'wagmi/connectors';
 import { config } from '@/lib/wagmi';
 import * as authService from '@/services/auth';
 import { setTokens, clearTokens } from '@/lib/token';
@@ -55,7 +55,9 @@ export const useWalletStore = create<WalletState>((set) => ({
   connect: async () => {
     set({ isConnecting: true, error: null });
     try {
-      const result = await connect(config, { connector: metaMask() });
+      const result = await connect(config, {
+        connector: walletConnect({ projectId: '71fbf046b37f1cc4359d26fde7228527' }),
+      });
 
       const address = result.accounts[0];
       const chainId = result.chainId;
