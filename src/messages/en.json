@@ -13,7 +13,7 @@
     "menu": "Menu"
   },
   "navigation": {
-    "dashboard": "Dashboard",
+    "fundingArbitrage": "Funding Arbitrage",
     "settings": "Settings",
     "logout": "Logout"
   },
@@ -40,5 +40,12 @@
     "validationError": "Invalid data",
     "passwordMismatch": "Passwords do not match",
     "unknownError": "An error occurred, please try again"
+  },
+  "wallet": {
+    "connect": "Connect Wallet",
+    "connecting": "Connecting...",
+    "disconnect": "Disconnect",
+    "connectedAs": "Connected as",
+    "connectToStart": "Connect your wallet to start trading"
   }
 }

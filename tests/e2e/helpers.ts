@@ -22,8 +22,8 @@ export async function expectLoginPage(page: Page) {
   await expect(page).toHaveURL(/\/login/);
 }
 
-export async function expectDashboardPage(page: Page) {
-  await expect(page).toHaveURL(/\/dashboard/);
+export async function expectFundingPage(page: Page) {
+  await expect(page).toHaveURL(/\/funding-arbitrage/);
 }
 
 export async function logoutUser(page: Page) {

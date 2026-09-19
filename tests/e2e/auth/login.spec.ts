@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { loginUser, expectLoginPage, expectDashboardPage } from '../helpers';
+import { loginUser, expectLoginPage, expectFundingPage } from '../helpers';
 
 test.describe('Login', () => {
   test('renders login form', async ({ page }) => {
@@ -28,9 +28,9 @@ test.describe('Login', () => {
     await expect(page.locator('.text-destructive')).toBeVisible();
   });
 
-  test('redirects to dashboard after successful login', async ({ page }) => {
+  test('redirects to funding arbitrage after successful login', async ({ page }) => {
     await loginUser(page);
 
-    await expectDashboardPage(page);
+    await expectFundingPage(page);
   });
 });

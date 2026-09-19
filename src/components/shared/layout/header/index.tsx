@@ -5,6 +5,7 @@ import { useAppStore } from '@/lib/stores/app';
 import { MenuIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
+import { ConnectWalletButton } from '@/components/shared/auth/connect-wallet-button';
 
 export function Header() {
   const { toggleSidebar } = useAppStore();
@@ -29,6 +30,10 @@ export function Header() {
           </div>
           <span className="text-lg font-semibold">{t('appName')}</span>
         </Link>
+
+        <div className="hidden lg:flex">
+          <ConnectWalletButton />
+        </div>
       </div>
     </header>
   );

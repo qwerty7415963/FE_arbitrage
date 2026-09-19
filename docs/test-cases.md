@@ -46,11 +46,11 @@
 | Module                         | File                                           | Tests  | Status |
 | ------------------------------ | ---------------------------------------------- | ------ | ------ |
 | `lib/token.ts`                 | `tests/unit/lib/token.test.ts`                 | 14     | ✅     |
-| `lib/wallet.ts`                | `tests/unit/lib/wallet.test.ts`                | 17     | ✅     |
+| `lib/stores/wallet.ts`         | `tests/unit/lib/wallet.test.ts`                | 2      | ✅     |
 | `services/auth.ts`             | `tests/unit/services/auth.test.ts`             | 12     | ✅     |
 | `stores/auth.ts`               | `tests/unit/stores/auth.test.ts`               | 12     | ✅     |
 | `infrastructure/api-client.ts` | `tests/unit/infrastructure/api-client.test.ts` | 14     | ✅     |
-| **Total**                      |                                                | **69** |        |
+| **Total**                      |                                                | **54** |        |
 
 ### Test Details
 
@@ -72,27 +72,12 @@
 | hasTokens false with one      | Only access or refresh              |
 | hasTokens true with both      | Both tokens exist                   |
 
-#### `lib/wallet.ts` (17 tests)
+#### `lib/stores/wallet.ts` (2 tests)
 
-| Test                             | Description            |
-| -------------------------------- | ---------------------- |
-| detectWallets empty array        | No window              |
-| detectWallets MetaMask           | MetaMask detected      |
-| detectWallets Rabby              | Rabby detected         |
-| detectWallets browser wallet     | Unknown wallet         |
-| detectWallets empty              | No ethereum            |
-| hasWallet false                  | No ethereum            |
-| hasWallet true                   | Ethereum exists        |
-| connectWallet returns data       | Gets address + chainId |
-| connectWallet throws no wallet   | No wallet              |
-| connectWallet throws no accounts | Empty accounts         |
-| getChainId returns number        | Converts hex to number |
-| getChainId throws                | No wallet              |
-| signMessage returns signature    | Calls personal_sign    |
-| signMessage throws no wallet     | No wallet              |
-| signMessage throws no accounts   | No accounts            |
-| formatAddress formats            | Shows 0x1234...5678    |
-| formatAddress empty              | Returns empty string   |
+| Test                  | Description          |
+| --------------------- | -------------------- |
+| formatAddress formats | Shows 0x1234...5678  |
+| formatAddress empty   | Returns empty string |
 
 #### `services/auth.ts` (12 tests)
 
@@ -158,12 +143,12 @@
 | E1  | `login.spec.ts`     | Login form renders     | Navigate /login              | Email + password fields visible |
 | E2  | `login.spec.ts`     | Shows register link    | Navigate /login              | "Sign up" link visible          |
 | E3  | `login.spec.ts`     | Login error            | Fill wrong creds → submit    | Error message shown             |
-| E4  | `login.spec.ts`     | Login success          | Fill form → submit           | Redirect /dashboard             |
+| E4  | `login.spec.ts`     | Login success          | Fill form → submit           | Redirect /funding-arbitrage     |
 | E5  | `register.spec.ts`  | Register form renders  | Navigate /register           | All fields visible              |
 | E6  | `register.spec.ts`  | Shows login link       | Navigate /register           | "Sign in" link visible          |
 | E7  | `register.spec.ts`  | Email exists error     | Fill existing email → submit | Error shown                     |
 | E8  | `register.spec.ts`  | Password mismatch      | Fill mismatched → submit     | "Passwords do not match"        |
-| E9  | `register.spec.ts`  | Register success       | Fill form → submit           | Redirect /dashboard             |
+| E9  | `register.spec.ts`  | Register success       | Fill form → submit           | Redirect /funding-arbitrage     |
 | E10 | `logout.spec.ts`    | Logout flow            | Login → logout → confirm     | Redirect /login                 |
 | E11 | `logout.spec.ts`    | Clears state           | After logout → /dashboard    | Redirect /login                 |
 | E12 | `protected.spec.ts` | Auth guard no token    | Navigate /dashboard          | Redirect /login                 |

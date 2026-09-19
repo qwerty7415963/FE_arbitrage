@@ -13,7 +13,7 @@
     "menu": "Menu"
   },
   "navigation": {
-    "dashboard": "Dashboard",
+    "fundingArbitrage": "Funding Arbitrage",
     "settings": "Cài đặt",
     "logout": "Đăng xuất"
   },
@@ -40,5 +40,12 @@
     "validationError": "Dữ liệu không hợp lệ",
     "passwordMismatch": "Mật khẩu xác nhận không khớp",
     "unknownError": "Đã xảy ra lỗi, vui lòng thử lại"
+  },
+  "wallet": {
+    "connect": "Kết nối ví",
+    "connecting": "Đang kết nối...",
+    "disconnect": "Ngắt kết nối",
+    "connectedAs": "Đang kết nối với",
+    "connectToStart": "Kết nối ví để bắt đầu giao dịch"
   }
 }

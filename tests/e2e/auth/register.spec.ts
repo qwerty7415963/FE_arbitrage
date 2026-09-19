@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { registerUser, expectDashboardPage } from '../helpers';
+import { registerUser, expectFundingPage } from '../helpers';
 
 test.describe('Register', () => {
   test('renders register form', async ({ page }) => {
@@ -40,10 +40,10 @@ test.describe('Register', () => {
     await expect(page.getByText('Passwords do not match')).toBeVisible();
   });
 
-  test('redirects to dashboard after successful registration', async ({ page }) => {
+  test('redirects to funding arbitrage after successful registration', async ({ page }) => {
     const email = `user${Date.now()}@test.com`;
     await registerUser(page, email);
 
-    await expectDashboardPage(page);
+    await expectFundingPage(page);
   });
 });

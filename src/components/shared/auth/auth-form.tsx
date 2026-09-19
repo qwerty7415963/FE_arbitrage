@@ -41,7 +41,7 @@ export function AuthForm({ mode }: AuthFormProps) {
       } else {
         await register(email, password);
       }
-      router.push('/dashboard');
+      router.push('/funding-arbitrage');
     } catch (err) {
       if (err instanceof ApiError) {
         if (err.code === 'CONFLICT') {
