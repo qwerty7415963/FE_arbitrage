@@ -1,9 +1,16 @@
 import { create } from 'zustand';
 import { connect, disconnect, getAccount, signMessage } from 'wagmi/actions';
-import { walletConnect } from 'wagmi/connectors';
+import { injected, walletConnect } from 'wagmi/connectors';
 import { config } from '@/lib/wagmi';
+import { config as appConfig } from '@/config';
 import * as authService from '@/services/auth';
 import { setTokens, clearTokens } from '@/lib/token';
+
+declare global {
+  interface Window {
+    ethereum?: Record<string, unknown>;
+  }
+}
 
 function formatAddress(address: string): string {
   if (!address) return '';
@@ -55,9 +62,15 @@ export const useWalletStore = create<WalletState>((set) => ({
   connect: async () => {
     set({ isConnecting: true, error: null });
     try {
-      const result = await connect(config, {
-        connector: walletConnect({ projectId: '71fbf046b37f1cc4359d26fde7228527' }),
-      });
+      const hasExtension = typeof window !== 'undefined' && !!window.ethereum;
+
+      const connector = hasExtension
+        ? injected()
+        : walletConnect({
+            projectId: appConfig.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID,
+          });
+
+      const result = await connect(config, { connector });
 
       const address = result.accounts[0];
       const chainId = result.chainId;
