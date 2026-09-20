@@ -16,3 +16,9 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Chạy `pnpm test` trước khi commit
 - Chạy `pnpm type-check` để kiểm tra type
 - E2E tests cần backend `localhost:8080` + frontend `localhost:3000` đang chạy
+
+## Git Rules
+
+- **KHÔNG** commit hoặc push nếu chưa được yêu cầu rõ ràng
+- Luôn hỏi trước khi commit: "Bạn muốn tôi commit + push không?"
+- Chỉ commit khi user xác nhận
