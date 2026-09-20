@@ -7,11 +7,12 @@ import {
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuCheckboxItem,
+  DropdownMenuGroup,
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import type { Venue } from '@/types/funding-arbitrage';
-import { ChevronDownIcon, CheckIcon } from 'lucide-react';
+import { ChevronDownIcon } from 'lucide-react';
 
 interface VenueSelectorProps {
   venues: Venue[];
@@ -43,19 +44,21 @@ export function VenueSelector({ venues, selected, onChange, disabled }: VenueSel
     selected.length === 0
       ? 'Select venues'
       : selected.length === 1
-        ? `1 venue`
+        ? '1 venue'
         : `${selected.length} venues`;
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger render={<div />}>
+      <DropdownMenuTrigger render={<div />} nativeButton={false}>
         <Button variant="outline" disabled={disabled} className="min-w-[180px] justify-between">
           {label}
           <ChevronDownIcon className="ml-2 h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-64">
-        <DropdownMenuLabel>Venues (2-10)</DropdownMenuLabel>
+        <DropdownMenuGroup>
+          <DropdownMenuLabel>Venues (2-10)</DropdownMenuLabel>
+        </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <div className="flex gap-1 px-1.5 py-1">
           <Button variant="ghost" size="sm" onClick={selectAll} className="h-6 text-xs">
