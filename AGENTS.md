@@ -12,6 +12,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 - Mỗi feature mới **bắt buộc** có unit test trong `tests/unit/`
 - Mỗi flow mới **bắt buộc** có E2E test trong `tests/e2e/`
+- Mỗi UI component mới **bắt buộc** có E2E test (unit test ko catch được rendering bugs)
 - Cập nhật `docs/test-cases.md` khi thêm test mới
 - Chạy `pnpm test` trước khi commit
 - Chạy `pnpm type-check` để kiểm tra type

@@ -43,14 +43,17 @@
 
 ### Coverage Summary
 
-| Module                          | File                                            | Tests  | Status |
-| ------------------------------- | ----------------------------------------------- | ------ | ------ |
-| `lib/token.ts`                  | `tests/unit/lib/token.test.ts`                  | 14     | ✅     |
-| `stores/auth.ts` (merged)       | `tests/unit/stores/auth.test.ts`                | 16     | ✅     |
-| `services/auth.ts`              | `tests/unit/services/auth.test.ts`              | 12     | ✅     |
-| `services/funding-arbitrage.ts` | `tests/unit/services/funding-arbitrage.test.ts` | 12     | ✅     |
-| `infrastructure/api-client.ts`  | `tests/unit/infrastructure/api-client.test.ts`  | 14     | ✅     |
-| **Total**                       |                                                 | **68** |        |
+| Module                          | File                                            | Tests   | Status |
+| ------------------------------- | ----------------------------------------------- | ------- | ------ |
+| `lib/token.ts`                  | `tests/unit/lib/token.test.ts`                  | 14      | ✅     |
+| `stores/auth.ts` (merged)       | `tests/unit/stores/auth.test.ts`                | 16      | ✅     |
+| `services/auth.ts`              | `tests/unit/services/auth.test.ts`              | 12      | ✅     |
+| `services/funding-arbitrage.ts` | `tests/unit/services/funding-arbitrage.test.ts` | 13      | ✅     |
+| `services/groups.ts`            | `tests/unit/services/groups.test.ts`            | 10      | ✅     |
+| `components/group-form.tsx`     | `tests/unit/components/group-form.test.tsx`     | 5       | ✅     |
+| `components/funding-table.tsx`  | `tests/unit/components/funding-table.test.tsx`  | 26      | ✅     |
+| `infrastructure/api-client.ts`  | `tests/unit/infrastructure/api-client.test.ts`  | 14      | ✅     |
+| **Total**                       |                                                 | **108** |        |
 
 ### Test Details
 
@@ -106,6 +109,31 @@
 | getFundingArbitrage no data        | Empty response                |
 | getFundingArbitrage API error      | Network error                 |
 
+#### `services/groups.ts` (10 tests)
+
+| Test                          | Description                |
+| ----------------------------- | -------------------------- |
+| listGroups calls endpoint     | GET /api/v1/groups         |
+| listGroups throws on no data  | Empty response             |
+| getGroup calls endpoint       | GET /api/v1/groups/{id}    |
+| createGroup trims + POSTs     | Name trimmed               |
+| createGroup rejects blank     | No API call                |
+| createGroup throws on no data | Empty response             |
+| updateGroup PATCHes trimmed   | Name trimmed               |
+| updateGroup throws on no data | Empty response             |
+| deleteGroup calls DELETE      | DELETE /api/v1/groups/{id} |
+| propagates API errors         | Network error              |
+
+#### `components/group-form.tsx` (5 tests)
+
+| Test                          | Description               |
+| ----------------------------- | ------------------------- |
+| renders create title          | No group prop             |
+| renders edit title            | Group prop                |
+| blocks blank name             | No API call + error shown |
+| shows duplicate on GROUP-002  | 409 GROUP-002 mapped      |
+| success calls onSuccess+close | Create flow               |
+
 #### `stores/auth.ts` (merged - 16 tests)
 
 | Test                          | Description               |
@@ -150,22 +178,32 @@
 
 ### Test Matrix
 
-| #   | File                | Flow                   | Steps                        | Expected                        |
-| --- | ------------------- | ---------------------- | ---------------------------- | ------------------------------- |
-| E1  | `login.spec.ts`     | Login form renders     | Navigate /login              | Email + password fields visible |
-| E2  | `login.spec.ts`     | Shows register link    | Navigate /login              | "Sign up" link visible          |
-| E3  | `login.spec.ts`     | Login error            | Fill wrong creds → submit    | Error message shown             |
-| E4  | `login.spec.ts`     | Login success          | Fill form → submit           | Redirect /funding-arbitrage     |
-| E5  | `register.spec.ts`  | Register form renders  | Navigate /register           | All fields visible              |
-| E6  | `register.spec.ts`  | Shows login link       | Navigate /register           | "Sign in" link visible          |
-| E7  | `register.spec.ts`  | Email exists error     | Fill existing email → submit | Error shown                     |
-| E8  | `register.spec.ts`  | Password mismatch      | Fill mismatched → submit     | "Passwords do not match"        |
-| E9  | `register.spec.ts`  | Register success       | Fill form → submit           | Redirect /funding-arbitrage     |
-| E10 | `logout.spec.ts`    | Logout flow            | Login → logout → confirm     | Redirect /login                 |
-| E11 | `logout.spec.ts`    | Clears state           | After logout → /dashboard    | Redirect /login                 |
-| E12 | `protected.spec.ts` | Auth guard no token    | Navigate /dashboard          | Redirect /login                 |
-| E13 | `protected.spec.ts` | Auth guard valid token | Login → /dashboard           | Dashboard renders               |
-| E14 | `protected.spec.ts` | Token expiry           | Remove tokens → /dashboard   | Redirect /login                 |
+| #   | File                        | Flow                   | Steps                             | Expected                        |
+| --- | --------------------------- | ---------------------- | --------------------------------- | ------------------------------- |
+| E1  | `login.spec.ts`             | Login form renders     | Navigate /login                   | Email + password fields visible |
+| E2  | `login.spec.ts`             | Shows register link    | Navigate /login                   | "Sign up" link visible          |
+| E3  | `login.spec.ts`             | Login error            | Fill wrong creds → submit         | Error message shown             |
+| E4  | `login.spec.ts`             | Login success          | Fill form → submit                | Redirect /funding-arbitrage     |
+| E5  | `register.spec.ts`          | Register form renders  | Navigate /register                | All fields visible              |
+| E6  | `register.spec.ts`          | Shows login link       | Navigate /register                | "Sign in" link visible          |
+| E7  | `register.spec.ts`          | Email exists error     | Fill existing email → submit      | Error shown                     |
+| E8  | `register.spec.ts`          | Password mismatch      | Fill mismatched → submit          | "Passwords do not match"        |
+| E9  | `register.spec.ts`          | Register success       | Fill form → submit                | Redirect /funding-arbitrage     |
+| E10 | `logout.spec.ts`            | Logout flow            | Login → logout → confirm          | Redirect /login                 |
+| E11 | `logout.spec.ts`            | Clears state           | After logout → /dashboard         | Redirect /login                 |
+| E12 | `protected.spec.ts`         | Auth guard no token    | Navigate /dashboard               | Redirect /login                 |
+| E13 | `protected.spec.ts`         | Auth guard valid token | Login → /dashboard                | Dashboard renders               |
+| E14 | `protected.spec.ts`         | Token expiry           | Remove tokens → /dashboard        | Redirect /login                 |
+| E15 | `funding-arbitrage.spec.ts` | Page renders           | Navigate /funding-arbitrage       | Title + buttons visible         |
+| E16 | `funding-arbitrage.spec.ts` | Venue selector opens   | Click "Select venues"             | Dropdown with venues shown      |
+| E17 | `funding-arbitrage.spec.ts` | Select All works       | Click "Select All"                | "10 venues" displayed           |
+| E18 | `funding-arbitrage.spec.ts` | Clear works            | Click "Clear"                     | "Select venues" displayed       |
+| E19 | `funding-arbitrage.spec.ts` | Search disabled        | No venues selected                | Search button disabled          |
+| E20 | `groups.spec.ts`            | Groups page renders    | Login → /groups                   | Title + Create visible          |
+| E21 | `groups.spec.ts`            | Empty state            | Mock [] → /groups                 | "No groups yet"                 |
+| E22 | `groups.spec.ts`            | Create validates blank | Open dialog → blank name → submit | "Group name is required"        |
+| E23 | `groups.spec.ts`            | Lists groups           | Mock [Main] → /groups             | Name + count visible            |
+| E24 | `groups.spec.ts`            | Error retry            | Mock 500 → /groups                | Retry button visible            |
 
 ---
 
