@@ -11,9 +11,9 @@ export interface ArbitrageToken {
   short_venue_id: string;
   funding_available: boolean;
   is_stale: boolean;
-  apr_1h_percent: number;
-  apr_4h_percent: number;
-  apy_percent: number;
+  rate_1h_percent: number;
+  rate_8h_percent: number;
+  apr_percent: number;
   price_spread_percent: number;
   venue_a_symbol: string;
   venue_a_funding_rate: string;
@@ -28,24 +28,29 @@ export interface ArbitrageToken {
 }
 
 export interface ArbitragePair {
-  venue_a: VenueInfo;
-  venue_b: VenueInfo;
-  tokens: ArbitrageToken[];
+  venue_a?: VenueInfo;
+  venue_b?: VenueInfo;
+  tokens?: ArbitrageToken[] | null;
+}
+
+export interface FundingArbitrageMeta {
+  has_more?: boolean;
+  limit?: number;
+  page?: number;
+  total_pages?: number;
 }
 
 export interface FundingArbitrageData {
   cache_status: string;
   data_as_of: string;
-  pairs: ArbitragePair[];
+  pairs?: ArbitragePair[] | null;
 }
 
 export interface Venue {
   id: string;
   code: string;
   name: string;
-  exchange_name: string;
   venue_type: 'CEX' | 'PERP_DEX';
-  status: 'ACTIVE' | 'DISABLED';
 }
 
-export type SortOption = 'apr_1h_desc' | 'apr_4h_desc' | 'apy_desc' | 'spread_desc';
+export type SortOption = 'rate_1h_desc' | 'rate_8h_desc' | 'apr_desc' | 'spread_desc';

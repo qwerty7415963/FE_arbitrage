@@ -11,27 +11,27 @@ import {
 import type { ArbitrageToken, ArbitragePair } from '@/types/funding-arbitrage';
 
 interface FundingTableProps {
-  pairs: ArbitragePair[];
+  pairs: ArbitragePair[] | undefined | null;
 }
 
 function flattenPairs(
-  pairs: ArbitragePair[],
+  pairs: ArbitragePair[] | undefined | null,
 ): (ArbitrageToken & { venue_a_name: string; venue_b_name: string })[] {
   const rows: (ArbitrageToken & { venue_a_name: string; venue_b_name: string })[] = [];
-  for (const pair of pairs) {
-    for (const token of pair.tokens) {
+  for (const pair of pairs ?? []) {
+    for (const token of pair.tokens ?? []) {
       rows.push({
         ...token,
-        venue_a_name: pair.venue_a.name,
-        venue_b_name: pair.venue_b.name,
+        venue_a_name: pair.venue_a?.name ?? '—',
+        venue_b_name: pair.venue_b?.name ?? '—',
       });
     }
   }
   return rows;
 }
 
-function formatPercent(value: number): string {
-  return `${value.toFixed(2)}%`;
+function formatPercent(value: number | undefined | null): string {
+  return `${(value ?? 0).toFixed(2)}%`;
 }
 
 function StatusBadge({
@@ -80,9 +80,9 @@ export function FundingTable({ pairs }: FundingTableProps) {
           <TableHead>Rate A</TableHead>
           <TableHead>Short (Venue B)</TableHead>
           <TableHead>Rate B</TableHead>
-          <TableHead>APR 4h</TableHead>
-          <TableHead>APR 1h</TableHead>
-          <TableHead>APY</TableHead>
+          <TableHead>Rate 8h</TableHead>
+          <TableHead>Rate 1h</TableHead>
+          <TableHead>APR</TableHead>
           <TableHead>Spread</TableHead>
           <TableHead>Status</TableHead>
         </TableRow>
@@ -95,13 +95,17 @@ export function FundingTable({ pairs }: FundingTableProps) {
             <TableCell className="font-mono text-xs">{row.venue_a_funding_rate}</TableCell>
             <TableCell>{row.venue_b_name}</TableCell>
             <TableCell className="font-mono text-xs">{row.venue_b_funding_rate}</TableCell>
-            <TableCell className={row.apr_4h_percent > 0 ? 'text-primary' : 'text-destructive'}>
-              {formatPercent(row.apr_4h_percent)}
+            <TableCell
+              className={(row.rate_8h_percent ?? 0) > 0 ? 'text-primary' : 'text-destructive'}
+            >
+              {formatPercent(row.rate_8h_percent)}
             </TableCell>
-            <TableCell className={row.apr_1h_percent > 0 ? 'text-primary' : 'text-destructive'}>
-              {formatPercent(row.apr_1h_percent)}
+            <TableCell
+              className={(row.rate_1h_percent ?? 0) > 0 ? 'text-primary' : 'text-destructive'}
+            >
+              {formatPercent(row.rate_1h_percent)}
             </TableCell>
-            <TableCell>{formatPercent(row.apy_percent)}</TableCell>
+            <TableCell>{formatPercent(row.apr_percent)}</TableCell>
             <TableCell>{formatPercent(row.price_spread_percent)}</TableCell>
             <TableCell>
               <StatusBadge funding_available={row.funding_available} is_stale={row.is_stale} />

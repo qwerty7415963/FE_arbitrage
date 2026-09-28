@@ -11,25 +11,19 @@ const mockVenues = [
     id: 'v1',
     code: 'BINANCE',
     name: 'Binance',
-    exchange_name: 'Binance',
     venue_type: 'CEX' as const,
-    status: 'ACTIVE' as const,
   },
   {
     id: 'v2',
     code: 'OKX',
     name: 'OKX',
-    exchange_name: 'OKX',
     venue_type: 'CEX' as const,
-    status: 'ACTIVE' as const,
   },
   {
     id: 'v3',
     code: 'BYBIT',
     name: 'Bybit',
-    exchange_name: 'Bybit',
     venue_type: 'CEX' as const,
-    status: 'ACTIVE' as const,
   },
 ];
 
@@ -45,9 +39,9 @@ const mockPairs = [
         short_venue_id: 'v2',
         funding_available: true,
         is_stale: false,
-        apr_1h_percent: 5.2,
-        apr_4h_percent: 10.5,
-        apy_percent: 156.3,
+        rate_1h_percent: 5.2,
+        rate_8h_percent: 10.5,
+        apr_percent: 156.3,
         price_spread_percent: 0.01,
         venue_a_symbol: 'BTC-USDT',
         venue_a_funding_rate: '0.00012',
@@ -76,7 +70,9 @@ describe('funding-arbitrage service', () => {
         data: mockVenues,
       });
       const result = await getVenues();
-      expect(apiClient.apiClient).toHaveBeenCalledWith('/api/v1/venues');
+      expect(apiClient.apiClient).toHaveBeenCalledWith('/api/v1/public/venues?market=perp', {
+        auth: false,
+      });
       expect(result).toEqual(mockVenues);
     });
 
@@ -110,9 +106,32 @@ describe('funding-arbitrage service', () => {
         data: { cache_status: 'fresh', data_as_of: '2024-01-01T00:00:00Z', pairs: [] },
         meta: {},
       });
-      await getFundingArbitrage(['v1', 'v2'], { sort: 'apr_1h_desc' });
+      await getFundingArbitrage(['v1', 'v2'], { sort: 'rate_1h_desc' });
       const url = vi.mocked(apiClient.apiClient).mock.calls[0][0] as string;
-      expect(url).toContain('sort=apr_1h_desc');
+      expect(url).toContain('sort=rate_1h_desc');
+    });
+
+    it('includes page param default 1', async () => {
+      vi.mocked(apiClient.apiClient).mockResolvedValue({
+        success: true,
+        data: { cache_status: 'fresh', data_as_of: '2024-01-01T00:00:00Z', pairs: [] },
+        meta: {},
+      });
+      await getFundingArbitrage(['v1', 'v2']);
+      const url = vi.mocked(apiClient.apiClient).mock.calls[0][0] as string;
+      expect(url).toContain('page=1');
+      expect(url).toContain('limit=50');
+    });
+
+    it('includes custom page param', async () => {
+      vi.mocked(apiClient.apiClient).mockResolvedValue({
+        success: true,
+        data: { cache_status: 'fresh', data_as_of: '2024-01-01T00:00:00Z', pairs: [] },
+        meta: {},
+      });
+      await getFundingArbitrage(['v1', 'v2'], { page: 3 });
+      const url = vi.mocked(apiClient.apiClient).mock.calls[0][0] as string;
+      expect(url).toContain('page=3');
     });
 
     it('includes limit param', async () => {
@@ -121,29 +140,18 @@ describe('funding-arbitrage service', () => {
         data: { cache_status: 'fresh', data_as_of: '2024-01-01T00:00:00Z', pairs: [] },
         meta: {},
       });
-      await getFundingArbitrage(['v1', 'v2'], { limit: 100 });
+      await getFundingArbitrage(['v1', 'v2'], { limit: 20 });
       const url = vi.mocked(apiClient.apiClient).mock.calls[0][0] as string;
-      expect(url).toContain('limit=100');
+      expect(url).toContain('limit=20');
     });
 
-    it('includes cursor param', async () => {
-      vi.mocked(apiClient.apiClient).mockResolvedValue({
-        success: true,
-        data: { cache_status: 'fresh', data_as_of: '2024-01-01T00:00:00Z', pairs: [] },
-        meta: {},
-      });
-      await getFundingArbitrage(['v1', 'v2'], { cursor: 'abc123' });
-      const url = vi.mocked(apiClient.apiClient).mock.calls[0][0] as string;
-      expect(url).toContain('cursor=abc123');
-    });
-
-    it('returns data and meta', async () => {
+    it('returns data and meta with pagination fields', async () => {
       const mockData = {
         cache_status: 'fresh',
         data_as_of: '2024-01-01T00:00:00Z',
         pairs: mockPairs,
       };
-      const mockMeta = { cursor: 'next', has_more: true, limit: 50 };
+      const mockMeta = { page: 1, total_pages: 5, has_more: true, limit: 10 };
       vi.mocked(apiClient.apiClient).mockResolvedValue({
         success: true,
         data: mockData,

@@ -1,9 +1,17 @@
 import { apiClient } from '@/infrastructure/api-client';
 import type { ApiResponse } from '@/types/api';
-import type { FundingArbitrageData, Venue, SortOption } from '@/types/funding-arbitrage';
+import type {
+  FundingArbitrageData,
+  FundingArbitrageMeta,
+  Venue,
+  SortOption,
+} from '@/types/funding-arbitrage';
 
 export async function getVenues(): Promise<Venue[]> {
-  const res = await apiClient<ApiResponse<Venue[]>>('/api/v1/venues');
+  const params = new URLSearchParams({ market: 'perp' });
+  const res = await apiClient<ApiResponse<Venue[]>>(`/api/v1/public/venues?${params.toString()}`, {
+    auth: false,
+  });
   if (!res.data) throw new Error('No data returned');
   return res.data;
 }
@@ -12,14 +20,12 @@ export async function getFundingArbitrage(
   venueIds: string[],
   options?: {
     sort?: SortOption;
+    page?: number;
     limit?: number;
-    cursor?: string;
-    includeStale?: boolean;
-    refresh?: boolean;
   },
 ): Promise<{
   data: FundingArbitrageData;
-  meta: { cursor?: string; has_more?: boolean; limit?: number };
+  meta: FundingArbitrageMeta;
 }> {
   if (venueIds.length < 2) {
     throw new Error('At least 2 venues are required');
@@ -30,11 +36,9 @@ export async function getFundingArbitrage(
 
   const params = new URLSearchParams();
   params.set('venue_id', venueIds.join(','));
+  params.set('page', String(options?.page ?? 1));
+  params.set('limit', String(options?.limit ?? 50));
   if (options?.sort) params.set('sort', options.sort);
-  if (options?.limit) params.set('limit', String(options.limit));
-  if (options?.cursor) params.set('cursor', options.cursor);
-  if (options?.includeStale) params.set('include_stale', 'true');
-  if (options?.refresh) params.set('refresh', 'true');
 
   const res = await apiClient<ApiResponse<FundingArbitrageData>>(
     `/api/v1/funding/arbitrage?${params.toString()}`,

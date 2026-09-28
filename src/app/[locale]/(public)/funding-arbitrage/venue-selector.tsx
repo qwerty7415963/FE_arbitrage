@@ -1,18 +1,17 @@
 'use client';
 
-import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
-  DropdownMenuCheckboxItem,
   DropdownMenuGroup,
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import type { Venue } from '@/types/funding-arbitrage';
-import { ChevronDownIcon } from 'lucide-react';
+import { ChevronDownIcon, CheckIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface VenueSelectorProps {
   venues: Venue[];
@@ -69,19 +68,29 @@ export function VenueSelector({ venues, selected, onChange, disabled }: VenueSel
           </Button>
         </div>
         <DropdownMenuSeparator />
-        {venues.map((venue) => (
-          <DropdownMenuCheckboxItem
-            key={venue.id}
-            checked={selected.includes(venue.id)}
-            onCheckedChange={() => toggle(venue.id)}
-            disabled={!selected.includes(venue.id) && selected.length >= 10}
-          >
-            <span className="flex flex-col">
-              <span>{venue.name}</span>
-              <span className="text-muted-foreground text-xs">{venue.exchange_name}</span>
-            </span>
-          </DropdownMenuCheckboxItem>
-        ))}
+        {venues.map((venue) => {
+          const isSelected = selected.includes(venue.id);
+          return (
+            <div
+              key={venue.id}
+              role="menuitem"
+              data-slot="dropdown-menu-item"
+              onClick={() => toggle(venue.id)}
+              className={cn(
+                'focus:bg-accent focus:text-accent-foreground relative flex cursor-default items-center gap-1.5 rounded-md px-1.5 py-1 text-sm outline-hidden select-none',
+                !isSelected && selected.length >= 10 && 'pointer-events-none opacity-50',
+              )}
+            >
+              <CheckIcon
+                className={cn('h-4 w-4 shrink-0', isSelected ? 'opacity-100' : 'opacity-0')}
+              />
+              <span className="flex flex-col">
+                <span>{venue.name}</span>
+                <span className="text-muted-foreground text-xs">{venue.code}</span>
+              </span>
+            </div>
+          );
+        })}
       </DropdownMenuContent>
     </DropdownMenu>
   );

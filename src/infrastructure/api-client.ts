@@ -22,6 +22,7 @@ export class ApiError extends Error {
 
 interface RequestOptions extends RequestInit {
   timeout?: number;
+  auth?: boolean;
 }
 
 let isRefreshing = false;
@@ -42,14 +43,14 @@ function processQueue(error: Error | null, token: string | null) {
 }
 
 export async function apiClient<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
-  const { timeout = 30000, ...fetchOptions } = options;
+  const { timeout = 30000, auth = true, ...fetchOptions } = options;
 
   const token = getAccessToken();
 
   const headers = new Headers(fetchOptions.headers);
   headers.set('Content-Type', 'application/json');
 
-  if (token) {
+  if (auth && token) {
     headers.set('Authorization', `Bearer ${token}`);
   }
 

@@ -2,20 +2,23 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { Loader2Icon, RefreshCwIcon } from 'lucide-react';
+import { Loader2Icon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useAuthStore } from '@/lib/stores/auth';
 import { getVenues, getFundingArbitrage } from '@/services/funding-arbitrage';
 import type { Venue, ArbitragePair, SortOption } from '@/types/funding-arbitrage';
 import { VenueSelector } from './venue-selector';
 import { FundingTable } from './funding-table';
+import { Pagination } from './pagination';
 
 const SORT_OPTIONS: { value: SortOption; label: string }[] = [
-  { value: 'apr_4h_desc', label: 'APR 4h ↓' },
-  { value: 'apr_1h_desc', label: 'APR 1h ↓' },
-  { value: 'apy_desc', label: 'APY ↓' },
+  { value: 'rate_8h_desc', label: 'Rate 8h ↓' },
+  { value: 'rate_1h_desc', label: 'Rate 1h ↓' },
+  { value: 'apr_desc', label: 'APR ↓' },
   { value: 'spread_desc', label: 'Spread ↓' },
 ];
+
+const PAGE_SIZE = 10;
 
 export default function FundingArbitragePage() {
   const { address, isAuthenticated } = useAuthStore();
@@ -23,19 +26,19 @@ export default function FundingArbitragePage() {
 
   const [venues, setVenues] = useState<Venue[]>([]);
   const [selectedVenueIds, setSelectedVenueIds] = useState<string[]>([]);
-  const [sort, setSort] = useState<SortOption>('apr_4h_desc');
+  const [sort, setSort] = useState<SortOption>('rate_8h_desc');
   const [pairs, setPairs] = useState<ArbitragePair[]>([]);
   const [isLoadingVenues, setIsLoadingVenues] = useState(true);
   const [isLoadingData, setIsLoadingData] = useState(false);
-  const [cursor, setCursor] = useState<string | undefined>();
-  const [hasMore, setHasMore] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadVenues() {
       try {
         const data = await getVenues();
-        setVenues(data.filter((v) => v.status === 'ACTIVE'));
+        setVenues(data);
       } catch {
         setError('Failed to load venues');
       } finally {
@@ -45,8 +48,8 @@ export default function FundingArbitragePage() {
     loadVenues();
   }, []);
 
-  const handleSearch = useCallback(
-    async (isRefresh = false) => {
+  const fetchData = useCallback(
+    async (page: number) => {
       if (selectedVenueIds.length < 2) {
         setError('Select at least 2 venues');
         return;
@@ -54,17 +57,16 @@ export default function FundingArbitragePage() {
 
       setIsLoadingData(true);
       setError(null);
-      setCursor(undefined);
 
       try {
         const result = await getFundingArbitrage(selectedVenueIds, {
           sort,
-          limit: 50,
-          refresh: isRefresh,
+          page,
+          limit: PAGE_SIZE,
         });
-        setPairs(result.data.pairs);
-        setHasMore(result.meta.has_more ?? false);
-        setCursor(result.meta.cursor);
+        setPairs(result.data.pairs ?? []);
+        setTotalPages(result.meta.total_pages ?? 1);
+        setCurrentPage(result.meta.page ?? page);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch data');
       } finally {
@@ -74,25 +76,16 @@ export default function FundingArbitragePage() {
     [selectedVenueIds, sort],
   );
 
-  const handleLoadMore = useCallback(async () => {
-    if (!cursor || selectedVenueIds.length < 2) return;
+  const handleSearch = useCallback(() => {
+    fetchData(1);
+  }, [fetchData]);
 
-    setIsLoadingData(true);
-    try {
-      const result = await getFundingArbitrage(selectedVenueIds, {
-        sort,
-        limit: 50,
-        cursor,
-      });
-      setPairs((prev) => [...prev, ...result.data.pairs]);
-      setHasMore(result.meta.has_more ?? false);
-      setCursor(result.meta.cursor);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load more');
-    } finally {
-      setIsLoadingData(false);
-    }
-  }, [cursor, selectedVenueIds, sort]);
+  const handlePageChange = useCallback(
+    (page: number) => {
+      fetchData(page);
+    },
+    [fetchData],
+  );
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 lg:p-6">
@@ -125,21 +118,9 @@ export default function FundingArbitragePage() {
           ))}
         </select>
 
-        <Button
-          onClick={() => handleSearch(false)}
-          disabled={isLoadingData || selectedVenueIds.length < 2}
-        >
+        <Button onClick={handleSearch} disabled={isLoadingData || selectedVenueIds.length < 2}>
           {isLoadingData ? <Loader2Icon className="mr-2 h-4 w-4 animate-spin" /> : null}
           Search
-        </Button>
-
-        <Button
-          variant="outline"
-          onClick={() => handleSearch(true)}
-          disabled={isLoadingData || selectedVenueIds.length < 2}
-        >
-          <RefreshCwIcon className="mr-2 h-4 w-4" />
-          Refresh
         </Button>
       </div>
 
@@ -154,14 +135,12 @@ export default function FundingArbitragePage() {
         <>
           <FundingTable pairs={pairs} />
 
-          {hasMore && (
-            <div className="flex justify-center py-4">
-              <Button variant="outline" onClick={handleLoadMore} disabled={isLoadingData}>
-                {isLoadingData ? <Loader2Icon className="mr-2 h-4 w-4 animate-spin" /> : null}
-                Load More
-              </Button>
-            </div>
-          )}
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+            disabled={isLoadingData}
+          />
         </>
       )}
     </div>
