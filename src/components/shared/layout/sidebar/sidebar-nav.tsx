@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation';
 import { Link } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
-import { TrendingUpIcon, SettingsIcon, type LucideIcon } from 'lucide-react';
+import { TrendingUpIcon, SettingsIcon, FolderIcon, type LucideIcon } from 'lucide-react';
 
 interface NavItem {
   href: string;
@@ -17,6 +17,11 @@ const navItems: NavItem[] = [
     href: '/funding-arbitrage',
     icon: TrendingUpIcon,
     labelKey: 'fundingArbitrage',
+  },
+  {
+    href: '/groups',
+    icon: FolderIcon,
+    labelKey: 'groups',
   },
   {
     href: '/settings',

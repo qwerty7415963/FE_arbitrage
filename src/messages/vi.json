@@ -14,6 +14,7 @@
   },
   "navigation": {
     "fundingArbitrage": "Funding Arbitrage",
+    "groups": "Nhóm",
     "settings": "Cài đặt",
     "logout": "Đăng xuất"
   },
@@ -47,5 +48,33 @@
     "disconnect": "Ngắt kết nối",
     "connectedAs": "Đang kết nối với",
     "connectToStart": "Kết nối ví để bắt đầu giao dịch"
+  },
+  "groups": {
+    "title": "Nhóm",
+    "create": "Tạo mới",
+    "createTitle": "Tạo nhóm",
+    "editTitle": "Sửa nhóm",
+    "formSubtitle": "Nhóm dùng để tổ chức wallet. Xóa nhóm không xóa dữ liệu thị trường.",
+    "name": "Tên",
+    "namePlaceholder": "VD: Danh sách theo dõi",
+    "description": "Mô tả",
+    "descriptionPlaceholder": "Mô tả tùy chọn",
+    "color": "Màu",
+    "colorPlaceholder": "Màu tùy chọn",
+    "walletCount": "Wallets",
+    "save": "Lưu",
+    "cancel": "Hủy",
+    "delete": "Xóa",
+    "edit": "Chỉnh sửa",
+    "deleteTitle": "Xóa nhóm",
+    "deleteConfirm": "Xóa nhóm \"{name}\"? Wallet vẫn còn trong dữ liệu thị trường, chỉ xóa membership.",
+    "nameRequired": "Tên nhóm là bắt buộc",
+    "duplicateName": "Tên nhóm đã tồn tại",
+    "unknownError": "Đã xảy ra lỗi, vui lòng thử lại",
+    "empty": "Chưa có nhóm nào",
+    "retry": "Thử lại",
+    "forbidden": "Bạn không có quyền xem nhóm này",
+    "notFound": "Không tìm thấy nhóm",
+    "walletsComingSoon": "Bảng wallets trong nhóm sẽ làm ở phase membership tiếp theo."
   }
 }

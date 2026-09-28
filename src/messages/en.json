@@ -14,6 +14,7 @@
   },
   "navigation": {
     "fundingArbitrage": "Funding Arbitrage",
+    "groups": "Groups",
     "settings": "Settings",
     "logout": "Logout"
   },
@@ -47,5 +48,33 @@
     "disconnect": "Disconnect",
     "connectedAs": "Connected as",
     "connectToStart": "Connect your wallet to start trading"
+  },
+  "groups": {
+    "title": "Groups",
+    "create": "Create",
+    "createTitle": "Create group",
+    "editTitle": "Edit group",
+    "formSubtitle": "Groups organize wallets. Deleting a group never deletes market data.",
+    "name": "Name",
+    "namePlaceholder": "e.g. Main watchlist",
+    "description": "Description",
+    "descriptionPlaceholder": "Optional description",
+    "color": "Color",
+    "colorPlaceholder": "Optional color",
+    "walletCount": "Wallets",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "deleteTitle": "Delete group",
+    "deleteConfirm": "Delete group \"{name}\"? Wallets stay in market data, only membership is removed.",
+    "nameRequired": "Group name is required",
+    "duplicateName": "Group name already exists",
+    "unknownError": "An error occurred, please try again",
+    "empty": "No groups yet",
+    "retry": "Retry",
+    "forbidden": "You don't have permission to view this group",
+    "notFound": "Group not found",
+    "walletsComingSoon": "Group wallets table comes in the next phase (membership)."
   }
 }
