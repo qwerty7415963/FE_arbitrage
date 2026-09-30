@@ -52,20 +52,21 @@ interface AuthState {
   chainId: number | null;
   isConnecting: boolean;
   error: string | null;
-  authMethod: 'email' | 'wallet' | null;
+  authMethod: 'wallet' | null;
+  connectModalOpen: boolean;
 
-  login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string) => Promise<void>;
   connectWallet: () => Promise<void>;
   disconnectWallet: () => Promise<void>;
   logout: () => Promise<void>;
   fetchUser: () => Promise<void>;
   initialize: () => Promise<void>;
+  setConnectModalOpen: (open: boolean) => void;
+  requireAuth: () => boolean;
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
       isAuthenticated: false,
       isLoading: false,
@@ -75,39 +76,14 @@ export const useAuthStore = create<AuthState>()(
       isConnecting: false,
       error: null,
       authMethod: null,
+      connectModalOpen: false,
 
-      login: async (email, password) => {
-        set({ isLoading: true });
-        try {
-          const data = await authService.login({ email, password });
-          setTokens(data.access_token, data.refresh_token);
-          set({
-            user: data.user,
-            isAuthenticated: true,
-            authMethod: 'email',
-            isLoading: false,
-          });
-        } catch (error) {
-          set({ isLoading: false });
-          throw error;
-        }
-      },
+      setConnectModalOpen: (open) => set({ connectModalOpen: open }),
 
-      register: async (email, password) => {
-        set({ isLoading: true });
-        try {
-          const data = await authService.register({ email, password });
-          setTokens(data.access_token, data.refresh_token);
-          set({
-            user: data.user,
-            isAuthenticated: true,
-            authMethod: 'email',
-            isLoading: false,
-          });
-        } catch (error) {
-          set({ isLoading: false });
-          throw error;
-        }
+      requireAuth: () => {
+        if (get().isAuthenticated) return true;
+        set({ connectModalOpen: true });
+        return false;
       },
 
       connectWallet: async () => {
@@ -229,7 +205,7 @@ export const useAuthStore = create<AuthState>()(
             set({
               user,
               isAuthenticated: true,
-              authMethod: account.address ? 'wallet' : 'email',
+              authMethod: 'wallet',
               isInitialized: true,
               isLoading: false,
             });

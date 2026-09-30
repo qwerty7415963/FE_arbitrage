@@ -12,60 +12,6 @@ describe('auth service', () => {
     vi.restoreAllMocks();
   });
 
-  describe('login', () => {
-    it('calls POST /auth/login with correct body', async () => {
-      const mockResponse = {
-        success: true,
-        data: {
-          access_token: 'access',
-          refresh_token: 'refresh',
-          expires_at: 123,
-          user: { id: '1', email: 'test@test.com', role: 'user', status: 'active', created_at: '' },
-        },
-      };
-      vi.mocked(apiClient.apiClientNoAuth).mockResolvedValue(mockResponse);
-
-      const result = await authService.login({ email: 'test@test.com', password: 'password123' });
-
-      expect(apiClient.apiClientNoAuth).toHaveBeenCalledWith('/api/v1/auth/login', {
-        method: 'POST',
-        body: JSON.stringify({ email: 'test@test.com', password: 'password123' }),
-      });
-      expect(result).toEqual(mockResponse.data);
-    });
-
-    it('throws when no data returned', async () => {
-      vi.mocked(apiClient.apiClientNoAuth).mockResolvedValue({ success: true });
-
-      await expect(authService.login({ email: 'a', password: 'b' })).rejects.toThrow(
-        'No data returned',
-      );
-    });
-  });
-
-  describe('register', () => {
-    it('calls POST /auth/register with correct body', async () => {
-      const mockResponse = {
-        success: true,
-        data: {
-          access_token: 'access',
-          refresh_token: 'refresh',
-          expires_at: 123,
-          user: { id: '1', email: 'new@test.com', role: 'user', status: 'active', created_at: '' },
-        },
-      };
-      vi.mocked(apiClient.apiClientNoAuth).mockResolvedValue(mockResponse);
-
-      const result = await authService.register({ email: 'new@test.com', password: 'password123' });
-
-      expect(apiClient.apiClientNoAuth).toHaveBeenCalledWith('/api/v1/auth/register', {
-        method: 'POST',
-        body: JSON.stringify({ email: 'new@test.com', password: 'password123' }),
-      });
-      expect(result).toEqual(mockResponse.data);
-    });
-  });
-
   describe('getMe', () => {
     it('calls GET /auth/me', async () => {
       const mockUser = {
@@ -115,19 +61,6 @@ describe('auth service', () => {
 
       expect(apiClient.apiClient).toHaveBeenCalledWith('/api/v1/auth/logout', {
         method: 'POST',
-      });
-    });
-  });
-
-  describe('changePassword', () => {
-    it('calls POST /auth/change-password', async () => {
-      vi.mocked(apiClient.apiClient).mockResolvedValue({ success: true });
-
-      await authService.changePassword({ old_password: 'old', new_password: 'new12345' });
-
-      expect(apiClient.apiClient).toHaveBeenCalledWith('/api/v1/auth/change-password', {
-        method: 'POST',
-        body: JSON.stringify({ old_password: 'old', new_password: 'new12345' }),
       });
     });
   });

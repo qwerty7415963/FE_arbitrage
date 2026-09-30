@@ -4,6 +4,7 @@ import { useAppStore } from '@/lib/stores/app';
 import { Sidebar } from './sidebar';
 import { Header } from './header';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
+import { ConnectWalletModal } from '@/components/shared/auth/connect-wallet-modal';
 import { useTranslations } from 'next-intl';
 
 interface AppLayoutProps {
@@ -34,6 +35,8 @@ export function AppLayout({ children }: AppLayoutProps) {
         <Header />
         <main className="flex-1 overflow-y-auto p-4 lg:p-6">{children}</main>
       </div>
+
+      <ConnectWalletModal />
     </div>
   );
 }

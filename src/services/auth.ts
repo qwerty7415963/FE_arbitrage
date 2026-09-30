@@ -1,12 +1,6 @@
 import { apiClient, apiClientNoAuth } from '@/infrastructure/api-client';
 import type { ApiResponse } from '@/types/api';
-import type {
-  LoginRequest,
-  RegisterRequest,
-  ChangePasswordRequest,
-  AuthResponse,
-  UserResponse,
-} from '@/types/auth';
+import type { AuthResponse, UserResponse } from '@/types/auth';
 import type {
   WalletNonceRequest,
   WalletVerifyRequest,
@@ -16,24 +10,6 @@ import type {
 } from '@/types/wallet';
 
 const AUTH_BASE = '/api/v1/auth';
-
-export async function login(data: LoginRequest): Promise<AuthResponse> {
-  const res = await apiClientNoAuth<ApiResponse<AuthResponse>>(`${AUTH_BASE}/login`, {
-    method: 'POST',
-    body: JSON.stringify(data),
-  });
-  if (!res.data) throw new Error('No data returned');
-  return res.data;
-}
-
-export async function register(data: RegisterRequest): Promise<AuthResponse> {
-  const res = await apiClientNoAuth<ApiResponse<AuthResponse>>(`${AUTH_BASE}/register`, {
-    method: 'POST',
-    body: JSON.stringify(data),
-  });
-  if (!res.data) throw new Error('No data returned');
-  return res.data;
-}
 
 export async function getMe(): Promise<UserResponse> {
   const res = await apiClient<ApiResponse<UserResponse>>(`${AUTH_BASE}/me`);
@@ -53,13 +29,6 @@ export async function refresh(refreshToken: string): Promise<AuthResponse> {
 export async function logout(): Promise<void> {
   await apiClient<ApiResponse<null>>(`${AUTH_BASE}/logout`, {
     method: 'POST',
-  });
-}
-
-export async function changePassword(data: ChangePasswordRequest): Promise<void> {
-  await apiClient<ApiResponse<null>>(`${AUTH_BASE}/change-password`, {
-    method: 'POST',
-    body: JSON.stringify(data),
   });
 }
 
