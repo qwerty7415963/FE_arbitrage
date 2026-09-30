@@ -8,21 +8,14 @@
 
 ### 1. Email Auth
 
-| #   | Case                    | Endpoint                     | Input                            | Expected                                    |
-| --- | ----------------------- | ---------------------------- | -------------------------------- | ------------------------------------------- |
-| M1  | Register thành công     | `POST /auth/register`        | `{ email, password }` hợp lệ     | 201 `{ access_token, refresh_token, user }` |
-| M2  | Register trùng email    | `POST /auth/register`        | Email đã tồn tại                 | 409 `{ code: "CONFLICT" }`                  |
-| M3  | Register password ngắn  | `POST /auth/register`        | `password < 8 chars`             | 400 `{ code: "VALIDATION_ERROR" }`          |
-| M4  | Login thành công        | `POST /auth/login`           | `{ email, password }` đúng       | 200 `{ access_token, refresh_token, user }` |
-| M5  | Login sai password      | `POST /auth/login`           | `{ email, wrong_password }`      | 401 `{ code: "UNAUTHORIZED" }`              |
-| M6  | Get profile OK          | `GET /auth/me`               | `Authorization: Bearer <valid>`  | 200 `{ id, email, role, status }`           |
-| M7  | Get profile no token    | `GET /auth/me`               | Không có header                  | 401                                         |
-| M8  | Get profile expired     | `GET /auth/me`               | Expired JWT                      | 401                                         |
-| M9  | Refresh token OK        | `POST /auth/refresh`         | `{ refresh_token }` hợp lệ       | 200 `{ access_token, refresh_token }`       |
-| M10 | Refresh token expired   | `POST /auth/refresh`         | `{ refresh_token }` invalid      | 401                                         |
-| M11 | Logout                  | `POST /auth/logout`          | `Authorization: Bearer <valid>`  | 204                                         |
-| M12 | Change password OK      | `POST /auth/change-password` | `{ old_password, new_password }` | 204                                         |
-| M13 | Change password sai old | `POST /auth/change-password` | `{ wrong_old, new_password }`    | 400                                         |
+| #   | Case                  | Endpoint             | Input                           | Expected                              |
+| --- | --------------------- | -------------------- | ------------------------------- | ------------------------------------- |
+| M6  | Get profile OK        | `GET /auth/me`       | `Authorization: Bearer <valid>` | 200 `{ id, email, role, status }`     |
+| M7  | Get profile no token  | `GET /auth/me`       | Không có header                 | 401                                   |
+| M8  | Get profile expired   | `GET /auth/me`       | Expired JWT                     | 401                                   |
+| M9  | Refresh token OK      | `POST /auth/refresh` | `{ refresh_token }` hợp lệ      | 200 `{ access_token, refresh_token }` |
+| M10 | Refresh token expired | `POST /auth/refresh` | `{ refresh_token }` invalid     | 401                                   |
+| M11 | Logout                | `POST /auth/logout`  | `Authorization: Bearer <valid>` | 204                                   |
 
 ### 2. Wallet Auth
 
@@ -46,14 +39,18 @@
 | Module                          | File                                            | Tests   | Status |
 | ------------------------------- | ----------------------------------------------- | ------- | ------ |
 | `lib/token.ts`                  | `tests/unit/lib/token.test.ts`                  | 14      | ✅     |
-| `stores/auth.ts` (merged)       | `tests/unit/stores/auth.test.ts`                | 16      | ✅     |
-| `services/auth.ts`              | `tests/unit/services/auth.test.ts`              | 12      | ✅     |
+| `stores/auth.ts` (wallet-only)  | `tests/unit/stores/auth.test.ts`                | 11      | ✅     |
+| `services/auth.ts`              | `tests/unit/services/auth.test.ts`              | 8       | ✅     |
 | `services/funding-arbitrage.ts` | `tests/unit/services/funding-arbitrage.test.ts` | 13      | ✅     |
-| `services/groups.ts`            | `tests/unit/services/groups.test.ts`            | 10      | ✅     |
-| `components/group-form.tsx`     | `tests/unit/components/group-form.test.tsx`     | 5       | ✅     |
+| `services/groups.ts`            | `tests/unit/services/groups.test.ts`            | 18      | ✅     |
+| `services/wallets.ts`           | `tests/unit/services/wallets.test.ts`           | 7       | ✅     |
+| `lib/saved-scans.ts`            | `tests/unit/lib/saved-scans.test.ts`            | 13      | ✅     |
+| `components/group-form.tsx`     | `tests/unit/components/group-form.test.tsx`     | 6       | ✅     |
+| `components/saved-scans.tsx`    | `tests/unit/components/saved-scans.test.tsx`    | 7       | ✅     |
+| `components/wallet-table.tsx`   | `tests/unit/components/wallet-table.test.tsx`   | 12      | ✅     |
 | `components/funding-table.tsx`  | `tests/unit/components/funding-table.test.tsx`  | 26      | ✅     |
 | `infrastructure/api-client.ts`  | `tests/unit/infrastructure/api-client.test.ts`  | 14      | ✅     |
-| **Total**                       |                                                 | **108** |        |
+| **Total**                       |                                                 | **149** |        |
 
 ### Test Details
 
@@ -75,22 +72,18 @@
 | hasTokens false with one      | Only access or refresh              |
 | hasTokens true with both      | Both tokens exist                   |
 
-#### `services/auth.ts` (12 tests)
+#### `services/auth.ts` (9 tests)
 
-| Test                          | Description                |
-| ----------------------------- | -------------------------- |
-| login calls correct endpoint  | POST /auth/login           |
-| login throws on no data       | Empty response             |
-| register calls endpoint       | POST /auth/register        |
-| getMe calls endpoint          | GET /auth/me               |
-| refresh calls endpoint        | POST /auth/refresh         |
-| logout calls endpoint         | POST /auth/logout          |
-| changePassword calls endpoint | POST /auth/change-password |
-| getNonce calls endpoint       | POST /auth/wallet/nonce    |
-| verifyWallet calls endpoint   | POST /auth/wallet/verify   |
-| getWallets calls endpoint     | GET /auth/wallet/list      |
-| linkWallet calls endpoint     | POST /auth/wallet/link     |
-| unlinkWallet calls endpoint   | DELETE /auth/wallet/{id}   |
+| Test                        | Description              |
+| --------------------------- | ------------------------ |
+| getMe calls endpoint        | GET /auth/me             |
+| refresh calls endpoint      | POST /auth/refresh       |
+| logout calls endpoint       | POST /auth/logout        |
+| getNonce calls endpoint     | POST /auth/wallet/nonce  |
+| verifyWallet calls endpoint | POST /auth/wallet/verify |
+| getWallets calls endpoint   | GET /auth/wallet/list    |
+| linkWallet calls endpoint   | POST /auth/wallet/link   |
+| unlinkWallet calls endpoint | DELETE /auth/wallet/{id} |
 
 #### `services/funding-arbitrage.ts` (12 tests)
 
@@ -109,7 +102,7 @@
 | getFundingArbitrage no data        | Empty response                |
 | getFundingArbitrage API error      | Network error                 |
 
-#### `services/groups.ts` (10 tests)
+#### `services/groups.ts` (18 tests)
 
 | Test                          | Description                |
 | ----------------------------- | -------------------------- |
@@ -123,8 +116,16 @@
 | updateGroup throws on no data | Empty response             |
 | deleteGroup calls DELETE      | DELETE /api/v1/groups/{id} |
 | propagates API errors         | Network error              |
+| buildParams defaults          | include+page+limit         |
+| buildParams csv               | dex/chain/market join      |
+| buildParams single-op         | metric_operator param      |
+| buildParams between           | lo,hi string               |
+| buildParams skips incomplete  | Missing value/min/max      |
+| buildParams search/sort       | Trim + enums               |
+| listGroupWallets calls API    | GET groups/{id}/wallets    |
+| listGroupWallets no data      | Empty response             |
 
-#### `components/group-form.tsx` (5 tests)
+#### `components/group-form.tsx` (6 tests)
 
 | Test                          | Description               |
 | ----------------------------- | ------------------------- |
@@ -133,25 +134,79 @@
 | blocks blank name             | No API call + error shown |
 | shows duplicate on GROUP-002  | 409 GROUP-002 mapped      |
 | success calls onSuccess+close | Create flow               |
+| unauthenticated opens modal   | requireAuth, no API call  |
 
-#### `stores/auth.ts` (merged - 16 tests)
+#### `services/wallets.ts` (7 tests)
 
-| Test                          | Description               |
-| ----------------------------- | ------------------------- |
-| login sets tokens and user    | Success flow              |
-| login sets isLoading          | Loading state             |
-| login throws on error         | Error handling            |
-| register sets tokens and user | Success flow              |
-| register throws on error      | Error handling            |
-| logout clears tokens          | Calls API + wagmi + clear |
-| logout clears on API error    | Clears even if API fails  |
-| fetchUser sets user           | Gets user from API        |
-| fetchUser clears on error     | Clears tokens on 401      |
-| initialize loads user         | Token exists              |
-| initialize clears on error    | getMe fails               |
-| initialize no token           | Skips loading             |
-| formatAddress formats         | Shows 0x1234...5678       |
-| formatAddress empty           | Returns empty string      |
+| Test                      | Description            |
+| ------------------------- | ---------------------- |
+| buildParams start/end     | Scanner date range     |
+| buildParams defaults      | page/limit, no include |
+| scanWallets calls API     | GET /api/v1/wallets    |
+| scanWallets no data       | Empty response         |
+| addWallets POSTs ids      | Returns added/skipped  |
+| addWallets no data        | Empty response         |
+| removeWallets DELETEs ids | Membership removal     |
+
+#### `lib/saved-scans.ts` (13 tests)
+
+| Test                        | Description                     |
+| --------------------------- | ------------------------------- |
+| sanitize strips page/limit  | Keeps filters, drops pagination |
+| list empty when unset       | Nothing stored                  |
+| list corrupted JSON         | Returns [] without crash        |
+| list non-array payload      | Returns []                      |
+| list filters malformed      | Only valid entries survive      |
+| save trims + sanitizes      | Name trimmed, query stripped    |
+| save rejects blank name     | null, nothing persisted         |
+| save upserts by name        | Single entry, latest query      |
+| save caps at MAX            | Oldest dropped beyond 20        |
+| remove by id                | Entry deleted from storage      |
+| remove unknown id           | List unchanged                  |
+| snapshot reflects save      | getSavedScansSnapshot updates   |
+| subscriber notified + unsub | emitChange then silence         |
+
+#### `components/saved-scans.tsx` (7 tests)
+
+| Test                      | Description                       |
+| ------------------------- | --------------------------------- |
+| renders save + local note | Empty storage                     |
+| renders stored searches   | Pre-seeded localStorage           |
+| rejects blank name        | Error shown, nothing saved        |
+| saves current query       | Chip + storage entry              |
+| applies saved query       | Filters kept, page/limit stripped |
+| removes a saved search    | Chip + storage entry gone         |
+| disables while scanning   | Buttons disabled                  |
+
+#### `components/wallet-table.tsx` (12 tests: 6 table + 6 validateFilters)
+
+| Test                        | Description            |
+| --------------------------- | ---------------------- |
+| empty state                 | No wallets / undefined |
+| truncated address row       | 0x1234...5678          |
+| null metrics N/A            | Not 0                  |
+| null dex/tag N/A            | Placeholders           |
+| PnL color pos/neg           | primary / destructive  |
+| validateFilters valid       | Single + between       |
+| validateFilters missing/NaN | invalidNumber          |
+| validateFilters min>max     | minGreaterThanMax      |
+| validateFilters incomplete  | between missing max    |
+
+#### `stores/auth.ts` (11 tests)
+
+| Test                         | Description               |
+| ---------------------------- | ------------------------- |
+| requireAuth true when authed | No modal opened           |
+| requireAuth opens modal      | Returns false + modal     |
+| logout clears tokens         | Calls API + wagmi + clear |
+| logout clears on API error   | Clears even if API fails  |
+| fetchUser sets user          | Gets user from API        |
+| fetchUser clears on error    | Clears tokens on 401      |
+| initialize loads user        | Token exists              |
+| initialize clears on error   | getMe fails               |
+| initialize no token          | Skips loading             |
+| formatAddress formats        | Shows 0x1234...5678       |
+| formatAddress empty          | Returns empty string      |
 
 #### `infrastructure/api-client.ts` (14 tests)
 
@@ -178,32 +233,29 @@
 
 ### Test Matrix
 
-| #   | File                        | Flow                   | Steps                             | Expected                        |
-| --- | --------------------------- | ---------------------- | --------------------------------- | ------------------------------- |
-| E1  | `login.spec.ts`             | Login form renders     | Navigate /login                   | Email + password fields visible |
-| E2  | `login.spec.ts`             | Shows register link    | Navigate /login                   | "Sign up" link visible          |
-| E3  | `login.spec.ts`             | Login error            | Fill wrong creds → submit         | Error message shown             |
-| E4  | `login.spec.ts`             | Login success          | Fill form → submit                | Redirect /funding-arbitrage     |
-| E5  | `register.spec.ts`          | Register form renders  | Navigate /register                | All fields visible              |
-| E6  | `register.spec.ts`          | Shows login link       | Navigate /register                | "Sign in" link visible          |
-| E7  | `register.spec.ts`          | Email exists error     | Fill existing email → submit      | Error shown                     |
-| E8  | `register.spec.ts`          | Password mismatch      | Fill mismatched → submit          | "Passwords do not match"        |
-| E9  | `register.spec.ts`          | Register success       | Fill form → submit                | Redirect /funding-arbitrage     |
-| E10 | `logout.spec.ts`            | Logout flow            | Login → logout → confirm          | Redirect /login                 |
-| E11 | `logout.spec.ts`            | Clears state           | After logout → /dashboard         | Redirect /login                 |
-| E12 | `protected.spec.ts`         | Auth guard no token    | Navigate /dashboard               | Redirect /login                 |
-| E13 | `protected.spec.ts`         | Auth guard valid token | Login → /dashboard                | Dashboard renders               |
-| E14 | `protected.spec.ts`         | Token expiry           | Remove tokens → /dashboard        | Redirect /login                 |
-| E15 | `funding-arbitrage.spec.ts` | Page renders           | Navigate /funding-arbitrage       | Title + buttons visible         |
-| E16 | `funding-arbitrage.spec.ts` | Venue selector opens   | Click "Select venues"             | Dropdown with venues shown      |
-| E17 | `funding-arbitrage.spec.ts` | Select All works       | Click "Select All"                | "10 venues" displayed           |
-| E18 | `funding-arbitrage.spec.ts` | Clear works            | Click "Clear"                     | "Select venues" displayed       |
-| E19 | `funding-arbitrage.spec.ts` | Search disabled        | No venues selected                | Search button disabled          |
-| E20 | `groups.spec.ts`            | Groups page renders    | Login → /groups                   | Title + Create visible          |
-| E21 | `groups.spec.ts`            | Empty state            | Mock [] → /groups                 | "No groups yet"                 |
-| E22 | `groups.spec.ts`            | Create validates blank | Open dialog → blank name → submit | "Group name is required"        |
-| E23 | `groups.spec.ts`            | Lists groups           | Mock [Main] → /groups             | Name + count visible            |
-| E24 | `groups.spec.ts`            | Error retry            | Mock 500 → /groups                | Retry button visible            |
+| #   | File                        | Flow                   | Steps                             | Expected                       |
+| --- | --------------------------- | ---------------------- | --------------------------------- | ------------------------------ |
+| E1  | `protected.spec.ts`         | Settings open access   | Navigate /settings                | Settings renders, no redirect  |
+| E2  | `protected.spec.ts`         | Groups open access     | Navigate /groups                  | Groups renders, no redirect    |
+| E3  | `protected.spec.ts`         | Mutation needs wallet  | Create group unauthenticated      | Connect wallet modal opens     |
+| E4  | `funding-arbitrage.spec.ts` | Page renders           | Navigate /funding-arbitrage       | Title + buttons visible        |
+| E5  | `funding-arbitrage.spec.ts` | Venue selector opens   | Click "Select venues"             | Dropdown with venues shown     |
+| E6  | `funding-arbitrage.spec.ts` | Select All works       | Click "Select All"                | "10 venues" displayed          |
+| E7  | `funding-arbitrage.spec.ts` | Clear works            | Click "Clear"                     | "Select venues" displayed      |
+| E8  | `funding-arbitrage.spec.ts` | Search disabled        | No venues selected                | Search button disabled         |
+| E9  | `groups.spec.ts`            | Groups page renders    | Navigate /groups                  | Title + Create visible         |
+| E10 | `groups.spec.ts`            | Empty state            | Mock [] → /groups                 | "No groups yet"                |
+| E11 | `groups.spec.ts`            | Create validates blank | Open dialog → blank name → submit | "Group name is required"       |
+| E12 | `groups.spec.ts`            | Lists groups           | Mock [Main] → /groups             | Name + count visible           |
+| E13 | `groups.spec.ts`            | Error retry            | Mock 500 → /groups                | Retry button visible           |
+| E14 | `groups.spec.ts`            | Detail lists members   | Mock group+wallets → /groups/g1   | Address row, no Scan needed    |
+| E15 | `groups.spec.ts`            | Null metrics N/A       | Mock null metrics                 | N/A shown                      |
+| E16 | `groups.spec.ts`            | Links to scanner       | Open /groups/g1                   | Link /wallets?group=g1         |
+| E17 | `groups.spec.ts`            | Scanner scans to list  | Mock /wallets → Scan              | Address row visible            |
+| E18 | `groups.spec.ts`            | Invalid between blocks | min>max → Scan                    | Error, no API call             |
+| E19 | `groups.spec.ts`            | Add modal from scan    | Tick + Add to group               | Modal + group list             |
+| E20 | `groups.spec.ts`            | Scan without wallet    | No auth → Scan                    | Rows visible, no connect modal |
+| E21 | `groups.spec.ts`            | Save search persists   | Save "My 7D" → reload → apply     | Chip kept, timeframe 7D, rows  |
 
 ---
 
@@ -246,6 +298,7 @@ pnpm test:e2e:debug    # Debug mode
 
 ## VI. Changelog
 
-| Date       | Change             | Author |
-| ---------- | ------------------ | ------ |
-| 2026-09-19 | Initial test cases | —      |
+| Date       | Change                                            | Author |
+| ---------- | ------------------------------------------------- | ------ |
+| 2026-09-19 | Initial test cases                                | —      |
+| 2026-09-29 | Saved searches (localStorage) + public scan tests | —      |
