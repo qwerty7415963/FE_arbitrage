@@ -3,6 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 import { GroupForm } from '@/app/[locale]/(protected)/groups/_components/group-form';
 import * as groupsService from '@/services/groups';
+import { useAuthStore } from '@/lib/stores/auth';
 import { ApiError } from '@/infrastructure/api-client';
 import enMessages from '@/messages/en.json';
 
@@ -32,6 +33,7 @@ function renderForm(props: Partial<React.ComponentProps<typeof GroupForm>> = {})
 describe('GroupForm', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
+    useAuthStore.setState({ isAuthenticated: true, connectModalOpen: false });
   });
 
   it('renders create title when no group', () => {
@@ -77,5 +79,16 @@ describe('GroupForm', () => {
       expect(onSuccess).toHaveBeenCalledWith(mockGroup);
     });
     expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it('opens connect modal instead of submitting when unauthenticated', async () => {
+    useAuthStore.setState({ isAuthenticated: false, connectModalOpen: false });
+    renderForm();
+    fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Main' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Create' }));
+    await waitFor(() => {
+      expect(useAuthStore.getState().connectModalOpen).toBe(true);
+    });
+    expect(groupsService.createGroup).not.toHaveBeenCalled();
   });
 });

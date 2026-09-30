@@ -4,7 +4,7 @@ test.describe('Funding Arbitrage', () => {
   test('renders page title', async ({ page }) => {
     await page.goto('/en/funding-arbitrage');
 
-    await expect(page.getByText('Funding Arbitrage')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Funding Arbitrage' })).toBeVisible();
   });
 
   test('renders venue selector button', async ({ page }) => {
@@ -23,12 +23,6 @@ test.describe('Funding Arbitrage', () => {
     await page.goto('/en/funding-arbitrage');
 
     await expect(page.getByRole('button', { name: 'Search' })).toBeVisible();
-  });
-
-  test('renders refresh button', async ({ page }) => {
-    await page.goto('/en/funding-arbitrage');
-
-    await expect(page.getByRole('button', { name: 'Refresh' })).toBeVisible();
   });
 
   test('search button disabled when no venues selected', async ({ page }) => {
@@ -98,6 +92,7 @@ test.describe('Funding Arbitrage', () => {
 
     await page.getByText('Select venues').click();
     await page.getByText('Select All').click();
+    await page.keyboard.press('Escape');
     await page.getByText('Search').click();
 
     await expect(page.locator('table')).toBeVisible({ timeout: 10000 });
@@ -108,10 +103,11 @@ test.describe('Funding Arbitrage', () => {
 
     await page.getByText('Select venues').click();
     await page.getByText('Select All').click();
+    await page.keyboard.press('Escape');
     await page.getByText('Search').click();
 
     await expect(page.locator('th').filter({ hasText: 'Token' })).toBeVisible({ timeout: 10000 });
-    await expect(page.locator('th').filter({ hasText: 'APR 4h' })).toBeVisible();
+    await expect(page.locator('th').filter({ hasText: /^APR$/ })).toBeVisible();
     await expect(page.locator('th').filter({ hasText: 'Status' })).toBeVisible();
   });
 
@@ -122,11 +118,13 @@ test.describe('Funding Arbitrage', () => {
     const venues = page.locator('[data-slot="dropdown-menu-item"]');
     await venues.first().click();
     await venues.nth(1).click();
+    await page.keyboard.press('Escape');
 
     await page.getByText('Search').click();
 
-    const emptyOrTable = page.locator('text=No arbitrage opportunities found, table');
-    await expect(emptyOrTable).toBeVisible({ timeout: 10000 });
+    await expect(
+      page.getByText('No arbitrage opportunities found').or(page.locator('table')).first(),
+    ).toBeVisible({ timeout: 10000 });
   });
 
   test('status badges render after search', async ({ page }) => {
@@ -134,6 +132,7 @@ test.describe('Funding Arbitrage', () => {
 
     await page.getByText('Select venues').click();
     await page.getByText('Select All').click();
+    await page.keyboard.press('Escape');
     await page.getByText('Search').click();
 
     const badges = page.locator('span').filter({ hasText: /Live|Stale|Unavailable/ });

@@ -1,43 +1,89 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
-import { useRouter } from '@/i18n/navigation';
+import { use, useCallback, useEffect, useState } from 'react';
+import { Link, useRouter } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ApiError } from '@/infrastructure/api-client';
-import { getGroup } from '@/services/groups';
+import { getGroup, listGroupWallets } from '@/services/groups';
+import { removeWalletsFromGroup } from '@/services/wallets';
+import { useAuthStore } from '@/lib/stores/auth';
+import { ConnectWalletButton } from '@/components/shared/auth/connect-wallet-button';
 import type { Group } from '@/types/wallet-group';
-import { PencilIcon, Trash2Icon } from 'lucide-react';
+import type { GroupWallet, Wallet } from '@/types/wallet-scan';
+import { PencilIcon, RadarIcon, Trash2Icon } from 'lucide-react';
 import { GroupForm } from '../_components/group-form';
 import { DeleteGroupDialog } from '../_components/delete-group-dialog';
+import { WalletTable } from '@/components/shared/wallets/wallet-table';
+import { Pagination } from '@/app/[locale]/(public)/funding-arbitrage/pagination';
 
-export default function GroupDetailPage({ params }: { params: { groupId: string } }) {
+const PAGE_SIZE = 10;
+
+export default function GroupDetailPage({ params }: { params: Promise<{ groupId: string }> }) {
+  const { groupId } = use(params);
   const t = useTranslations('groups');
   const router = useRouter();
   const [group, setGroup] = useState<Group | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [isLoadingGroup, setIsLoadingGroup] = useState(true);
+  const [groupError, setGroupError] = useState<string | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
+  const [search, setSearch] = useState('');
+  const [wallets, setWallets] = useState<GroupWallet[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [isLoadingWallets, setIsLoadingWallets] = useState(true);
+  const [walletsError, setWalletsError] = useState<string | null>(null);
+  const [needsAuth, setNeedsAuth] = useState(false);
+
   const fetchGroup = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
+    setIsLoadingGroup(true);
+    setGroupError(null);
     try {
-      setGroup(await getGroup(params.groupId));
+      setGroup(await getGroup(groupId));
     } catch (err) {
       if (err instanceof ApiError) {
-        if (err.status === 403) setError(t('forbidden'));
-        else if (err.status === 404) setError(t('notFound'));
-        else setError(err.message);
+        if (err.status === 403) setGroupError(t('forbidden'));
+        else if (err.status === 404) setGroupError(t('notFound'));
+        else setGroupError(err.message);
       } else {
-        setError(err instanceof Error ? err.message : t('unknownError'));
+        setGroupError(err instanceof Error ? err.message : t('unknownError'));
       }
     } finally {
-      setIsLoading(false);
+      setIsLoadingGroup(false);
     }
-  }, [params.groupId, t]);
+  }, [groupId, t]);
+
+  const fetchWallets = useCallback(
+    async (page: number, searchText: string) => {
+      setIsLoadingWallets(true);
+      setWalletsError(null);
+      setNeedsAuth(false);
+      try {
+        const result = await listGroupWallets(groupId, {
+          search: searchText || undefined,
+          page,
+          limit: PAGE_SIZE,
+        });
+        setWallets(result.data ?? []);
+        setTotalPages(result.meta.total_pages ?? 1);
+        setCurrentPage(result.meta.page ?? page);
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 401) {
+          setNeedsAuth(true);
+          setWalletsError(t('authRequired'));
+        } else {
+          setWalletsError(err instanceof Error ? err.message : t('unknownError'));
+        }
+      } finally {
+        setIsLoadingWallets(false);
+      }
+    },
+    [groupId, t],
+  );
 
   useEffect(() => {
     async function load() {
@@ -46,7 +92,25 @@ export default function GroupDetailPage({ params }: { params: { groupId: string 
     load();
   }, [fetchGroup]);
 
-  if (isLoading) {
+  useEffect(() => {
+    async function load() {
+      await fetchWallets(1, '');
+    }
+    load();
+  }, [fetchWallets]);
+
+  async function handleRemove(wallet: Wallet | GroupWallet) {
+    if (!useAuthStore.getState().requireAuth()) return;
+    try {
+      await removeWalletsFromGroup(groupId, [wallet.id]);
+      fetchWallets(currentPage, search);
+      fetchGroup();
+    } catch (err) {
+      setWalletsError(err instanceof Error ? err.message : t('unknownError'));
+    }
+  }
+
+  if (isLoadingGroup) {
     return (
       <div className="flex flex-1 flex-col gap-4 p-4 lg:p-6">
         <Skeleton className="h-8 w-48" />
@@ -55,11 +119,11 @@ export default function GroupDetailPage({ params }: { params: { groupId: string 
     );
   }
 
-  if (error || !group) {
+  if (groupError || !group) {
     return (
       <div className="flex flex-1 flex-col gap-4 p-4 lg:p-6">
         <div className="bg-destructive/10 text-destructive rounded-md p-3 text-sm">
-          {error ?? t('notFound')}{' '}
+          {groupError ?? t('notFound')}{' '}
           <Button variant="link" size="sm" onClick={fetchGroup}>
             {t('retry')}
           </Button>
@@ -92,9 +156,65 @@ export default function GroupDetailPage({ params }: { params: { groupId: string 
         </div>
       </div>
 
-      <div className="text-muted-foreground rounded-lg border p-4 text-sm">
-        {t('walletsComingSoon')}
+      <div className="flex flex-wrap items-end gap-2">
+        <Input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') fetchWallets(1, search);
+          }}
+          placeholder={t('searchPlaceholder')}
+          className="w-56"
+        />
+        <Button size="sm" onClick={() => fetchWallets(1, search)} disabled={isLoadingWallets}>
+          {t('search')}
+        </Button>
+        <Link href={`/wallets?group=${group.id}`}>
+          <Button variant="outline" size="sm">
+            <RadarIcon className="mr-2 h-4 w-4" />
+            {t('scanMore')}
+          </Button>
+        </Link>
       </div>
+
+      {walletsError && (
+        <div className="bg-destructive/10 text-destructive rounded-md p-3 text-sm">
+          {walletsError}{' '}
+          {needsAuth ? (
+            <span className="ml-2 inline-flex">
+              <ConnectWalletButton />
+            </span>
+          ) : (
+            <Button variant="link" size="sm" onClick={() => fetchWallets(currentPage, search)}>
+              {t('retry')}
+            </Button>
+          )}
+        </div>
+      )}
+
+      {isLoadingWallets && wallets.length === 0 ? (
+        <div className="space-y-2">
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-12 w-full" />
+        </div>
+      ) : (
+        <>
+          <WalletTable
+            wallets={wallets}
+            renderActions={(w) => (
+              <Button variant="ghost" size="icon-xs" onClick={() => handleRemove(w)}>
+                <Trash2Icon className="h-4 w-4" />
+              </Button>
+            )}
+          />
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={(p) => fetchWallets(p, search)}
+            disabled={isLoadingWallets}
+          />
+        </>
+      )}
 
       <GroupForm open={formOpen} onOpenChange={setFormOpen} group={group} onSuccess={setGroup} />
       <DeleteGroupDialog

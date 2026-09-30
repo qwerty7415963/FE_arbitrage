@@ -1,6 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import * as apiClient from '@/infrastructure/api-client';
-import { listGroups, getGroup, createGroup, updateGroup, deleteGroup } from '@/services/groups';
+import {
+  listGroups,
+  getGroup,
+  createGroup,
+  updateGroup,
+  deleteGroup,
+  listGroupWallets,
+  buildGroupWalletParams,
+} from '@/services/groups';
 
 vi.mock('@/infrastructure/api-client', () => ({
   apiClient: vi.fn(),
@@ -89,5 +97,79 @@ describe('groups service', () => {
   it('propagates API errors', async () => {
     vi.mocked(apiClient.apiClient).mockRejectedValue(new Error('Network error'));
     await expect(listGroups()).rejects.toThrow('Network error');
+  });
+
+  describe('buildGroupWalletParams', () => {
+    it('always includes metrics + page + limit defaults', () => {
+      const params = buildGroupWalletParams({});
+      expect(params.get('include')).toBe('metrics');
+      expect(params.get('page')).toBe('1');
+      expect(params.get('limit')).toBe('50');
+    });
+
+    it('joins dex/chain/market as csv', () => {
+      const params = buildGroupWalletParams({ dex: ['hyperliquid', 'extended'], chain: ['evm'] });
+      expect(params.get('dex')).toBe('hyperliquid,extended');
+      expect(params.get('chain')).toBe('evm');
+      expect(params.get('market')).toBeNull();
+    });
+
+    it('maps single-operator filters to metric_operator params', () => {
+      const params = buildGroupWalletParams({
+        filters: [{ metric: 'pnl', operator: 'gt', value: 100 }],
+      });
+      expect(params.get('pnl_gt')).toBe('100');
+    });
+
+    it('maps between filters to lo,hi string', () => {
+      const params = buildGroupWalletParams({
+        filters: [{ metric: 'roi', operator: 'between', min: 1, max: 5 }],
+      });
+      expect(params.get('roi_between')).toBe('1,5');
+    });
+
+    it('skips incomplete filters', () => {
+      const params = buildGroupWalletParams({
+        filters: [
+          { metric: 'pnl', operator: 'gt' },
+          { metric: 'roi', operator: 'between', min: 1 },
+        ],
+      });
+      expect(params.get('pnl_gt')).toBeNull();
+      expect(params.get('roi_between')).toBeNull();
+    });
+
+    it('includes sort/order/timeframe/search', () => {
+      const params = buildGroupWalletParams({
+        search: ' 0xabc ',
+        timeframe: '7D',
+        sort: 'roi',
+        order: 'asc',
+      });
+      expect(params.get('search')).toBe('0xabc');
+      expect(params.get('timeframe')).toBe('7D');
+      expect(params.get('sort')).toBe('roi');
+      expect(params.get('order')).toBe('asc');
+    });
+  });
+
+  describe('listGroupWallets', () => {
+    it('calls endpoint with query string and returns data + meta', async () => {
+      const wallets = [{ id: 'w1' }];
+      const meta = { page: 1, total_pages: 3 };
+      vi.mocked(apiClient.apiClient).mockResolvedValue({ success: true, data: wallets, meta });
+      const result = await listGroupWallets('g1', { sort: 'pnl' });
+      const url = vi.mocked(apiClient.apiClient).mock.calls[0][0] as string;
+      expect(url).toContain('/api/v1/groups/g1/wallets');
+      expect(url).toContain('include=metrics');
+      expect(url).toContain('sort=pnl');
+      expect(result.data).toEqual(wallets);
+      expect(result.meta).toEqual(meta);
+    });
+
+    it('throws when no data returned', async () => {
+      vi.mocked(apiClient.apiClient).mockResolvedValue({ success: true });
+      await expect(listGroupWallets('g1')).rejects.toThrow('No data returned');
+    });
   });
 });

@@ -12,6 +12,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { deleteGroup } from '@/services/groups';
+import { useAuthStore } from '@/lib/stores/auth';
 import type { Group } from '@/types/wallet-group';
 import { Loader2Icon } from 'lucide-react';
 
@@ -34,6 +35,7 @@ export function DeleteGroupDialog({
 
   async function handleDelete() {
     if (!group) return;
+    if (!useAuthStore.getState().requireAuth()) return;
     setError(null);
     setIsDeleting(true);
     try {

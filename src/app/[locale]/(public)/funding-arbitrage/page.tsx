@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Loader2Icon } from 'lucide-react';
-import { useTranslations } from 'next-intl';
 import { useAuthStore } from '@/lib/stores/auth';
 import { getVenues, getFundingArbitrage } from '@/services/funding-arbitrage';
 import type { Venue, ArbitragePair, SortOption } from '@/types/funding-arbitrage';
@@ -22,7 +21,6 @@ const PAGE_SIZE = 10;
 
 export default function FundingArbitragePage() {
   const { address, isAuthenticated } = useAuthStore();
-  const t = useTranslations('common');
 
   const [venues, setVenues] = useState<Venue[]>([]);
   const [selectedVenueIds, setSelectedVenueIds] = useState<string[]>([]);

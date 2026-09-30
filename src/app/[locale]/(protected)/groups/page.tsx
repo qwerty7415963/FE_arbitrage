@@ -9,6 +9,7 @@ import { ApiError } from '@/infrastructure/api-client';
 import { listGroups } from '@/services/groups';
 import type { Group } from '@/types/wallet-group';
 import { Loader2Icon, PencilIcon, Trash2Icon } from 'lucide-react';
+import { ConnectWalletButton } from '@/components/shared/auth/connect-wallet-button';
 import { GroupForm } from './_components/group-form';
 import { DeleteGroupDialog } from './_components/delete-group-dialog';
 
@@ -19,6 +20,7 @@ export default function GroupsPage() {
   const [groups, setGroups] = useState<Group[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [needsAuth, setNeedsAuth] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Group | null>(null);
   const [deleting, setDeleting] = useState<Group | null>(null);
@@ -27,10 +29,14 @@ export default function GroupsPage() {
   const fetchGroups = useCallback(async () => {
     setIsLoading(true);
     setError(null);
+    setNeedsAuth(false);
     try {
       setGroups(await listGroups());
     } catch (err) {
-      if (err instanceof ApiError && err.status === 403) {
+      if (err instanceof ApiError && err.status === 401) {
+        setNeedsAuth(true);
+        setError(t('authRequired'));
+      } else if (err instanceof ApiError && err.status === 403) {
         setError(t('forbidden'));
       } else {
         setError(err instanceof Error ? err.message : t('unknownError'));
@@ -75,9 +81,15 @@ export default function GroupsPage() {
       {error && (
         <div className="bg-destructive/10 text-destructive rounded-md p-3 text-sm">
           {error}{' '}
-          <Button variant="link" size="sm" onClick={fetchGroups}>
-            {t('retry')}
-          </Button>
+          {needsAuth ? (
+            <span className="ml-2 inline-flex">
+              <ConnectWalletButton />
+            </span>
+          ) : (
+            <Button variant="link" size="sm" onClick={fetchGroups}>
+              {t('retry')}
+            </Button>
+          )}
         </div>
       )}
 
