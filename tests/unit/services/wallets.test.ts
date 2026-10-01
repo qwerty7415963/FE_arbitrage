@@ -5,6 +5,7 @@ import {
   addWalletsToGroup,
   removeWalletsFromGroup,
   buildWalletQueryParams,
+  fetchWalletFilterConfig,
 } from '@/services/wallets';
 
 vi.mock('@/infrastructure/api-client', () => ({
@@ -51,6 +52,45 @@ describe('wallets service', () => {
     it('throws when no data returned', async () => {
       vi.mocked(apiClient.apiClient).mockResolvedValue({ success: true });
       await expect(scanWallets()).rejects.toThrow('No data returned');
+    });
+  });
+
+  describe('fetchWalletFilterConfig', () => {
+    const config = {
+      dexes: ['hyperliquid', 'extended'],
+      chains: [],
+      markets: [],
+      timeframes: ['24H', '7D', '30D', '90D', 'ALL'],
+      default_timeframe: '30D',
+      sort_fields: ['pnl', 'roi'],
+      default_sort: 'pnl',
+      operators: ['gt', 'gte', 'lt', 'lte', 'between'],
+      metrics: [{ key: 'pnl', min: null, max: null, ops: ['gt', 'lte'], sortable: true }],
+    };
+
+    it('calls GET /api/v1/wallets/filter-config and returns data', async () => {
+      vi.mocked(apiClient.apiClient).mockResolvedValue({ success: true, data: config });
+      const result = await fetchWalletFilterConfig();
+      expect(apiClient.apiClient).toHaveBeenCalledWith('/api/v1/wallets/filter-config');
+      expect(result.dexes).toEqual(['hyperliquid', 'extended']);
+      expect(result.metrics).toEqual(config.metrics);
+    });
+
+    it('filters out test venue dexes', async () => {
+      vi.mocked(apiClient.apiClient).mockResolvedValue({
+        success: true,
+        data: {
+          ...config,
+          dexes: ['hyperliquid', 'test-venue-071791e1', 'e2e-dex', 'binance'],
+        },
+      });
+      const result = await fetchWalletFilterConfig();
+      expect(result.dexes).toEqual(['hyperliquid', 'binance']);
+    });
+
+    it('throws when data shape is invalid', async () => {
+      vi.mocked(apiClient.apiClient).mockResolvedValue({ success: true, data: [{ id: 'w1' }] });
+      await expect(fetchWalletFilterConfig()).rejects.toThrow('Invalid filter config');
     });
   });
 

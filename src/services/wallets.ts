@@ -6,9 +6,12 @@ import type {
   GroupWalletMeta,
   GroupWalletQuery,
   Wallet,
+  WalletFilterConfig,
 } from '@/types/wallet-scan';
 
 const WALLETS_BASE = '/api/v1/wallets';
+
+const TEST_DEX_PATTERN = /^(test-venue-|e2e-)/;
 
 export function buildWalletQueryParams(query: GroupWalletQuery): URLSearchParams {
   const params = new URLSearchParams();
@@ -46,6 +49,24 @@ export async function scanWallets(
   const res = await apiClient<ApiResponse<Wallet[]>>(`${WALLETS_BASE}?${params.toString()}`);
   if (!res.data) throw new Error('No data returned');
   return { data: res.data, meta: res.meta || {} };
+}
+
+export async function fetchWalletFilterConfig(): Promise<WalletFilterConfig> {
+  const res = await apiClient<ApiResponse<WalletFilterConfig>>(`${WALLETS_BASE}/filter-config`);
+  const data = res.data;
+  if (
+    !data ||
+    !Array.isArray(data.dexes) ||
+    !Array.isArray(data.timeframes) ||
+    !Array.isArray(data.sort_fields) ||
+    !Array.isArray(data.metrics)
+  ) {
+    throw new Error('Invalid filter config');
+  }
+  return {
+    ...data,
+    dexes: data.dexes.filter((d) => typeof d === 'string' && !TEST_DEX_PATTERN.test(d)),
+  };
 }
 
 export async function addWalletsToGroup(

@@ -117,3 +117,49 @@ export const METRIC_KEYS: MetricKey[] = [
 ];
 
 export const METRIC_OPERATORS: MetricOperator[] = ['gt', 'gte', 'lt', 'lte', 'between'];
+
+export const FALLBACK_DEXES: string[] = [
+  'binance',
+  'extended',
+  'gmx',
+  'hyperliquid',
+  'variational',
+];
+
+export interface MetricConfig {
+  key: MetricKey;
+  min: number | null;
+  max: number | null;
+  ops: MetricOperator[];
+  sortable: boolean;
+}
+
+export interface WalletFilterConfig {
+  dexes: string[];
+  chains: string[];
+  markets: string[];
+  timeframes: Timeframe[];
+  default_timeframe: Timeframe;
+  sort_fields: WalletSortField[];
+  default_sort: WalletSortField;
+  operators: MetricOperator[];
+  metrics: MetricConfig[];
+}
+
+export const FALLBACK_FILTER_CONFIG: WalletFilterConfig = {
+  dexes: FALLBACK_DEXES,
+  chains: [],
+  markets: [],
+  timeframes: TIMEFRAMES,
+  default_timeframe: '30D',
+  sort_fields: SORT_FIELDS,
+  default_sort: 'pnl',
+  operators: METRIC_OPERATORS,
+  metrics: METRIC_KEYS.map((key) => ({
+    key,
+    min: null,
+    max: null,
+    ops: METRIC_OPERATORS,
+    sortable: (SORT_FIELDS as string[]).includes(key),
+  })),
+};

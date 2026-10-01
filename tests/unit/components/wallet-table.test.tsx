@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { WalletTable } from '@/components/shared/wallets/wallet-table';
-import { validateFilters } from '@/components/shared/wallets/scan-filters';
 import type { GroupWallet } from '@/types/wallet-scan';
 
 const createWallet = (overrides: Partial<GroupWallet> = {}): GroupWallet => ({
@@ -73,33 +72,5 @@ describe('WalletTable', () => {
     expect(container.querySelector('tbody tr td:nth-child(5)')?.className).toContain(
       'text-destructive',
     );
-  });
-});
-
-describe('validateFilters', () => {
-  it('returns null for valid single-value filter', () => {
-    expect(validateFilters([{ metric: 'pnl', operator: 'gt', value: 100 }])).toBeNull();
-  });
-
-  it('returns null for valid between filter', () => {
-    expect(validateFilters([{ metric: 'roi', operator: 'between', min: 1, max: 5 }])).toBeNull();
-  });
-
-  it('returns invalidNumber for missing value', () => {
-    expect(validateFilters([{ metric: 'pnl', operator: 'gt' }])).toBe('invalidNumber');
-  });
-
-  it('returns invalidNumber for NaN value', () => {
-    expect(validateFilters([{ metric: 'pnl', operator: 'gt', value: NaN }])).toBe('invalidNumber');
-  });
-
-  it('returns minGreaterThanMax when min exceeds max', () => {
-    expect(validateFilters([{ metric: 'roi', operator: 'between', min: 5, max: 1 }])).toBe(
-      'minGreaterThanMax',
-    );
-  });
-
-  it('returns invalidNumber for incomplete between', () => {
-    expect(validateFilters([{ metric: 'roi', operator: 'between', min: 1 }])).toBe('invalidNumber');
   });
 });

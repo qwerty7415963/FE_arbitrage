@@ -59,6 +59,14 @@ export async function apiClient<T>(endpoint: string, options: RequestOptions = {
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeout);
+  const userSignal = fetchOptions.signal;
+  if (userSignal) {
+    if (userSignal.aborted) {
+      controller.abort();
+    } else {
+      userSignal.addEventListener('abort', () => controller.abort(), { once: true });
+    }
+  }
 
   try {
     const response = await fetch(`${config.NEXT_PUBLIC_API_BASE_URL}${endpoint}`, {
@@ -120,6 +128,9 @@ export async function apiClient<T>(endpoint: string, options: RequestOptions = {
     }
 
     if (error instanceof DOMException && error.name === 'AbortError') {
+      if (userSignal?.aborted) {
+        throw new ApiError(499, 'ABORTED', 'Request aborted', requestId);
+      }
       throw new ApiError(408, 'TIMEOUT', 'Request timed out', requestId);
     }
 

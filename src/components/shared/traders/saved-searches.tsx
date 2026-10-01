@@ -5,29 +5,29 @@ import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
-  getSavedScansSnapshot,
-  getServerSavedScansSnapshot,
-  removeSavedScan,
-  saveSavedScan,
-  sanitizeScanQuery,
-  subscribeSavedScans,
-} from '@/lib/saved-scans';
-import type { GroupWalletQuery } from '@/types/wallet-scan';
+  getSavedSearchesSnapshot,
+  getServerSavedSearchesSnapshot,
+  removeSavedSearch,
+  saveSavedSearch,
+  sanitizeTraderSearchQuery,
+  subscribeSavedSearches,
+} from '@/lib/trader-saved-searches';
+import type { TraderSearchQuery } from '@/types/trader';
 import { BookmarkIcon, XIcon } from 'lucide-react';
 
-export interface SavedScansProps {
-  query: GroupWalletQuery;
-  onApply: (query: GroupWalletQuery) => void;
+export interface SavedSearchesProps {
+  query: TraderSearchQuery;
+  onApply: (query: TraderSearchQuery) => void;
   disabled?: boolean;
 }
 
-export function SavedScans({ query, onApply, disabled }: SavedScansProps) {
-  const t = useTranslations('wallets');
+export function SavedSearches({ query, onApply, disabled }: SavedSearchesProps) {
+  const t = useTranslations('traders');
   const tc = useTranslations('common');
-  const scans = useSyncExternalStore(
-    subscribeSavedScans,
-    getSavedScansSnapshot,
-    getServerSavedScansSnapshot,
+  const searches = useSyncExternalStore(
+    subscribeSavedSearches,
+    getSavedSearchesSnapshot,
+    getServerSavedSearchesSnapshot,
   );
   const [isNaming, setIsNaming] = useState(false);
   const [name, setName] = useState('');
@@ -46,7 +46,7 @@ export function SavedScans({ query, onApply, disabled }: SavedScansProps) {
   }
 
   function handleSave() {
-    const entry = saveSavedScan(name, query);
+    const entry = saveSavedSearch(name, query);
     if (!entry) {
       setNameError(t('saveSearchNameRequired'));
       return;
@@ -55,7 +55,7 @@ export function SavedScans({ query, onApply, disabled }: SavedScansProps) {
   }
 
   function handleRemove(id: string) {
-    removeSavedScan(id);
+    removeSavedSearch(id);
   }
 
   return (
@@ -65,26 +65,26 @@ export function SavedScans({ query, onApply, disabled }: SavedScansProps) {
     >
       <span className="text-muted-foreground text-xs">{t('savedSearches')}</span>
 
-      {scans.map((scan) => (
+      {searches.map((search) => (
         <span
-          key={scan.id}
+          key={search.id}
           className="bg-muted/40 inline-flex items-center gap-1 rounded-full border py-1 pr-1 pl-3 text-sm"
         >
           <button
             type="button"
             className="max-w-40 truncate hover:underline"
             disabled={disabled}
-            title={scan.name}
-            onClick={() => onApply(sanitizeScanQuery(scan.query))}
+            title={search.name}
+            onClick={() => onApply(sanitizeTraderSearchQuery(search.query))}
           >
-            {scan.name}
+            {search.name}
           </button>
           <button
             type="button"
             className="text-muted-foreground hover:text-foreground rounded-full p-0.5"
             disabled={disabled}
-            aria-label={t('deleteSavedSearch', { name: scan.name })}
-            onClick={() => handleRemove(scan.id)}
+            aria-label={t('deleteSavedSearch', { name: search.name })}
+            onClick={() => handleRemove(search.id)}
           >
             <XIcon className="h-3.5 w-3.5" />
           </button>

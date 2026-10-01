@@ -1,30 +1,32 @@
-import type { GroupWalletQuery } from '@/types/wallet-scan';
+import type { TraderSearchQuery } from '@/types/trader';
 
-export interface SavedScan {
+export interface SavedTraderSearch {
   id: string;
   name: string;
-  query: GroupWalletQuery;
+  query: TraderSearchQuery;
   createdAt: string;
 }
 
-const STORAGE_KEY = 'perp.saved-scans.v1';
+const STORAGE_KEY = 'trader.saved-searches.v1';
 
-export const MAX_SAVED_SCANS = 20;
+export const MAX_SAVED_SEARCHES = 20;
 
 const QUERY_KEYS = [
-  'search',
-  'dex',
-  'chain',
-  'market',
-  'timeframe',
-  'start',
-  'end',
-  'filters',
-  'lastActiveWithin',
-  'lastActiveFrom',
-  'lastActiveTo',
-  'sort',
-  'order',
+  'venue',
+  'period',
+  'roi',
+  'winRate',
+  'pnl',
+  'volume',
+  'tradeCount',
+  'profitFactor',
+  'longWinRate',
+  'shortWinRate',
+  'lastTradeAfter',
+  'groupId',
+  'sortBy',
+  'sortDirection',
+  'limit',
 ] as const;
 
 function pick<T extends object, K extends keyof T>(obj: T, keys: readonly K[]): Pick<T, K> {
@@ -37,7 +39,7 @@ function pick<T extends object, K extends keyof T>(obj: T, keys: readonly K[]): 
   return out;
 }
 
-export function sanitizeScanQuery(query: GroupWalletQuery): GroupWalletQuery {
+export function sanitizeTraderSearchQuery(query: TraderSearchQuery): TraderSearchQuery {
   return pick(query, QUERY_KEYS);
 }
 
@@ -45,18 +47,18 @@ function createId(): string {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
     return crypto.randomUUID();
   }
-  return `ss-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+  return `ts-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
-function isSavedScan(value: unknown): value is SavedScan {
+function isSavedSearch(value: unknown): value is SavedTraderSearch {
   if (!value || typeof value !== 'object') return false;
-  const scan = value as Partial<SavedScan>;
+  const search = value as Partial<SavedTraderSearch>;
   return (
-    typeof scan.id === 'string' &&
-    typeof scan.name === 'string' &&
-    scan.name.trim().length > 0 &&
-    !!scan.query &&
-    typeof scan.query === 'object'
+    typeof search.id === 'string' &&
+    typeof search.name === 'string' &&
+    search.name.trim().length > 0 &&
+    !!search.query &&
+    typeof search.query === 'object'
   );
 }
 
@@ -69,12 +71,12 @@ function readRaw(): string | null {
   }
 }
 
-function parseScans(raw: string | null): SavedScan[] {
+function parseSearches(raw: string | null): SavedTraderSearch[] {
   if (!raw) return [];
   try {
     const parsed: unknown = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
-    return parsed.filter(isSavedScan);
+    return parsed.filter(isSavedSearch);
   } catch {
     return [];
   }
@@ -84,15 +86,15 @@ type Listener = () => void;
 
 const listeners = new Set<Listener>();
 let cachedRaw: string | null | undefined;
-let cachedScans: SavedScan[] = [];
+let cachedSearches: SavedTraderSearch[] = [];
 
-function refreshCache(): SavedScan[] {
+function refreshCache(): SavedTraderSearch[] {
   const raw = readRaw();
   if (raw !== cachedRaw) {
     cachedRaw = raw;
-    cachedScans = parseScans(raw);
+    cachedSearches = parseSearches(raw);
   }
-  return cachedScans;
+  return cachedSearches;
 }
 
 function emitChange(): void {
@@ -108,16 +110,16 @@ function onStorage(event: StorageEvent): void {
   }
 }
 
-export function getSavedScansSnapshot(): SavedScan[] {
+export function getSavedSearchesSnapshot(): SavedTraderSearch[] {
   if (typeof window === 'undefined') return [];
   return refreshCache();
 }
 
-export function getServerSavedScansSnapshot(): SavedScan[] {
+export function getServerSavedSearchesSnapshot(): SavedTraderSearch[] {
   return [];
 }
 
-export function subscribeSavedScans(listener: Listener): () => void {
+export function subscribeSavedSearches(listener: Listener): () => void {
   if (typeof window === 'undefined') return () => {};
   if (listeners.size === 0) {
     window.addEventListener('storage', onStorage);
@@ -131,8 +133,8 @@ export function subscribeSavedScans(listener: Listener): () => void {
   };
 }
 
-function persist(scans: SavedScan[]): SavedScan[] {
-  const trimmed = scans.slice(0, MAX_SAVED_SCANS);
+function persist(searches: SavedTraderSearch[]): SavedTraderSearch[] {
+  const trimmed = searches.slice(0, MAX_SAVED_SEARCHES);
   if (typeof window !== 'undefined') {
     try {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(trimmed));
@@ -144,26 +146,26 @@ function persist(scans: SavedScan[]): SavedScan[] {
   return trimmed;
 }
 
-export function listSavedScans(): SavedScan[] {
-  return parseScans(readRaw());
+export function listSavedSearches(): SavedTraderSearch[] {
+  return parseSearches(readRaw());
 }
 
-export function saveSavedScan(name: string, query: GroupWalletQuery): SavedScan | null {
+export function saveSavedSearch(name: string, query: TraderSearchQuery): SavedTraderSearch | null {
   const trimmedName = name.trim();
   if (!trimmedName) return null;
 
-  const entry: SavedScan = {
+  const entry: SavedTraderSearch = {
     id: createId(),
     name: trimmedName,
-    query: sanitizeScanQuery(query),
+    query: sanitizeTraderSearchQuery(query),
     createdAt: new Date().toISOString(),
   };
 
-  const rest = listSavedScans().filter((scan) => scan.name !== trimmedName);
+  const rest = listSavedSearches().filter((search) => search.name !== trimmedName);
   persist([entry, ...rest]);
   return entry;
 }
 
-export function removeSavedScan(id: string): SavedScan[] {
-  return persist(listSavedScans().filter((scan) => scan.id !== id));
+export function removeSavedSearch(id: string): SavedTraderSearch[] {
+  return persist(listSavedSearches().filter((search) => search.id !== id));
 }
