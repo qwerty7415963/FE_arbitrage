@@ -77,6 +77,7 @@ describe('TradersScannerPage', () => {
     vi.restoreAllMocks();
     nav.params = new URLSearchParams();
     window.localStorage.clear();
+    window.sessionStorage.clear();
     vi.mocked(listTraderGroups).mockResolvedValue([]);
     vi.mocked(searchTraders).mockResolvedValue({ data: [ROW_A], meta: {} });
   });
@@ -106,10 +107,24 @@ describe('TradersScannerPage', () => {
     );
     expect(await screen.findByText('0xaaaa...aaaa')).toBeInTheDocument();
     expect(screen.getByText('1 results')).toBeInTheDocument();
-    expect(nav.replace).toHaveBeenCalledWith(
-      expect.stringContaining('roi_min=30'),
-      expect.anything(),
+    expect(nav.push).toHaveBeenCalledWith(expect.stringContaining('roi_min=30'), expect.anything());
+    expect(window.sessionStorage.getItem('trader.last-scan.v1')).toContain('roi_min=30');
+  });
+
+  it('shows a skeleton on first search', async () => {
+    const user = userEvent.setup();
+    let resolveSearch: ((v: { data: PeriodMetrics[]; meta: object }) => void) | null = null;
+    vi.mocked(searchTraders).mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveSearch = resolve;
+        }),
     );
+    renderPage();
+    await user.click(screen.getByRole('button', { name: 'Search' }));
+    expect(await screen.findByRole('status', { name: 'Loading...' })).toBeInTheDocument();
+    resolveSearch!({ data: [ROW_A], meta: {} });
+    expect(await screen.findByText('0xaaaa...aaaa')).toBeInTheDocument();
   });
 
   it('blocks invalid filters without calling the API', async () => {
@@ -229,7 +244,7 @@ describe('TradersScannerPage', () => {
     await user.click(screen.getByRole('button', { name: 'Reset' }));
     expect(screen.getByLabelText('ROI Min')).toHaveValue('');
     expect(screen.queryByText('0xaaaa...aaaa')).not.toBeInTheDocument();
-    expect(nav.replace).toHaveBeenLastCalledWith('/en/wallets', expect.anything());
+    expect(nav.push).toHaveBeenLastCalledWith('/en/wallets', expect.anything());
   });
 
   it('restores state from URL and auto-searches', async () => {

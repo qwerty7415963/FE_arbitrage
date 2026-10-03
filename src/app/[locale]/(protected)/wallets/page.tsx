@@ -7,7 +7,11 @@ import { Button } from '@/components/ui/button';
 import { ApiError } from '@/infrastructure/api-client';
 import { listTraderGroups, searchTraders } from '@/services/traders';
 import { validateTraderSearch } from '@/lib/trader-validation';
-import { buildTraderSearchParams, parseTraderSearchParams } from '@/lib/trader-url-state';
+import {
+  buildTraderSearchParams,
+  parseTraderSearchParams,
+  saveLastScan,
+} from '@/lib/trader-url-state';
 import {
   defaultDraft,
   draftFromQuery,
@@ -107,7 +111,10 @@ function ScannerContent() {
     (query: TraderSearchQuery) => {
       const serialized = buildTraderSearchParams(query).toString();
       lastWrittenUrlRef.current = serialized;
-      router.replace(`/${locale}/wallets${serialized ? `?${serialized}` : ''}`, { scroll: false });
+      saveLastScan(serialized);
+      // Push (not replace) so each search is a history entry and
+      // browser back/forward restores prior searches (FE-025).
+      router.push(`/${locale}/wallets${serialized ? `?${serialized}` : ''}`, { scroll: false });
     },
     [router, locale],
   );

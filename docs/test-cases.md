@@ -36,30 +36,29 @@
 
 ### Coverage Summary
 
-| Module                                      | File                                                       | Tests   | Status |
-| ------------------------------------------- | ---------------------------------------------------------- | ------- | ------ |
-| `lib/token.ts`                              | `tests/unit/lib/token.test.ts`                             | 14      | ✅     |
-| `stores/auth.ts` (wallet-only)              | `tests/unit/stores/auth.test.ts`                           | 11      | ✅     |
-| `services/auth.ts`                          | `tests/unit/services/auth.test.ts`                         | 8       | ✅     |
-| `services/funding-arbitrage.ts`             | `tests/unit/services/funding-arbitrage.test.ts`            | 13      | ✅     |
-| `services/groups.ts`                        | `tests/unit/services/groups.test.ts`                       | 18      | ✅     |
-| `services/wallets.ts`                       | `tests/unit/services/wallets.test.ts`                      | 10      | ✅     |
-| `lib/trader-saved-searches.ts`              | `tests/unit/lib/trader-saved-searches.test.ts`             | 4       | ✅     |
-| `components/group-form.tsx`                 | `tests/unit/components/group-form.test.tsx`                | 6       | ✅     |
-| `components/trader-filters.tsx`             | `tests/unit/components/trader-filters.test.tsx`            | 6       | ✅     |
-| `components/trader-table.tsx`               | `tests/unit/components/trader-table.test.tsx`              | 5       | ✅     |
-| `components/add-to-trader-group-modal.tsx`  | `tests/unit/components/add-to-trader-group-modal.test.tsx` | 4       | ✅     |
-| `components/saved-searches.tsx`             | `tests/unit/components/saved-searches.test.tsx`            | 2       | ✅     |
-| `app/[locale]/(protected)/wallets/page.tsx` | `tests/unit/components/trader-scanner-page.test.tsx`       | 12      | ✅     |
-| `services/traders.ts`                       | `tests/unit/services/traders.test.ts`                      | 7       | ✅     |
-| `lib/trader-validation.ts`                  | `tests/unit/lib/trader-validation.test.ts`                 | 11      | ✅     |
-| `lib/trader-format.ts`                      | `tests/unit/lib/trader-format.test.ts`                     | 12      | ✅     |
-| `lib/trader-url-state.ts`                   | `tests/unit/lib/trader-url-state.test.ts`                  | 4       | ✅     |
-| `lib/trader-filter-draft.ts`                | `tests/unit/lib/trader-filter-draft.test.ts`               | 3       | ✅     |
-| `components/wallet-table.tsx`               | `tests/unit/components/wallet-table.test.tsx`              | 6       | ✅     |
-| `components/funding-table.tsx`              | `tests/unit/components/funding-table.test.tsx`             | 26      | ✅     |
-| `infrastructure/api-client.ts`              | `tests/unit/infrastructure/api-client.test.ts`             | 14      | ✅     |
-| **Total**                                   |                                                            | **196** |        |
+| Module                                               | File                                                       | Tests   | Status |
+| ---------------------------------------------------- | ---------------------------------------------------------- | ------- | ------ |
+| `lib/token.ts`                                       | `tests/unit/lib/token.test.ts`                             | 14      | ✅     |
+| `stores/auth.ts` (wallet-only)                       | `tests/unit/stores/auth.test.ts`                           | 11      | ✅     |
+| `services/auth.ts`                                   | `tests/unit/services/auth.test.ts`                         | 8       | ✅     |
+| `services/funding-arbitrage.ts`                      | `tests/unit/services/funding-arbitrage.test.ts`            | 13      | ✅     |
+| `components/group-form.tsx`                          | `tests/unit/components/group-form.test.tsx`                | 7       | ✅     |
+| `components/group-detail-page.tsx`                   | `tests/unit/components/group-detail-page.test.tsx`         | 8       | ✅     |
+| `components/trader-filters.tsx`                      | `tests/unit/components/trader-filters.test.tsx`            | 6       | ✅     |
+| `components/trader-table.tsx`                        | `tests/unit/components/trader-table.test.tsx`              | 7       | ✅     |
+| `components/add-to-trader-group-modal.tsx`           | `tests/unit/components/add-to-trader-group-modal.test.tsx` | 6       | ✅     |
+| `components/saved-searches.tsx`                      | `tests/unit/components/saved-searches.test.tsx`            | 2       | ✅     |
+| `app/[locale]/(protected)/wallets/page.tsx`          | `tests/unit/components/trader-scanner-page.test.tsx`       | 13      | ✅     |
+| `app/[locale]/(protected)/wallets/[wallet]/page.tsx` | `tests/unit/components/trader-detail-page.test.tsx`        | 7       | ✅     |
+| `components/copy-address.tsx`                        | `tests/unit/components/copy-address.test.tsx`              | 2       | ✅     |
+| `services/traders.ts`                                | `tests/unit/services/traders.test.ts`                      | 10      | ✅     |
+| `lib/trader-validation.ts`                           | `tests/unit/lib/trader-validation.test.ts`                 | 11      | ✅     |
+| `lib/trader-format.ts`                               | `tests/unit/lib/trader-format.test.ts`                     | 12      | ✅     |
+| `lib/trader-url-state.ts`                            | `tests/unit/lib/trader-url-state.test.ts`                  | 6       | ✅     |
+| `lib/trader-filter-draft.ts`                         | `tests/unit/lib/trader-filter-draft.test.ts`               | 3       | ✅     |
+| `components/funding-table.tsx`                       | `tests/unit/components/funding-table.test.tsx`             | 26      | ✅     |
+| `infrastructure/api-client.ts`                       | `tests/unit/infrastructure/api-client.test.ts`             | 14      | ✅     |
+| **Total**                                            |                                                            | **192** |        |
 
 ### Test Details
 
@@ -111,54 +110,46 @@
 | getFundingArbitrage no data        | Empty response                |
 | getFundingArbitrage API error      | Network error                 |
 
-#### `services/groups.ts` (18 tests)
+#### `services/traders.ts` (10 tests)
 
-| Test                          | Description                |
-| ----------------------------- | -------------------------- |
-| listGroups calls endpoint     | GET /api/v1/groups         |
-| listGroups throws on no data  | Empty response             |
-| getGroup calls endpoint       | GET /api/v1/groups/{id}    |
-| createGroup trims + POSTs     | Name trimmed               |
-| createGroup rejects blank     | No API call                |
-| createGroup throws on no data | Empty response             |
-| updateGroup PATCHes trimmed   | Name trimmed               |
-| updateGroup throws on no data | Empty response             |
-| deleteGroup calls DELETE      | DELETE /api/v1/groups/{id} |
-| propagates API errors         | Network error              |
-| buildParams defaults          | include+page+limit         |
-| buildParams csv               | dex/chain/market join      |
-| buildParams single-op         | metric_operator param      |
-| buildParams between           | lo,hi string               |
-| buildParams skips incomplete  | Missing value/min/max      |
-| buildParams search/sort       | Trim + enums               |
-| listGroupWallets calls API    | GET groups/{id}/wallets    |
-| listGroupWallets no data      | Empty response             |
+| Test                          | Description                 |
+| ----------------------------- | --------------------------- |
+| buildSearchRequest maps       | snake_case, omits undefined |
+| buildSearchRequest empty      | Empty body                  |
+| searchTraders POSTs defaults  | venue/period/sort/limit     |
+| searchTraders no data         | Empty response              |
+| fetchTraderDetail GETs        | venue + period params       |
+| getTraderGroup GETs           | GET trader-groups/{id}      |
+| getTraderGroup missing        | Empty response              |
+| groups CRUD + members         | added/removed counts        |
+| members period param          | default 30D + custom        |
+| patch members reports updated | PATCH → {updated}           |
 
-#### `components/group-form.tsx` (6 tests)
+#### `components/group-form.tsx` (7 tests)
 
 | Test                          | Description               |
 | ----------------------------- | ------------------------- |
-| renders create title          | No group prop             |
+| renders create title          | No group prop, no color   |
 | renders edit title            | Group prop                |
 | blocks blank name             | No API call + error shown |
+| blocks >100 char name         | nameTooLong, no API call  |
 | shows duplicate on GROUP-002  | 409 GROUP-002 mapped      |
 | success calls onSuccess+close | Create flow               |
 | unauthenticated opens modal   | requireAuth, no API call  |
 
-#### `services/wallets.ts` (10 tests)
+#### `components/group-detail-page.tsx` (8 tests)
 
-| Test                          | Description                   |
-| ----------------------------- | ----------------------------- |
-| buildParams start/end         | Scanner date range            |
-| buildParams defaults          | page/limit, no include        |
-| scanWallets calls API         | GET /api/v1/wallets           |
-| scanWallets no data           | Empty response                |
-| addWallets POSTs ids          | Returns added/skipped         |
-| addWallets no data            | Empty response                |
-| removeWallets DELETEs ids     | Membership removal            |
-| fetchFilterConfig calls API   | GET filter-config             |
-| fetchFilterConfig test venues | test-venue/e2e-* filtered out |
-| fetchFilterConfig bad shape   | Throws Invalid filter config  |
+| Test                   | Description              |
+| ---------------------- | ------------------------ |
+| header + member rows   | Name, address, alias     |
+| member metrics columns | ROI/PnL + dashes         |
+| local search filters   | Client-side filter       |
+| remove refetches       | venue+address, reload    |
+| group 404 → not found  | Error + retry            |
+| empty members          | No members yet           |
+| inline edit saves      | PATCH trimmed alias+note |
+| Escape cancels edit    | No API call              |
+| edit error surfaces    | Inline banner            |
 
 #### `lib/trader-saved-searches.ts` (4 tests)
 
@@ -176,16 +167,6 @@
 | saves and applies  | Chip + onApply sanitized |
 | requires + deletes | Error shown, chip gone   |
 
-#### `components/wallet-table.tsx` (6 tests)
-
-| Test                  | Description            |
-| --------------------- | ---------------------- |
-| empty state           | No wallets / undefined |
-| truncated address row | 0x1234...5678          |
-| null metrics N/A      | Not 0                  |
-| null dex/tag N/A      | Placeholders           |
-| PnL color pos/neg     | primary / destructive  |
-
 #### `components/trader-filters.tsx` (6 tests)
 
 | Test                          | Description                          |
@@ -197,7 +178,7 @@
 | onReset                       | Reset button callback                |
 | forwards draft changes        | onDraftChange per keystroke          |
 
-#### `components/trader-table.tsx` (5 tests)
+#### `components/trader-table.tsx` (7 tests)
 
 | Test                      | Description                          |
 | ------------------------- | ------------------------------------ |
@@ -206,8 +187,10 @@
 | copy address + feedback   | Clipboard + Copied                   |
 | header sort + aria-sort   | onSortChange, PF header not sortable |
 | select + view/add actions | Checkbox, View detail, Add to group  |
+| negative PnL sign         | Minus prefix, not color only         |
+| malicious name inert      | No executable HTML (FE-040)          |
 
-#### `components/add-to-trader-group-modal.tsx` (4 tests)
+#### `components/add-to-trader-group-modal.tsx` (5 tests)
 
 | Test                       | Description                       |
 | -------------------------- | --------------------------------- |
@@ -215,23 +198,44 @@
 | requires selected group    | selectGroupRequired, no API call  |
 | pasted addresses validated | EVM check, lowercase normalize    |
 | long name + duplicate      | nameTooLong, GROUP-002 → inline   |
+| zero additions reported    | Added 0 for duplicates (FE-016)   |
 
-#### `wallets/page.tsx` trader scanner (12 tests)
+#### `wallets/page.tsx` trader scanner (13 tests)
 
-| Test                            | Description                          |
-| ------------------------------- | ------------------------------------ |
-| default without auto-search     | Controls visible, no API call        |
-| search merges defaults + URL    | venue/period/sort/limit, replace URL |
-| invalid min/max blocks          | Error, no API call                   |
-| non-numeric blocks              | invalidNumber, no API call           |
-| header toggles sort             | desc → asc, cursor reset             |
-| load more appends deduped       | cursor sent, count grows             |
-| error + retry recovers          | Banner, Retry → rows                 |
-| keep rows + Updating            | Old rows visible during search       |
-| latest overlapping wins         | Stale response ignored               |
-| reset clears all                | Form, rows, bare URL                 |
-| URL restore + auto-search       | Params → form + search               |
-| group hint when unauthenticated | groupAuthHint shown                  |
+| Test                            | Description                        |
+| ------------------------------- | ---------------------------------- |
+| default without auto-search     | Controls visible, no API call      |
+| search merges defaults + URL    | venue/period/sort/limit, push URL  |
+| skeleton on first search        | role=status while loading (FE-010) |
+| invalid min/max blocks          | Error, no API call                 |
+| non-numeric blocks              | invalidNumber, no API call         |
+| header toggles sort             | desc → asc, cursor reset           |
+| load more appends deduped       | cursor sent, count grows           |
+| error + retry recovers          | Banner, Retry → rows               |
+| keep rows + Updating            | Old rows visible during search     |
+| latest overlapping wins         | Stale response ignored (FE-034)    |
+| reset clears all                | Form, rows, bare URL               |
+| URL restore + auto-search       | Params → form + search             |
+| group hint when unauthenticated | groupAuthHint shown                |
+
+#### `wallets/[wallet]/page.tsx` trader detail (7 tests)
+
+| Test                       | Description                           |
+| -------------------------- | ------------------------------------- |
+| invalid address blocks     | No API call                           |
+| header, cards, long/short  | ROI/PnL/WR, counts, Ready status      |
+| period switch refetches    | period=7D in request                  |
+| null metrics → dashes      | Cards degrade gracefully              |
+| 404 → retry recovers       | Trader not found → rows               |
+| back + add-to-group modal  | router.back, dialog opens             |
+| stored scan → push on back | Deterministic return, no history race |
+
+#### `components/copy-address.tsx` (2 tests)
+
+| Test                        | Description           |
+| --------------------------- | --------------------- |
+| copies full address         | Clipboard + Copied    |
+| full display when short off | Detail header variant |
 
 #### `lib/trader-filter-draft.ts` (3 tests)
 
@@ -297,22 +301,115 @@
 | E11 | `groups.spec.ts`            | Create validates blank  | Open dialog → blank name → submit | "Group name is required"      |
 | E12 | `groups.spec.ts`            | Lists groups            | Mock [Main] → /groups             | Name + count visible          |
 | E13 | `groups.spec.ts`            | Error retry             | Mock 500 → /groups                | Retry button visible          |
-| E14 | `groups.spec.ts`            | Detail lists members    | Mock group+wallets → /groups/g1   | Address row, no Scan needed   |
-| E15 | `groups.spec.ts`            | Null metrics N/A        | Mock null metrics                 | N/A shown                     |
-| E16 | `groups.spec.ts`            | Links to scanner        | Open /groups/g1                   | Link /wallets?group=g1        |
-| E17 | `groups.spec.ts`            | Scanner scans to list   | POST search mock → Search         | Name + address, body defaults |
-| E18 | `groups.spec.ts`            | Invalid min/max blocks  | ROI 5/1 → Search                  | Error, no API call            |
-| E19 | `groups.spec.ts`            | Non-numeric blocks      | PnL "abc" → Search                | invalidNumber, no API call    |
-| E20 | `groups.spec.ts`            | Header sorts desc→asc   | Click PnL header                  | 2nd body sort_direction asc   |
-| E21 | `groups.spec.ts`            | Cursor appends deduped  | Load more with cursor c1          | 2 rows, A shown once          |
-| E22 | `groups.spec.ts`            | Empty + reset filters   | Mock [] → Search → Reset          | No traders, form cleared      |
-| E23 | `groups.spec.ts`            | Error + retry recovers  | 500 → Retry                       | Rows after retry              |
-| E24 | `groups.spec.ts`            | Group needs auth        | Group + 401 search                | Auth message shown            |
-| E25 | `groups.spec.ts`            | Add modal from scan     | Tick + Add to group (1)           | Modal → Added 1               |
-| E26 | `groups.spec.ts`            | Scan without wallet     | No auth → Search                  | Rows + group hint, no modal   |
-| E27 | `groups.spec.ts`            | Save search persists    | Save "My 7D" → reload → apply     | Chip kept, period 7D, rows    |
-| E28 | `groups.spec.ts`            | URL restores on refresh | ?period=7D&roi_min=30             | Form + auto search            |
-| E29 | `groups.spec.ts`            | Venue/period in body    | Period 7D → Search                | venue + period in POST body   |
+| E14 | `groups.spec.ts`            | Detail lists members    | Mock group+members → /groups/g1   | Address row, no Scan needed   |
+| E15 | `groups.spec.ts`            | Member name + alias     | Mock member with alias            | Display name + alias shown    |
+| E16 | `groups.spec.ts`            | Empty members           | Mock [] members                   | No members yet                |
+| E17 | `groups.spec.ts`            | Remove member refetch   | DELETE members → {removed:1}      | DELETE sent, list reloads     |
+| E18 | `groups.spec.ts`            | Links to scanner        | Open /groups/g1                   | Link /wallets?group=g1        |
+| E19 | `groups.spec.ts`            | Scanner scans to list   | POST search mock → Search         | Name + address, body defaults |
+| E20 | `groups.spec.ts`            | Invalid min/max blocks  | ROI 5/1 → Search                  | Error, no API call            |
+| E21 | `groups.spec.ts`            | Non-numeric blocks      | PnL "abc" → Search                | invalidNumber, no API call    |
+| E22 | `groups.spec.ts`            | Header sorts desc→asc   | Click PnL header                  | 2nd body sort_direction asc   |
+| E23 | `groups.spec.ts`            | Cursor appends deduped  | Load more with cursor c1          | 2 rows, A shown once          |
+| E24 | `groups.spec.ts`            | Empty + reset filters   | Mock [] → Search → Reset          | No traders, form cleared      |
+| E25 | `groups.spec.ts`            | Error + retry recovers  | 500 → Retry                       | Rows after retry              |
+| E26 | `groups.spec.ts`            | Group needs auth        | Group + 401 search                | Auth message shown            |
+| E27 | `groups.spec.ts`            | Add modal from scan     | Tick + Add to group (1)           | Modal → Added 1               |
+| E28 | `groups.spec.ts`            | Scan without wallet     | No auth → Search                  | Rows + group hint, no modal   |
+| E29 | `groups.spec.ts`            | Save search persists    | Save "My 7D" → reload → apply     | Chip kept, period 7D, rows    |
+| E30 | `groups.spec.ts`            | URL restores on refresh | ?period=7D&roi_min=30             | Form + auto search            |
+| E31 | `groups.spec.ts`            | Venue/period in body    | Period 7D → Search                | venue + period in POST body   |
+| E32 | `groups.spec.ts`            | Detail open + back      | View → detail → Back              | Filters + rows preserved      |
+| E33 | `groups.spec.ts`            | Detail period tabs      | Click 7D on detail                | period=7D refetch             |
+| E34 | `groups.spec.ts`            | Detail 404              | Direct detail URL, 404 mock       | Trader not found              |
+| E35 | `groups.spec.ts`            | Create group dialog     | Fill name+desc → Create           | Row appears in list           |
+| E36 | `groups.spec.ts`            | Edit group name         | Edit → rename → Save              | New name in list              |
+| E37 | `groups.spec.ts`            | Delete with warning     | Delete → confirm text → confirm   | Membership text, row gone     |
+| E38 | `groups.spec.ts`            | Group+ROI combine       | Group + ROI/PnL → Search          | group_id + mins in body       |
+| E39 | `groups.spec.ts`            | Back restores search    | Search A → B → back               | Form A + refetch roi_min      |
+| E40 | `groups.spec.ts`            | Network fail + retry    | Abort → error → Retry             | Filters kept, rows recover    |
+| E41 | `groups.spec.ts`            | Stale rows inspectable  | Stale status mock → Search        | Stale text + data visible     |
+| E42 | `groups.spec.ts`            | Detail inline create    | Add → new group → Add 1           | Added 1                       |
+| E43 | `groups.spec.ts`            | Stale detail            | Stale + partial mock              | Stale + Partial + data        |
+| E44 | `groups.spec.ts`            | Add/remove member flow  | 2 members → remove 1              | Count + table update          |
+
+### Accessibility / Keyboard / Visual / Performance
+
+| ID   | File                    | Coverage                                                                         |
+| ---- | ----------------------- | -------------------------------------------------------------------------------- |
+| A1-6 | `accessibility.spec.ts` | axe wcag2a+aa: scanner (default/results/error), detail, groups+dialog, add modal |
+| K1-4 | `keyboard.spec.ts`      | Tab order, Enter-to-sort, focus trap + Escape, narrow scroll                     |
+| V1-8 | `visual.spec.ts`        | Baselines (main region, frozen clock): scanner ×4, detail, groups, narrow ×2     |
+| P1-3 | `performance.spec.ts`   | 100 rows <15s, slow-search keeps rows, 500-member group pages                    |
+
+---
+
+### Spec FE-001 → FE-040 coverage (Hyperliquid_Trader_Scanner_FE_Spec_v1.1)
+
+| ID     | Scenario                  | Covered by                                           |
+| ------ | ------------------------- | ---------------------------------------------------- |
+| FE-001 | Default scanner state     | unit scanner default + E19                           |
+| FE-002 | ROI filter validation     | unit validation + E20/E21                            |
+| FE-003 | AND filters               | E19 (defaults) + E38 (group+ROI+PnL)                 |
+| FE-004 | Reset filters             | unit reset + E24                                     |
+| FE-005 | Period switch             | E31 (period in body); cursor reset in unit sort test |
+| FE-006 | Server sort               | unit header toggle + E22                             |
+| FE-007 | Cursor pagination         | unit load-more + E23                                 |
+| FE-008 | Empty state               | unit (page) + E24                                    |
+| FE-009 | Scanner error             | unit error + E25                                     |
+| FE-010 | Loading state             | unit skeleton + P2 perf transition                   |
+| FE-011 | Detail navigation         | unit view callback + E32                             |
+| FE-012 | Detail periods            | unit period switch + E33                             |
+| FE-013 | Detail stale data         | unit stale/partial + E43                             |
+| FE-014 | Copy wallet               | unit copy-address + table copy                       |
+| FE-015 | Add to group              | unit modal + E27/E42                                 |
+| FE-016 | Duplicate group member    | unit Added 0                                         |
+| FE-017 | Create group              | unit form success + E35                              |
+| FE-018 | Invalid group name        | unit blank/too-long/duplicate                        |
+| FE-019 | Edit group                | E36                                                  |
+| FE-020 | Delete group confirmation | E37                                                  |
+| FE-021 | Delete group result       | E37 (row gone)                                       |
+| FE-022 | Remove member             | unit detail remove + E17/E44                         |
+| FE-023 | Group scanner filter      | E38                                                  |
+| FE-024 | URL state                 | unit restore + E30                                   |
+| FE-025 | Back/forward              | E39                                                  |
+| FE-026 | Long wallet formatting    | unit shortAddress + copy tests                       |
+| FE-027 | Currency formatting       | unit formatUsd tiers                                 |
+| FE-028 | Null profit factor        | unit dashes + table dashes                           |
+| FE-029 | Responsive table          | K4 narrow (scroll, no page overflow) + V narrow      |
+| FE-030 | Keyboard navigation       | K1 tab order, K2 Enter sort                          |
+| FE-031 | Dialog focus              | K3 trap + Escape; Dialog `modal` default             |
+| FE-032 | Status not color-only     | unit negative sign + status text; table cells        |
+| FE-033 | API auth error            | E26 (401 group) + unit group hint                    |
+| FE-034 | Slow search race          | unit overlapping wins                                |
+| FE-035 | Detail stale cache        | E32 back-flow reloads via URL; unit 404/retry        |
+| FE-036 | Large result rendering    | P1 perf (100 rows)                                   |
+| FE-037 | Group member scale        | P3 perf (500 members, client paging)                 |
+| FE-038 | Network offline           | E40 (abort → banner, filters kept, retry)            |
+| FE-039 | Retry recovery            | unit retry + E25/E40                                 |
+| FE-040 | XSS safety                | unit malicious display_name                          |
+
+### E2E scenarios (§14) coverage
+
+| #   | Scenario                                                       | Covered by                |
+| --- | -------------------------------------------------------------- | ------------------------- |
+| 1   | 30D + ROI≥30% + WR≥60% → Search → detail → back → filters kept | E38-style filters + E32   |
+| 2   | Create group → add two → detail → remove one → count updates   | E35 + E42-style add + E44 |
+| 3   | Detail → add → inline create → membership                      | E42                       |
+| 4   | Group + ROI + PnL → verify AND                                 | E38                       |
+| 5   | Stale row + detail freshness                                   | E41 + E43                 |
+| 6   | Failure → Retry → success, error cleared                       | E25 + E40                 |
+
+### Release exit criteria (§18)
+
+| Criterion                                    | Status                                                     |
+| -------------------------------------------- | ---------------------------------------------------------- |
+| All P0 tests pass                            | ✅ — exit 0 locally; CI runs `pnpm test` + `pnpm test:e2e` |
+| Core E2E flows pass against staging BE       | ✅ mocked + live-BE runs green (funding needs BE up)       |
+| Visual baselines approved (desktop + narrow) | ✅ 8 baselines in `tests/e2e/visual.spec.ts-snapshots/`    |
+| No direct Hyperliquid dependency in browser  | ✅ all calls via `/api` proxy to BE                        |
+| Race-condition test passes                   | ✅ unit overlapping wins + ABORTED signal                  |
+| Auth errors displayed safely                 | ✅ AUTH-003/GROUP-003/AUTH-005 mapped, no dumps            |
 
 ---
 
@@ -331,7 +428,14 @@ pnpm test:watch        # Watch mode
 pnpm test:e2e          # Run all
 pnpm test:e2e:ui       # With Playwright UI
 pnpm test:e2e:debug    # Debug mode
+pnpm playwright test tests/e2e/accessibility.spec.ts  # axe a11y
+pnpm playwright test tests/e2e/visual.spec.ts          # Visual baselines
 ```
+
+Visual baselines live in `tests/e2e/visual.spec.ts-snapshots/` (main-region
+screenshots, frozen clock, `nextjs-portal` hidden). Regenerate deliberately with
+`pnpm playwright test tests/e2e/visual.spec.ts --update-snapshots` after
+reviewing diffs — never blindly.
 
 ### Requirements
 
@@ -363,3 +467,7 @@ pnpm test:e2e:debug    # Debug mode
 | 2026-09-30 | Human-readable labels: metric/sort/operator/order options + i18n frame labels                       | —      |
 | 2026-10-01 | P0 trader foundation: types/service/validation/format/url-state (spec v1.1)                         | —      |
 | 2026-10-01 | P1 scanner redo: filter grid, header sort, cursor pages, URL state, trader-groups modal (spec v1.1) | —      |
+| 2026-10-02 | P2 trader detail: header/tabs/cards/long-short/freshness/add-to-group (spec v1.1)                   | —      |
+| 2026-10-02 | Cutover groups to trader-groups API: list/form/delete/detail, remove dead wallets/groups code       | —      |
+| 2026-10-03 | P4 a11y/visual/perf/keyboard suites + P5 FE-040 gap closure (spec v1.1 exit criteria)               | —      |
+| 2026-10-03 | F1 member metrics columns + F2 inline alias/note edit via PATCH members                             | —      |

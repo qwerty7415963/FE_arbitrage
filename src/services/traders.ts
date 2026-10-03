@@ -100,6 +100,12 @@ export async function listTraderGroups(): Promise<TraderGroup[]> {
   return res.data ?? [];
 }
 
+export async function getTraderGroup(id: string): Promise<TraderGroup> {
+  const res = await apiClient<ApiResponse<TraderGroup>>(`${TRADER_GROUPS_BASE}/${id}`);
+  if (!res.data) throw new Error('No data returned');
+  return res.data;
+}
+
 export async function createTraderGroup(input: {
   name: string;
   description?: string;
@@ -128,9 +134,14 @@ export async function deleteTraderGroup(id: string): Promise<void> {
   await apiClient(`${TRADER_GROUPS_BASE}/${id}`, { method: 'DELETE' });
 }
 
-export async function listGroupMembers(groupId: string): Promise<TraderMember[]> {
+export async function listGroupMembers(
+  groupId: string,
+  period: TraderDetail['period'] = DEFAULT_TRADER_PERIOD,
+): Promise<TraderMember[]> {
+  const params = new URLSearchParams();
+  params.set('period', period);
   const res = await apiClient<ApiResponse<TraderMember[]>>(
-    `${TRADER_GROUPS_BASE}/${groupId}/members`,
+    `${TRADER_GROUPS_BASE}/${groupId}/members?${params.toString()}`,
   );
   return res.data ?? [];
 }
@@ -155,4 +166,15 @@ export async function removeGroupMembers(
     { method: 'DELETE', body: JSON.stringify({ members }) },
   );
   return { removed: typeof res.data?.removed === 'number' ? res.data.removed : 0 };
+}
+
+export async function updateGroupMembers(
+  groupId: string,
+  members: MemberInput[],
+): Promise<{ updated: number }> {
+  const res = await apiClient<ApiResponse<{ updated: number }>>(
+    `${TRADER_GROUPS_BASE}/${groupId}/members`,
+    { method: 'PATCH', body: JSON.stringify({ members }) },
+  );
+  return { updated: typeof res.data?.updated === 'number' ? res.data.updated : 0 };
 }

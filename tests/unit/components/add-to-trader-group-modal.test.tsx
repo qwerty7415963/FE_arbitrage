@@ -93,4 +93,14 @@ describe('AddToTraderGroupModal', () => {
     await user.click(screen.getByRole('button', { name: 'Create' }));
     expect(await screen.findByText('Group name already exists')).toBeInTheDocument();
   });
+
+  it('reports zero additions for duplicate members', async () => {
+    const user = userEvent.setup();
+    vi.mocked(addGroupMembers).mockResolvedValue({ added: 0 });
+    renderModal();
+    await screen.findByText('Main');
+    await user.click(screen.getByRole('radio', { name: /Main/ }));
+    await user.click(screen.getByRole('button', { name: 'Add 1' }));
+    expect(await screen.findByText('Added 0')).toBeInTheDocument();
+  });
 });

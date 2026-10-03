@@ -14,7 +14,7 @@ test.describe('Open Routes', () => {
   });
 
   test('group mutation without auth opens connect wallet modal', async ({ page }) => {
-    await page.route('**/api/v1/groups', (route) =>
+    await page.route('**/api/v1/trader-groups', (route) =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',

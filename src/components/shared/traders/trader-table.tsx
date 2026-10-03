@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   Table,
@@ -19,10 +18,10 @@ import {
   formatRelativeTime,
   formatSignedPercent,
   formatUsd,
-  shortAddress,
 } from '@/lib/trader-format';
 import type { DataStatus, PeriodMetrics, SortDirection, TraderSortBy } from '@/types/trader';
-import { ArrowDownIcon, ArrowUpDownIcon, ArrowUpIcon, CheckIcon, CopyIcon } from 'lucide-react';
+import { ArrowDownIcon, ArrowUpDownIcon, ArrowUpIcon } from 'lucide-react';
+import { CopyAddress } from './copy-address';
 
 export const NULL_DISPLAY = '—';
 
@@ -77,20 +76,7 @@ export function TraderTable({
   onAdd,
 }: TraderTableProps) {
   const t = useTranslations('traders');
-  const [copied, setCopied] = useState<string | null>(null);
   const selectedAddresses = selected ?? [];
-
-  async function handleCopy(address: string): Promise<void> {
-    try {
-      await navigator.clipboard.writeText(address);
-      setCopied(address);
-      window.setTimeout(() => {
-        setCopied((current) => (current === address ? null : current));
-      }, 1500);
-    } catch {
-      // Clipboard unavailable — leave the button unchanged.
-    }
-  }
 
   function toggleAll(): void {
     if (!onSelect) return;
@@ -186,25 +172,7 @@ export function TraderTable({
                 )}
                 <TableCell className="bg-background sticky left-0">
                   {row.display_name && <div className="font-medium">{row.display_name}</div>}
-                  <div className="flex items-center gap-1 font-mono text-xs">
-                    <span title={row.wallet_address}>{shortAddress(row.wallet_address)}</span>
-                    <button
-                      type="button"
-                      aria-label={t('copyAddress')}
-                      title={t('copyAddress')}
-                      className="text-muted-foreground hover:text-foreground rounded p-0.5"
-                      onClick={() => handleCopy(row.wallet_address)}
-                    >
-                      {copied === row.wallet_address ? (
-                        <CheckIcon className="h-3.5 w-3.5" aria-hidden />
-                      ) : (
-                        <CopyIcon className="h-3.5 w-3.5" aria-hidden />
-                      )}
-                    </button>
-                    {copied === row.wallet_address && (
-                      <span className="text-xs">{t('copied')}</span>
-                    )}
-                  </div>
+                  <CopyAddress address={row.wallet_address} />
                 </TableCell>
                 <TableCell className={(pnl ?? 0) >= 0 ? 'text-primary' : 'text-destructive'}>
                   {pnl === null || pnl === undefined

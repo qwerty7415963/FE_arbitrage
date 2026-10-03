@@ -123,6 +123,7 @@ export interface TraderMember {
   display_name: string | null;
   alias: string | null;
   note: string | null;
+  metrics: PeriodMetrics | null;
 }
 
 export interface MemberInput {

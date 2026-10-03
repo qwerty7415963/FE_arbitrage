@@ -14,23 +14,24 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ApiError } from '@/infrastructure/api-client';
-import { createGroup, updateGroup } from '@/services/groups';
+import { createTraderGroup, updateTraderGroup } from '@/services/traders';
 import { useAuthStore } from '@/lib/stores/auth';
-import { GROUP_DUPLICATE_CODE, type Group } from '@/types/wallet-group';
+import { GROUP_NAME_MAX_RUNES, type TraderGroup } from '@/types/trader';
 import { Loader2Icon } from 'lucide-react';
 
 interface GroupFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  group?: Group | null;
-  onSuccess: (group: Group) => void;
+  group?: TraderGroup | null;
+  onSuccess: (group: TraderGroup) => void;
 }
+
+const GROUP_DUPLICATE_CODE = 'GROUP-002';
 
 export function GroupForm({ open, onOpenChange, group, onSuccess }: GroupFormProps) {
   const t = useTranslations('groups');
   const [name, setName] = useState(group?.name ?? '');
   const [description, setDescription] = useState(group?.description ?? '');
-  const [color, setColor] = useState(group?.color ?? '');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -39,7 +40,6 @@ export function GroupForm({ open, onOpenChange, group, onSuccess }: GroupFormPro
   function reset() {
     setName(group?.name ?? '');
     setDescription(group?.description ?? '');
-    setColor(group?.color ?? '');
     setError(null);
   }
 
@@ -54,15 +54,20 @@ export function GroupForm({ open, onOpenChange, group, onSuccess }: GroupFormPro
       setError(t('nameRequired'));
       return;
     }
+    if ([...trimmedName].length > GROUP_NAME_MAX_RUNES) {
+      setError(t('nameTooLong'));
+      return;
+    }
 
     setIsSubmitting(true);
     try {
       const payload = {
         name: trimmedName,
         description: description.trim() ? description.trim() : undefined,
-        color: color.trim() ? color.trim() : undefined,
       };
-      const saved = isEdit ? await updateGroup(group!.id, payload) : await createGroup(payload);
+      const saved = isEdit
+        ? await updateTraderGroup(group!.id, payload)
+        : await createTraderGroup(payload);
       onSuccess(saved);
       onOpenChange(false);
       reset();
@@ -116,17 +121,6 @@ export function GroupForm({ open, onOpenChange, group, onSuccess }: GroupFormPro
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder={t('descriptionPlaceholder')}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="group-color">{t('color')}</Label>
-            <Input
-              id="group-color"
-              value={color}
-              onChange={(e) => setColor(e.target.value)}
-              placeholder={t('colorPlaceholder')}
-              maxLength={32}
             />
           </div>
 

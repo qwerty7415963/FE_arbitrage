@@ -2,24 +2,22 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 import { GroupForm } from '@/app/[locale]/(protected)/groups/_components/group-form';
-import * as groupsService from '@/services/groups';
+import * as tradersService from '@/services/traders';
 import { useAuthStore } from '@/lib/stores/auth';
 import { ApiError } from '@/infrastructure/api-client';
 import enMessages from '@/messages/en.json';
 
-vi.mock('@/services/groups', () => ({
-  createGroup: vi.fn(),
-  updateGroup: vi.fn(),
+vi.mock('@/services/traders', () => ({
+  createTraderGroup: vi.fn(),
+  updateTraderGroup: vi.fn(),
 }));
 
 const mockGroup = {
   id: 'g1',
+  user_id: 'u1',
   name: 'Main',
   description: 'desc',
-  color: '#fff',
-  wallet_count: 2,
-  created_at: '2024-01-01T00:00:00Z',
-  updated_at: '2024-01-01T00:00:00Z',
+  member_count: 2,
 };
 
 function renderForm(props: Partial<React.ComponentProps<typeof GroupForm>> = {}) {
@@ -39,6 +37,7 @@ describe('GroupForm', () => {
   it('renders create title when no group', () => {
     renderForm();
     expect(screen.getByText('Create group')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Color')).not.toBeInTheDocument();
   });
 
   it('renders edit title when group provided', () => {
@@ -53,11 +52,21 @@ describe('GroupForm', () => {
     await waitFor(() => {
       expect(screen.getByText('Group name is required')).toBeInTheDocument();
     });
-    expect(groupsService.createGroup).not.toHaveBeenCalled();
+    expect(tradersService.createTraderGroup).not.toHaveBeenCalled();
+  });
+
+  it('blocks names longer than 100 characters', async () => {
+    renderForm();
+    fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'x'.repeat(101) } });
+    fireEvent.click(screen.getByRole('button', { name: 'Create' }));
+    await waitFor(() => {
+      expect(screen.getByText('Group name must be 100 characters or fewer')).toBeInTheDocument();
+    });
+    expect(tradersService.createTraderGroup).not.toHaveBeenCalled();
   });
 
   it('shows duplicate error on GROUP-002', async () => {
-    vi.mocked(groupsService.createGroup).mockRejectedValue(
+    vi.mocked(tradersService.createTraderGroup).mockRejectedValue(
       new ApiError(409, 'GROUP-002', 'duplicate'),
     );
     renderForm();
@@ -71,7 +80,7 @@ describe('GroupForm', () => {
   it('calls onSuccess and closes on create success', async () => {
     const onSuccess = vi.fn();
     const onOpenChange = vi.fn();
-    vi.mocked(groupsService.createGroup).mockResolvedValue(mockGroup);
+    vi.mocked(tradersService.createTraderGroup).mockResolvedValue(mockGroup);
     renderForm({ onSuccess, onOpenChange });
     fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Main' } });
     fireEvent.click(screen.getByRole('button', { name: 'Create' }));
@@ -89,6 +98,6 @@ describe('GroupForm', () => {
     await waitFor(() => {
       expect(useAuthStore.getState().connectModalOpen).toBe(true);
     });
-    expect(groupsService.createGroup).not.toHaveBeenCalled();
+    expect(tradersService.createTraderGroup).not.toHaveBeenCalled();
   });
 });

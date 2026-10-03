@@ -11,15 +11,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { deleteGroup } from '@/services/groups';
+import { deleteTraderGroup } from '@/services/traders';
 import { useAuthStore } from '@/lib/stores/auth';
-import type { Group } from '@/types/wallet-group';
+import type { TraderGroup } from '@/types/trader';
 import { Loader2Icon } from 'lucide-react';
 
 interface DeleteGroupDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  group: Group | null;
+  group: TraderGroup | null;
   onSuccess: (id: string) => void;
 }
 
@@ -39,7 +39,7 @@ export function DeleteGroupDialog({
     setError(null);
     setIsDeleting(true);
     try {
-      await deleteGroup(group.id);
+      await deleteTraderGroup(group.id);
       onSuccess(group.id);
       onOpenChange(false);
     } catch (err) {

@@ -118,4 +118,16 @@ describe('TraderTable', () => {
     await user.click(screen.getByRole('button', { name: 'Add to group' }));
     expect(onAdd).toHaveBeenCalledWith(row);
   });
+
+  it('prefixes negative PnL with a minus sign instead of color only', () => {
+    renderTable({ rows: [{ ...row, pnl: -2500 }] });
+    expect(screen.getByText('-$2.50K')).toBeInTheDocument();
+  });
+
+  it('renders malicious display names as inert text', () => {
+    const malicious = '<img src=x onerror="alert(1)">';
+    renderTable({ rows: [{ ...row, display_name: malicious }] });
+    expect(screen.getByText(malicious)).toBeInTheDocument();
+    expect(document.querySelector('img')).not.toBeInTheDocument();
+  });
 });

@@ -6,8 +6,8 @@ import { Link } from '@/i18n/navigation';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ApiError } from '@/infrastructure/api-client';
-import { listGroups } from '@/services/groups';
-import type { Group } from '@/types/wallet-group';
+import { listTraderGroups } from '@/services/traders';
+import type { TraderGroup } from '@/types/trader';
 import { Loader2Icon, PencilIcon, Trash2Icon } from 'lucide-react';
 import { ConnectWalletButton } from '@/components/shared/auth/connect-wallet-button';
 import { GroupForm } from './_components/group-form';
@@ -17,13 +17,13 @@ export default function GroupsPage() {
   const t = useTranslations('groups');
   const tCommon = useTranslations('common');
 
-  const [groups, setGroups] = useState<Group[]>([]);
+  const [groups, setGroups] = useState<TraderGroup[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [needsAuth, setNeedsAuth] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
-  const [editing, setEditing] = useState<Group | null>(null);
-  const [deleting, setDeleting] = useState<Group | null>(null);
+  const [editing, setEditing] = useState<TraderGroup | null>(null);
+  const [deleting, setDeleting] = useState<TraderGroup | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
   const fetchGroups = useCallback(async () => {
@@ -31,9 +31,12 @@ export default function GroupsPage() {
     setError(null);
     setNeedsAuth(false);
     try {
-      setGroups(await listGroups());
+      setGroups(await listTraderGroups());
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
+        setNeedsAuth(true);
+        setError(t('authRequired'));
+      } else if (err instanceof ApiError && err.code === 'AUTH-005') {
         setNeedsAuth(true);
         setError(t('authRequired'));
       } else if (err instanceof ApiError && err.status === 403) {
@@ -53,7 +56,7 @@ export default function GroupsPage() {
     load();
   }, [fetchGroups]);
 
-  function handleFormSuccess(saved: Group) {
+  function handleFormSuccess(saved: TraderGroup) {
     setGroups((prev) => {
       const exists = prev.some((g) => g.id === saved.id);
       return exists ? prev.map((g) => (g.id === saved.id ? saved : g)) : [saved, ...prev];
@@ -133,12 +136,13 @@ export default function GroupsPage() {
                     </Link>
                   </td>
                   <td className="text-muted-foreground p-2">{group.description ?? '—'}</td>
-                  <td className="p-2">{group.wallet_count}</td>
+                  <td className="p-2">{group.member_count}</td>
                   <td className="p-2">
                     <div className="flex justify-end gap-1">
                       <Button
                         variant="ghost"
                         size="icon-xs"
+                        aria-label={`${t('edit')} ${group.name}`}
                         onClick={() => {
                           setEditing(group);
                           setFormOpen(true);
@@ -149,6 +153,7 @@ export default function GroupsPage() {
                       <Button
                         variant="ghost"
                         size="icon-xs"
+                        aria-label={`${t('delete')} ${group.name}`}
                         onClick={() => {
                           setDeleting(group);
                           setDeleteOpen(true);

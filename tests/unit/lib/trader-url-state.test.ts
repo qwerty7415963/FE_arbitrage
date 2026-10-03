@@ -1,5 +1,10 @@
-import { describe, it, expect } from 'vitest';
-import { buildTraderSearchParams, parseTraderSearchParams } from '@/lib/trader-url-state';
+import { describe, it, expect, beforeEach } from 'vitest';
+import {
+  buildTraderSearchParams,
+  parseTraderSearchParams,
+  readLastScan,
+  saveLastScan,
+} from '@/lib/trader-url-state';
 import type { TraderSearchQuery } from '@/types/trader';
 
 describe('trader-url-state', () => {
@@ -58,6 +63,24 @@ describe('trader-url-state', () => {
   it('parses partial ranges', () => {
     expect(parseTraderSearchParams(new URLSearchParams('volume_max=1000000'))).toEqual({
       volume: { max: 1000000 },
+    });
+  });
+
+  describe('last scan', () => {
+    beforeEach(() => {
+      window.sessionStorage.clear();
+    });
+
+    it('saves and reads the serialized scan', () => {
+      expect(readLastScan()).toBeNull();
+      saveLastScan('period=7D&roi_min=25');
+      expect(readLastScan()).toBe('period=7D&roi_min=25');
+    });
+
+    it('clears on empty input', () => {
+      saveLastScan('period=7D');
+      saveLastScan('');
+      expect(readLastScan()).toBeNull();
     });
   });
 });

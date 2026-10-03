@@ -39,6 +39,30 @@ export function buildTraderSearchParams(query: TraderSearchQuery): URLSearchPara
   return params;
 }
 
+const LAST_SCAN_KEY = 'trader.last-scan.v1';
+
+export function saveLastScan(serialized: string): void {
+  if (typeof window === 'undefined') return;
+  try {
+    if (serialized) {
+      window.sessionStorage.setItem(LAST_SCAN_KEY, serialized);
+    } else {
+      window.sessionStorage.removeItem(LAST_SCAN_KEY);
+    }
+  } catch {
+    // Storage unavailable — back navigation falls back to router.back().
+  }
+}
+
+export function readLastScan(): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    return window.sessionStorage.getItem(LAST_SCAN_KEY);
+  } catch {
+    return null;
+  }
+}
+
 function parseNumberParam(params: URLSearchParams, name: string): number | undefined {
   const raw = params.get(name);
   if (raw === null || raw.trim() === '') return undefined;

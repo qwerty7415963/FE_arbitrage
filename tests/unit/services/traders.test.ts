@@ -6,10 +6,12 @@ import {
   createTraderGroup,
   deleteTraderGroup,
   fetchTraderDetail,
+  getTraderGroup,
   listGroupMembers,
   listTraderGroups,
   removeGroupMembers,
   searchTraders,
+  updateGroupMembers,
   updateTraderGroup,
 } from '@/services/traders';
 
@@ -98,6 +100,34 @@ describe('traders service', () => {
   });
 
   describe('trader-groups', () => {
+    it('gets a single group', async () => {
+      vi.mocked(apiClient.apiClient).mockResolvedValueOnce({
+        success: true,
+        data: { id: 'g1', name: 'Main' },
+      });
+      expect(await getTraderGroup('g1')).toEqual({ id: 'g1', name: 'Main' });
+      expect(vi.mocked(apiClient.apiClient).mock.calls[0][0]).toBe('/api/v1/trader-groups/g1');
+    });
+
+    it('throws when a group is missing', async () => {
+      vi.mocked(apiClient.apiClient).mockResolvedValueOnce({ success: true });
+      await expect(getTraderGroup('g9')).rejects.toThrow('No data returned');
+    });
+
+    it('lists members with default and custom periods', async () => {
+      vi.mocked(apiClient.apiClient)
+        .mockResolvedValueOnce({ success: true, data: [] })
+        .mockResolvedValueOnce({ success: true, data: [] });
+      expect(await listGroupMembers('g1')).toEqual([]);
+      expect(vi.mocked(apiClient.apiClient).mock.calls[0][0]).toBe(
+        '/api/v1/trader-groups/g1/members?period=30D',
+      );
+      await listGroupMembers('g1', '7D');
+      expect(vi.mocked(apiClient.apiClient).mock.calls[1][0]).toBe(
+        '/api/v1/trader-groups/g1/members?period=7D',
+      );
+    });
+
     it('lists, creates, updates and deletes groups', async () => {
       vi.mocked(apiClient.apiClient)
         .mockResolvedValueOnce({ success: true, data: [{ id: 'g1' }] })
@@ -124,6 +154,19 @@ describe('traders service', () => {
       expect(await addGroupMembers('g1', members)).toEqual({ added: 2 });
       expect(await removeGroupMembers('g1', members)).toEqual({ removed: 1 });
       expect(await addGroupMembers('g1', members)).toEqual({ added: 0 });
+    });
+
+    it('patches members and reports updated count', async () => {
+      vi.mocked(apiClient.apiClient)
+        .mockResolvedValueOnce({ success: true, data: { updated: 1 } })
+        .mockResolvedValueOnce({ success: true });
+      const members = [{ venue: 'hyperliquid', wallet_address: '0x1', alias: 'w1', note: '' }];
+      expect(await updateGroupMembers('g1', members)).toEqual({ updated: 1 });
+      const [url, options] = vi.mocked(apiClient.apiClient).mock.calls[0] as [string, RequestInit];
+      expect(url).toBe('/api/v1/trader-groups/g1/members');
+      expect(options.method).toBe('PATCH');
+      expect(JSON.parse(options.body as string)).toEqual({ members });
+      expect(await updateGroupMembers('g1', members)).toEqual({ updated: 0 });
     });
   });
 });
