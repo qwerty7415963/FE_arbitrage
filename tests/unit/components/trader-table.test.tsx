@@ -130,4 +130,20 @@ describe('TraderTable', () => {
     expect(screen.getByText(malicious)).toBeInTheDocument();
     expect(document.querySelector('img')).not.toBeInTheDocument();
   });
+
+  it('renders a rank column with one-based positions', () => {
+    const second = { ...row, wallet_address: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb' };
+    renderTable({ rows: [row, second] });
+    const table = screen.getByRole('table');
+    const bodyRows = within(table).getAllByRole('row').slice(1);
+    expect(bodyRows[0]).toHaveTextContent('1');
+    expect(bodyRows[1]).toHaveTextContent('2');
+  });
+
+  it('right-aligns numeric cells with tabular figures', () => {
+    renderTable();
+    const pnlCell = screen.getByText('+$12.35K').closest('td');
+    expect(pnlCell?.className).toMatch('text-right');
+    expect(pnlCell?.className).toMatch('tabular-nums');
+  });
 });

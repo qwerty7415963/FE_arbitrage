@@ -22,7 +22,6 @@ function StatefulFilters({
         onDraftChange={setDraft}
         onSearch={() => onSearch?.(draft)}
         onReset={() => setDraft(defaultDraft())}
-        groups={[]}
       />
     </NextIntlClientProvider>
   );
@@ -34,7 +33,6 @@ function renderFilters(props: Partial<React.ComponentProps<typeof TraderFilters>
     onDraftChange: vi.fn(),
     onSearch: vi.fn(),
     onReset: vi.fn(),
-    groups: [],
   };
   return render(
     <NextIntlClientProvider locale="en" messages={enMessages}>
@@ -44,19 +42,18 @@ function renderFilters(props: Partial<React.ComponentProps<typeof TraderFilters>
 }
 
 describe('TraderFilters', () => {
-  it('renders defaults and auth hint when groups are unavailable', () => {
-    renderFilters({ groups: null });
-    expect(screen.getByLabelText('Venue')).toHaveValue('hyperliquid');
-    expect(screen.getByLabelText('Period')).toHaveValue('30D');
+  it('renders metric inputs with search and reset actions', () => {
+    renderFilters();
     expect(screen.getByLabelText('ROI Min')).toHaveValue('');
-    expect(screen.getByText('Connect a wallet to filter by group')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Search' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Reset' })).toBeInTheDocument();
   });
 
-  it('renders group options when loaded', () => {
-    renderFilters({
-      groups: [{ id: 'g1', user_id: 'u1', name: 'Main', description: null, member_count: 3 }],
-    });
-    expect(screen.getByRole('option', { name: 'Main' })).toBeInTheDocument();
+  it('keeps venue/period/group out of the panel (they live in the header)', () => {
+    renderFilters();
+    expect(screen.queryByLabelText('Venue')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Period')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Group')).not.toBeInTheDocument();
   });
 
   it('edits the controlled draft and searches', async () => {
@@ -66,12 +63,10 @@ describe('TraderFilters', () => {
     await user.type(screen.getByLabelText('ROI Min'), '30');
     await user.type(screen.getByLabelText('Win Rate Min'), '60');
     await user.type(screen.getByLabelText('Win Rate Max'), '100');
-    await user.selectOptions(screen.getByLabelText('Period'), '7D');
     await user.click(screen.getByRole('button', { name: 'Search' }));
     expect(seen).toHaveLength(1);
     expect(seen[0].ranges.roi).toEqual({ min: '30', max: '' });
     expect(seen[0].ranges.winRate).toEqual({ min: '60', max: '100' });
-    expect(seen[0].period).toBe('7D');
   });
 
   it('keeps raw text so the page can validate it', async () => {

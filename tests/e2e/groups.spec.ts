@@ -655,7 +655,7 @@ test.describe('Wallet Scanner', () => {
     );
     await mockGroupsRoute(page);
     await page.goto('/en/traders');
-    await page.getByLabel('Period').selectOption('7D');
+    await page.getByRole('group', { name: 'Period' }).getByRole('button', { name: '7D' }).click();
     await page.getByLabel('ROI Min').fill('30');
     await page.getByRole('button', { name: 'Save search' }).click();
     await page.getByLabel('Search name').fill('My 7D');
@@ -667,7 +667,9 @@ test.describe('Wallet Scanner', () => {
 
     await page.getByRole('button', { name: 'My 7D', exact: true }).click();
     await expect(page.getByText('0x1234...5678')).toBeVisible();
-    await expect(page.getByLabel('Period')).toHaveValue('7D');
+    await expect(
+      page.getByRole('group', { name: 'Period' }).getByRole('button', { name: '7D' }),
+    ).toHaveAttribute('aria-pressed', 'true');
     await expect(page.getByLabel('ROI Min')).toHaveValue('30');
   });
 
@@ -684,7 +686,9 @@ test.describe('Wallet Scanner', () => {
     await mockGroupsRoute(page);
     await page.goto('/en/traders?period=7D&roi_min=30&sort_by=roi');
     await expect(page.getByText('Smart Money')).toBeVisible();
-    await expect(page.getByLabel('Period')).toHaveValue('7D');
+    await expect(
+      page.getByRole('group', { name: 'Period' }).getByRole('button', { name: '7D' }),
+    ).toHaveAttribute('aria-pressed', 'true');
     await expect(page.getByLabel('ROI Min')).toHaveValue('30');
     expect(bodies[0]).toMatchObject({ period: '7D', roi_min: 30, sort_by: 'roi' });
   });
@@ -701,7 +705,7 @@ test.describe('Wallet Scanner', () => {
     });
     await mockGroupsRoute(page);
     await page.goto('/en/traders');
-    await page.getByLabel('Period').selectOption('7D');
+    await page.getByRole('group', { name: 'Period' }).getByRole('button', { name: '7D' }).click();
     await page.getByRole('button', { name: 'Search', exact: true }).click();
     await expect(page.getByText('0x1234...5678')).toBeVisible();
     expect(bodies[0]).toMatchObject({ venue: 'hyperliquid', period: '7D' });

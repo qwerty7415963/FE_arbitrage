@@ -85,7 +85,11 @@ describe('TradersScannerPage', () => {
   it('shows default controls without auto-searching', () => {
     renderPage();
     expect(screen.getByRole('heading', { name: 'Trader Scanner' })).toBeInTheDocument();
-    expect(screen.getByLabelText('Period')).toHaveValue('30D');
+    expect(
+      within(screen.getByRole('group', { name: 'Period' })).getByRole('button', {
+        name: '30D',
+      }),
+    ).toHaveAttribute('aria-pressed', 'true');
     expect(searchTraders).not.toHaveBeenCalled();
   });
 
@@ -250,7 +254,11 @@ describe('TradersScannerPage', () => {
   it('restores state from URL and auto-searches', async () => {
     nav.params = new URLSearchParams('period=7D&roi_min=30&sort_by=roi');
     renderPage();
-    expect(screen.getByLabelText('Period')).toHaveValue('7D');
+    expect(
+      within(screen.getByRole('group', { name: 'Period' })).getByRole('button', {
+        name: '7D',
+      }),
+    ).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByLabelText('ROI Min')).toHaveValue('30');
     expect(searchTraders).toHaveBeenCalledWith(
       expect.objectContaining({ period: '7D', roi: { min: 30 }, sortBy: 'roi' }),

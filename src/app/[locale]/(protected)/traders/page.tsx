@@ -18,6 +18,7 @@ import {
   draftToQuery,
   type FilterDraft,
 } from '@/lib/trader-filter-draft';
+import { ScannerHeader } from './_components/scanner-header';
 import { TraderFilters } from '@/components/shared/traders/trader-filters';
 import { SavedSearches } from '@/components/shared/traders/saved-searches';
 import { TraderTable } from '@/components/shared/traders/trader-table';
@@ -31,6 +32,7 @@ import {
   type MemberInput,
   type PeriodMetrics,
   type TraderGroup,
+  type TraderPeriod,
   type TraderSearchQuery,
   type TraderSortBy,
 } from '@/types/trader';
@@ -84,6 +86,7 @@ function ScannerContent() {
   const [addOpen, setAddOpen] = useState(false);
   const [addMembers, setAddMembers] = useState<MemberInput[]>([]);
   const [groups, setGroups] = useState<TraderGroup[] | null>(null);
+  const [filtersOpen, setFiltersOpen] = useState(true);
 
   const abortRef = useRef<AbortController | null>(null);
   const requestIdRef = useRef(0);
@@ -183,6 +186,40 @@ function ScannerContent() {
     syncUrl(query);
     void runSearch(query, false);
   }, [effectiveQuery, syncUrl, runSearch]);
+
+  const handlePeriodChange = useCallback(
+    (period: TraderPeriod) => {
+      const next = { ...form, period };
+      setForm(next);
+      const query: TraderSearchQuery = {
+        ...draftToQuery(next),
+        sortBy,
+        sortDirection,
+        limit: SCANNER_PAGE_SIZE,
+        cursor: undefined,
+      };
+      setCursor(null);
+      syncUrl(query);
+      void runSearch(query, false);
+    },
+    [form, sortBy, sortDirection, syncUrl, runSearch],
+  );
+
+  const handleGroupChange = useCallback((groupId: string) => {
+    setForm((prev) => ({ ...prev, groupId }));
+  }, []);
+
+  const handleSortSelect = useCallback(
+    (column: TraderSortBy, direction: 'asc' | 'desc') => {
+      setSortBy(column);
+      setSortDirection(direction);
+      const query = effectiveQuery({ sortBy: column, sortDirection: direction });
+      setCursor(null);
+      syncUrl(query);
+      void runSearch(query, false);
+    },
+    [effectiveQuery, syncUrl, runSearch],
+  );
 
   const handleSortChange = useCallback(
     (column: TraderSortBy) => {
@@ -305,20 +342,41 @@ function ScannerContent() {
   const showSkeleton = isSearching && rows.length === 0;
   const showEmpty = hasSearched && !isSearching && rows.length === 0 && !error;
 
+  const resultText = hasSearched
+    ? hasMore
+      ? t('resultsCapped', { count: rows.length })
+      : t('results', { count: rows.length })
+    : null;
+
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 lg:p-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">{t('title')}</h1>
-      </div>
-
-      <TraderFilters
-        draft={form}
-        onDraftChange={setForm}
-        onSearch={handleSearch}
-        onReset={handleReset}
+      <ScannerHeader
+        period={form.period}
+        onPeriodChange={handlePeriodChange}
+        venue={form.venue}
         groups={groups}
+        groupId={form.groupId}
+        onGroupChange={handleGroupChange}
+        resultText={resultText}
+        filtersOpen={filtersOpen}
+        onToggleFilters={() => setFiltersOpen((open) => !open)}
+        sortBy={sortBy}
+        sortDirection={sortDirection}
+        onSortSelect={handleSortSelect}
         disabled={isSearching}
       />
+
+      <div id="scanner-metric-filters">
+        {filtersOpen && (
+          <TraderFilters
+            draft={form}
+            onDraftChange={setForm}
+            onSearch={handleSearch}
+            onReset={handleReset}
+            disabled={isSearching}
+          />
+        )}
+      </div>
 
       <SavedSearches
         query={{ ...draftToQuery(form), sortBy, sortDirection, limit: SCANNER_PAGE_SIZE }}
@@ -343,18 +401,13 @@ function ScannerContent() {
       )}
 
       {hasSearched && (
-        <div className="flex items-center justify-between">
-          <p className="text-muted-foreground text-sm">
-            {hasMore
-              ? t('resultsCapped', { count: rows.length })
-              : t('results', { count: rows.length })}
-            {isSearching && rows.length > 0 && (
-              <span className="ml-2 inline-flex items-center">
-                <Loader2Icon className="mr-1 h-3 w-3 animate-spin" />
-                {t('updating')}
-              </span>
-            )}
-          </p>
+        <div className="flex items-center justify-end gap-2">
+          {isSearching && rows.length > 0 && (
+            <span className="text-muted-foreground inline-flex items-center text-sm">
+              <Loader2Icon className="mr-1 h-3 w-3 animate-spin" />
+              {t('updating')}
+            </span>
+          )}
           <Button
             size="sm"
             onClick={() => openAddForAddresses(selected)}

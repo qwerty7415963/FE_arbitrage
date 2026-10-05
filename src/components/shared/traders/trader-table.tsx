@@ -1,6 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
+import { cn } from 'cn';
 import {
   Table,
   TableBody,
@@ -141,6 +142,9 @@ export function TraderTable({
                 />
               </TableHead>
             )}
+            <TableHead className="w-10 text-right tabular-nums">
+              <span className="sr-only">{t('colRank')}</span>
+            </TableHead>
             <TableHead className="bg-background sticky left-0">{t('colTrader')}</TableHead>
             {SORTABLE_COLUMNS.filter((c) => c.key !== 'last_trade').map((c) =>
               sortableHead(c.key, t(c.labelKey)),
@@ -148,15 +152,15 @@ export function TraderTable({
             <TableHead>{t('colProfitFactor')}</TableHead>
             <TableHead>{t('colLongShortWr')}</TableHead>
             {sortableHead('last_trade', t('colLastTrade'))}
-            <TableHead>{t('colData')}</TableHead>
             {(onView || onAdd) && <TableHead />}
           </TableRow>
         </TableHeader>
         <TableBody>
-          {rows.map((row) => {
+          {rows.map((row, index) => {
             const pnl = row.pnl;
             const longWr = deriveWinRate(row.long_wins, row.long_count);
             const shortWr = deriveWinRate(row.short_wins, row.short_count);
+            const statusLabel = t(STATUS_LABEL_KEYS[row.data_status]);
             return (
               <TableRow key={`${row.venue}:${row.wallet_address}`}>
                 {selectable && (
@@ -170,31 +174,60 @@ export function TraderTable({
                     />
                   </TableCell>
                 )}
+                <TableCell className="text-right tabular-nums">{index + 1}</TableCell>
                 <TableCell className="bg-background sticky left-0">
                   {row.display_name && <div className="font-medium">{row.display_name}</div>}
                   <CopyAddress address={row.wallet_address} />
+                  <div className="mt-1 flex flex-wrap items-center gap-1">
+                    <span className="bg-muted text-foreground rounded px-1.5 py-0.5 text-xs font-medium capitalize">
+                      {row.venue}
+                    </span>
+                    <span
+                      className={cn(
+                        'rounded px-1.5 py-0.5 text-xs font-medium',
+                        STATUS_CLASSES[row.data_status],
+                      )}
+                      title={statusLabel}
+                      aria-label={statusLabel}
+                    >
+                      <span aria-hidden="true">● </span>
+                      {statusLabel}
+                    </span>
+                  </div>
                 </TableCell>
-                <TableCell className={(pnl ?? 0) >= 0 ? 'text-primary' : 'text-destructive'}>
+                <TableCell
+                  className={cn(
+                    'text-right font-mono tabular-nums',
+                    (pnl ?? 0) >= 0 ? 'text-primary' : 'text-destructive',
+                  )}
+                >
                   {pnl === null || pnl === undefined
                     ? NULL_DISPLAY
                     : `${pnl > 0 ? '+' : ''}${formatUsd(pnl)}`}
                 </TableCell>
-                <TableCell>{display(formatSignedPercent(row.roi))}</TableCell>
-                <TableCell>{display(formatPercent(row.win_rate))}</TableCell>
-                <TableCell>{display(formatUsd(row.volume))}</TableCell>
-                <TableCell>{display(formatInteger(row.trade_count))}</TableCell>
-                <TableCell>{display(formatDecimal(row.profit_factor))}</TableCell>
-                <TableCell>
+                <TableCell className="text-right font-mono tabular-nums">
+                  {display(formatSignedPercent(row.roi))}
+                </TableCell>
+                <TableCell className="text-right font-mono tabular-nums">
+                  {display(formatPercent(row.win_rate))}
+                </TableCell>
+                <TableCell className="text-right font-mono tabular-nums">
+                  {display(formatUsd(row.volume))}
+                </TableCell>
+                <TableCell className="text-right font-mono tabular-nums">
+                  {display(formatInteger(row.trade_count))}
+                </TableCell>
+                <TableCell className="text-right font-mono tabular-nums">
+                  {display(formatDecimal(row.profit_factor))}
+                </TableCell>
+                <TableCell className="text-right font-mono tabular-nums">
                   {display(formatPercent(longWr))} / {display(formatPercent(shortWr))}
                 </TableCell>
                 <TableCell
-                  className="text-xs"
+                  className="text-right font-mono text-xs tabular-nums"
                   title={formatDateTimeUtc(row.last_trade_at) ?? undefined}
                 >
                   {display(formatRelativeTime(row.last_trade_at))}
-                </TableCell>
-                <TableCell className={STATUS_CLASSES[row.data_status]}>
-                  {t(STATUS_LABEL_KEYS[row.data_status])}
                 </TableCell>
                 {(onView || onAdd) && (
                   <TableCell>

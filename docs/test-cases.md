@@ -43,22 +43,24 @@
 | `services/auth.ts`                                    | `tests/unit/services/auth.test.ts`                         | 8       | ✅     |
 | `services/funding-arbitrage.ts`                       | `tests/unit/services/funding-arbitrage.test.ts`            | 13      | ✅     |
 | `components/group-form.tsx`                           | `tests/unit/components/group-form.test.tsx`                | 7       | ✅     |
-| `components/group-detail-page.tsx`                    | `tests/unit/components/group-detail-page.test.tsx`         | 8       | ✅     |
+| `components/group-detail-page.tsx`                    | `tests/unit/components/group-detail-page.test.tsx`         | 9       | ✅     |
 | `components/trader-filters.tsx`                       | `tests/unit/components/trader-filters.test.tsx`            | 6       | ✅     |
-| `components/trader-table.tsx`                         | `tests/unit/components/trader-table.test.tsx`              | 7       | ✅     |
-| `components/add-to-trader-group-modal.tsx`            | `tests/unit/components/add-to-trader-group-modal.test.tsx` | 6       | ✅     |
+| `components/trader-table.tsx`                         | `tests/unit/components/trader-table.test.tsx`              | 9       | ✅     |
+| `traders/_components/scanner-header.tsx`              | `tests/unit/components/scanner-header.test.tsx`            | 9       | ✅     |
+| `components/add-to-trader-group-modal.tsx`            | `tests/unit/components/add-to-trader-group-modal.test.tsx` | 5       | ✅     |
 | `components/saved-searches.tsx`                       | `tests/unit/components/saved-searches.test.tsx`            | 2       | ✅     |
 | `app/[locale]/(protected)/traders/page.tsx`           | `tests/unit/components/trader-scanner-page.test.tsx`       | 15      | ✅     |
-| `app/[locale]/(protected)/traders/[address]/page.tsx` | `tests/unit/components/trader-detail-page.test.tsx`        | 7       | ✅     |
+| `app/[locale]/(protected)/traders/[address]/page.tsx` | `tests/unit/components/trader-detail-page.test.tsx`        | 8       | ✅     |
 | `components/copy-address.tsx`                         | `tests/unit/components/copy-address.test.tsx`              | 2       | ✅     |
-| `services/traders.ts`                                 | `tests/unit/services/traders.test.ts`                      | 10      | ✅     |
+| `services/traders.ts`                                 | `tests/unit/services/traders.test.ts`                      | 11      | ✅     |
+| `lib/trader-saved-searches.ts`                        | `tests/unit/lib/trader-saved-searches.test.ts`             | 4       | ✅     |
 | `lib/trader-validation.ts`                            | `tests/unit/lib/trader-validation.test.ts`                 | 13      | ✅     |
 | `lib/trader-format.ts`                                | `tests/unit/lib/trader-format.test.ts`                     | 12      | ✅     |
 | `lib/trader-url-state.ts`                             | `tests/unit/lib/trader-url-state.test.ts`                  | 6       | ✅     |
 | `lib/trader-filter-draft.ts`                          | `tests/unit/lib/trader-filter-draft.test.ts`               | 9       | ✅     |
 | `components/funding-table.tsx`                        | `tests/unit/components/funding-table.test.tsx`             | 26      | ✅     |
 | `infrastructure/api-client.ts`                        | `tests/unit/infrastructure/api-client.test.ts`             | 14      | ✅     |
-| **Total**                                             |                                                            | **202** |        |
+| **Total**                                             |                                                            | **213** |        |
 
 ### Test Details
 
@@ -189,6 +191,22 @@
 | select + view/add actions | Checkbox, View detail, Add to group  |
 | negative PnL sign         | Minus prefix, not color only         |
 | malicious name inert      | No executable HTML (FE-040)          |
+| rank column               | One-based positions per loaded row   |
+| numeric alignment         | text-right + tabular-nums on numbers |
+
+#### `traders/_components/scanner-header.tsx` (9 tests)
+
+| Test                 | Description                                |
+| -------------------- | ------------------------------------------ |
+| period pressed state | Active period has aria-pressed true        |
+| period change        | onPeriodChange with the picked period      |
+| venue static         | Badge text, no Venue control in tab order  |
+| group options        | Group names in select                      |
+| group auth hint      | Disabled select + hint when groups is null |
+| group change         | onGroupChange with the picked group        |
+| filters toggle       | aria-expanded + aria-controls, callback    |
+| sort select          | onSortSelect with column and direction     |
+| result count         | resultText shown when provided             |
 
 #### `components/add-to-trader-group-modal.tsx` (5 tests)
 
@@ -200,7 +218,7 @@
 | long name + duplicate      | nameTooLong, GROUP-002 → inline   |
 | zero additions reported    | Added 0 for duplicates (FE-016)   |
 
-#### `traders/page.tsx` trader scanner (13 tests)
+#### `traders/page.tsx` trader scanner (15 tests)
 
 | Test                            | Description                        |
 | ------------------------------- | ---------------------------------- |
@@ -220,7 +238,7 @@
 | capped count when has_more      | "N shown, more available"          |
 | plain count when not capped     | "N results" kept                   |
 
-#### `traders/[address]/page.tsx` trader detail (7 tests)
+#### `traders/[address]/page.tsx` trader detail (8 tests)
 
 | Test                       | Description                           |
 | -------------------------- | ------------------------------------- |
@@ -467,15 +485,16 @@ reviewing diffs — never blindly.
 
 ## VI. Changelog
 
-| Date       | Change                                                                                              | Author |
-| ---------- | --------------------------------------------------------------------------------------------------- | ------ |
-| 2026-09-19 | Initial test cases                                                                                  | —      |
-| 2026-09-29 | Saved searches (localStorage) + public scan tests                                                   | —      |
-| 2026-09-30 | Filter-config integration: DEX dropdown + config-driven filters                                     | —      |
-| 2026-09-30 | Human-readable labels: metric/sort/operator/order options + i18n frame labels                       | —      |
-| 2026-10-01 | P0 trader foundation: types/service/validation/format/url-state (spec v1.1)                         | —      |
-| 2026-10-01 | P1 scanner redo: filter grid, header sort, cursor pages, URL state, trader-groups modal (spec v1.1) | —      |
-| 2026-10-02 | P2 trader detail: header/tabs/cards/long-short/freshness/add-to-group (spec v1.1)                   | —      |
-| 2026-10-02 | Cutover groups to trader-groups API: list/form/delete/detail, remove dead wallets/groups code       | —      |
-| 2026-10-03 | P4 a11y/visual/perf/keyboard suites + P5 FE-040 gap closure (spec v1.1 exit criteria)               | —      |
-| 2026-10-03 | F1 member metrics columns + F2 inline alias/note edit via PATCH members                             | —      |
+| Date       | Change                                                                                                                                                                                                       | Author |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------ |
+| 2026-09-19 | Initial test cases                                                                                                                                                                                           | —      |
+| 2026-09-29 | Saved searches (localStorage) + public scan tests                                                                                                                                                            | —      |
+| 2026-09-30 | Filter-config integration: DEX dropdown + config-driven filters                                                                                                                                              | —      |
+| 2026-09-30 | Human-readable labels: metric/sort/operator/order options + i18n frame labels                                                                                                                                | —      |
+| 2026-10-01 | P0 trader foundation: types/service/validation/format/url-state (spec v1.1)                                                                                                                                  | —      |
+| 2026-10-01 | P1 scanner redo: filter grid, header sort, cursor pages, URL state, trader-groups modal (spec v1.1)                                                                                                          | —      |
+| 2026-10-02 | P2 trader detail: header/tabs/cards/long-short/freshness/add-to-group (spec v1.1)                                                                                                                            | —      |
+| 2026-10-02 | Cutover groups to trader-groups API: list/form/delete/detail, remove dead wallets/groups code                                                                                                                | —      |
+| 2026-10-03 | P4 a11y/visual/perf/keyboard suites + P5 FE-040 gap closure (spec v1.1 exit criteria)                                                                                                                        | —      |
+| 2026-10-03 | F1 member metrics columns + F2 inline alias/note edit via PATCH members                                                                                                                                      | —      |
+| 2026-10-05 | Phase 4 scanner header: period segmented, venue badge, group select, filters toggle, sort select, rank column, mono numerals, status moved to identity cell (9 new unit tests, 3 visual baselines refreshed) | —      |

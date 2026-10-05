@@ -52,7 +52,7 @@ test.describe('Keyboard', () => {
     await page.goto('/en/traders');
     await page.locator('body').click();
     const seen: string[] = [];
-    for (let i = 0; i < 14; i += 1) {
+    for (let i = 0; i < 24; i += 1) {
       await page.keyboard.press('Tab');
       const label = await page.evaluate(() => {
         const el = document.activeElement as HTMLElement | null;
@@ -69,9 +69,13 @@ test.describe('Keyboard', () => {
       });
       seen.push(label);
     }
-    for (const expected of ['Venue', 'Period', 'Group', 'Search', 'Reset']) {
+    // Venue is static text since Phase 4, so it is intentionally absent here.
+    expect(seen).not.toContain('Venue');
+    for (const expected of ['Period', 'Group', 'Filters', 'Search', 'Reset']) {
       expect(seen).toContain(expected);
     }
+    expect(seen.indexOf('Period')).toBeLessThan(seen.indexOf('Group'));
+    expect(seen.indexOf('Group')).toBeLessThan(seen.indexOf('Filters'));
   });
 
   test('sort header activates with Enter', async ({ page }) => {
