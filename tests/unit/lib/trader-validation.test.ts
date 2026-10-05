@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { isValidWalletAddress, validateTraderSearch } from '@/lib/trader-validation';
+import {
+  isValidWalletAddress,
+  validateDraftFields,
+  validateTraderSearch,
+} from '@/lib/trader-validation';
 
 describe('validateTraderSearch', () => {
   it('accepts an empty query', () => {
@@ -84,5 +88,69 @@ describe('isValidWalletAddress', () => {
     expect(isValidWalletAddress('')).toBe(false);
     expect(isValidWalletAddress(undefined)).toBe(false);
     expect(isValidWalletAddress(null)).toBe(false);
+  });
+});
+
+describe('validateDraftFields', () => {
+  it('chỉ ra đúng ô sai', () => {
+    const errors = validateDraftFields({
+      venue: 'hyperliquid',
+      period: '30D',
+      groupId: '',
+      lastTradeAfter: '',
+      ranges: {
+        roi: { min: '10', max: '5' }, // min > max
+        winRate: { min: '150', max: '' }, // ngoai 0-100
+        tradeCount: { min: '1.5', max: '' }, // phai nguyen
+        pnl: { min: 'abc', max: '' }, // khong phai so
+        volume: { min: '', max: '' },
+        profitFactor: { min: '', max: '' },
+        longWinRate: { min: '', max: '' },
+        shortWinRate: { min: '', max: '' },
+      },
+    });
+    expect(errors.roi).toBe('minGreaterThanMax');
+    expect(errors.winRate).toBe('outOfRange');
+    expect(errors.tradeCount).toBe('invalidInteger');
+    expect(errors.pnl).toBe('invalidNumber');
+    expect(errors.volume).toBeUndefined();
+  });
+
+  it('báo invalidDateTime cho lastTradeAfter sai và bỏ qua khi rỗng', () => {
+    const bad = validateDraftFields({
+      venue: 'hyperliquid',
+      period: '30D',
+      groupId: '',
+      lastTradeAfter: 'not-a-date',
+      ranges: {
+        roi: { min: '', max: '' },
+        winRate: { min: '', max: '' },
+        pnl: { min: '', max: '' },
+        volume: { min: '', max: '' },
+        tradeCount: { min: '', max: '' },
+        profitFactor: { min: '', max: '' },
+        longWinRate: { min: '', max: '' },
+        shortWinRate: { min: '', max: '' },
+      },
+    });
+    expect(bad.lastTradeAfter).toBe('invalidDateTime');
+
+    const ok = validateDraftFields({
+      venue: 'hyperliquid',
+      period: '30D',
+      groupId: '',
+      lastTradeAfter: '',
+      ranges: {
+        roi: { min: '', max: '' },
+        winRate: { min: '', max: '' },
+        pnl: { min: '', max: '' },
+        volume: { min: '', max: '' },
+        tradeCount: { min: '', max: '' },
+        profitFactor: { min: '', max: '' },
+        longWinRate: { min: '', max: '' },
+        shortWinRate: { min: '', max: '' },
+      },
+    });
+    expect(ok).toEqual({});
   });
 });

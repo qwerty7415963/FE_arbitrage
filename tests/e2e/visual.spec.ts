@@ -63,7 +63,7 @@ test.describe('Visual desktop', () => {
   test('scanner default', async ({ page }) => {
     await freezeClock(page);
     await mockGroups(page);
-    await page.goto('/en/wallets');
+    await page.goto('/en/traders');
     await expect(page.getByRole('button', { name: 'Search', exact: true })).toBeVisible();
     await settle(page);
     await expect(page.locator('main')).toHaveScreenshot('scanner-default.png', SHOT);
@@ -79,7 +79,7 @@ test.describe('Visual desktop', () => {
         body: JSON.stringify({ success: true, data: [TRADER], meta: {} }),
       }),
     );
-    await page.goto('/en/wallets');
+    await page.goto('/en/traders');
     await page.getByRole('button', { name: 'Search', exact: true }).click();
     await expect(page.getByText('Smart Money')).toBeVisible();
     await settle(page);
@@ -96,7 +96,7 @@ test.describe('Visual desktop', () => {
         body: JSON.stringify({ success: true, data: [], meta: {} }),
       }),
     );
-    await page.goto('/en/wallets');
+    await page.goto('/en/traders');
     await page.getByRole('button', { name: 'Search', exact: true }).click();
     await expect(page.getByText('No traders found')).toBeVisible();
     await settle(page);
@@ -113,7 +113,7 @@ test.describe('Visual desktop', () => {
         body: JSON.stringify({ success: false, error: { code: 'INTERNAL', message: 'boom' } }),
       }),
     );
-    await page.goto('/en/wallets');
+    await page.goto('/en/traders');
     await page.getByRole('button', { name: 'Search', exact: true }).click();
     await expect(page.getByText('An error occurred, please try again')).toBeVisible();
     await settle(page);
@@ -147,7 +147,7 @@ test.describe('Visual desktop', () => {
         }),
       }),
     );
-    await page.goto(`/en/wallets/${TRADER.wallet_address}`);
+    await page.goto(`/en/traders/${TRADER.wallet_address}`);
     await expect(page.getByRole('heading', { name: 'Smart Money' })).toBeVisible();
     await settle(page);
     await expect(page.locator('main')).toHaveScreenshot('trader-detail.png', SHOT);
@@ -178,7 +178,7 @@ test.describe('Visual narrow', () => {
         body: JSON.stringify({ success: true, data: [TRADER], meta: {} }),
       }),
     );
-    await page.goto('/en/wallets');
+    await page.goto('/en/traders');
     await page.getByRole('button', { name: 'Search', exact: true }).click();
     await expect(page.getByText('Smart Money')).toBeVisible();
     await page.locator('main').evaluate((el) => {
@@ -216,7 +216,7 @@ test.describe('Visual narrow', () => {
         }),
       }),
     );
-    await page.goto(`/en/wallets/${TRADER.wallet_address}`);
+    await page.goto(`/en/traders/${TRADER.wallet_address}`);
     await expect(page.getByRole('heading', { name: 'Smart Money' })).toBeVisible();
     await settle(page);
     await expect(page.locator('main')).toHaveScreenshot('trader-detail-narrow.png', SHOT);

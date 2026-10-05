@@ -7,6 +7,7 @@ import {
   type RangeFilter,
   type TraderSearchQuery,
 } from '@/types/trader';
+import { toRange, type FilterDraft, type MetricDraftKey } from '@/lib/trader-filter-draft';
 
 export type TraderSearchError =
   | 'minGreaterThanMax'
@@ -18,7 +19,7 @@ export type TraderSearchError =
   | 'invalidSort'
   | 'invalidPeriod';
 
-const RANGE_KEYS = [
+export const RANGE_KEYS = [
   'roi',
   'winRate',
   'pnl',
@@ -89,6 +90,26 @@ export function validateTraderSearch(query: TraderSearchQuery): TraderSearchErro
 }
 
 const WALLET_ADDRESS_PATTERN = /^0x[0-9a-fA-F]{40}$/;
+
+export type FieldErrors = Partial<Record<MetricDraftKey | 'lastTradeAfter', TraderSearchError>>;
+
+/**
+ * Validate theo từng ô để UI hiển thị lỗi cạnh đúng ô.
+ * Khác validateTraderSearch (trả 1 lỗi cho cả query, dùng cho tầng service).
+ */
+export function validateDraftFields(draft: FilterDraft): FieldErrors {
+  const errors: FieldErrors = {};
+  for (const key of RANGE_KEYS) {
+    const range = toRange(draft.ranges[key]);
+    const error = validateRange(range, RANGE_TO_METRIC[key]);
+    if (error) errors[key] = error;
+  }
+  const lastTrade = draft.lastTradeAfter.trim();
+  if (lastTrade && Number.isNaN(Date.parse(lastTrade))) {
+    errors.lastTradeAfter = 'invalidDateTime';
+  }
+  return errors;
+}
 
 export function isValidWalletAddress(address: string | undefined | null): boolean {
   return typeof address === 'string' && WALLET_ADDRESS_PATTERN.test(address.trim());

@@ -36,29 +36,29 @@
 
 ### Coverage Summary
 
-| Module                                               | File                                                       | Tests   | Status |
-| ---------------------------------------------------- | ---------------------------------------------------------- | ------- | ------ |
-| `lib/token.ts`                                       | `tests/unit/lib/token.test.ts`                             | 14      | ✅     |
-| `stores/auth.ts` (wallet-only)                       | `tests/unit/stores/auth.test.ts`                           | 11      | ✅     |
-| `services/auth.ts`                                   | `tests/unit/services/auth.test.ts`                         | 8       | ✅     |
-| `services/funding-arbitrage.ts`                      | `tests/unit/services/funding-arbitrage.test.ts`            | 13      | ✅     |
-| `components/group-form.tsx`                          | `tests/unit/components/group-form.test.tsx`                | 7       | ✅     |
-| `components/group-detail-page.tsx`                   | `tests/unit/components/group-detail-page.test.tsx`         | 8       | ✅     |
-| `components/trader-filters.tsx`                      | `tests/unit/components/trader-filters.test.tsx`            | 6       | ✅     |
-| `components/trader-table.tsx`                        | `tests/unit/components/trader-table.test.tsx`              | 7       | ✅     |
-| `components/add-to-trader-group-modal.tsx`           | `tests/unit/components/add-to-trader-group-modal.test.tsx` | 6       | ✅     |
-| `components/saved-searches.tsx`                      | `tests/unit/components/saved-searches.test.tsx`            | 2       | ✅     |
-| `app/[locale]/(protected)/wallets/page.tsx`          | `tests/unit/components/trader-scanner-page.test.tsx`       | 13      | ✅     |
-| `app/[locale]/(protected)/wallets/[wallet]/page.tsx` | `tests/unit/components/trader-detail-page.test.tsx`        | 7       | ✅     |
-| `components/copy-address.tsx`                        | `tests/unit/components/copy-address.test.tsx`              | 2       | ✅     |
-| `services/traders.ts`                                | `tests/unit/services/traders.test.ts`                      | 10      | ✅     |
-| `lib/trader-validation.ts`                           | `tests/unit/lib/trader-validation.test.ts`                 | 11      | ✅     |
-| `lib/trader-format.ts`                               | `tests/unit/lib/trader-format.test.ts`                     | 12      | ✅     |
-| `lib/trader-url-state.ts`                            | `tests/unit/lib/trader-url-state.test.ts`                  | 6       | ✅     |
-| `lib/trader-filter-draft.ts`                         | `tests/unit/lib/trader-filter-draft.test.ts`               | 3       | ✅     |
-| `components/funding-table.tsx`                       | `tests/unit/components/funding-table.test.tsx`             | 26      | ✅     |
-| `infrastructure/api-client.ts`                       | `tests/unit/infrastructure/api-client.test.ts`             | 14      | ✅     |
-| **Total**                                            |                                                            | **192** |        |
+| Module                                                | File                                                       | Tests   | Status |
+| ----------------------------------------------------- | ---------------------------------------------------------- | ------- | ------ |
+| `lib/token.ts`                                        | `tests/unit/lib/token.test.ts`                             | 14      | ✅     |
+| `stores/auth.ts` (wallet-only)                        | `tests/unit/stores/auth.test.ts`                           | 11      | ✅     |
+| `services/auth.ts`                                    | `tests/unit/services/auth.test.ts`                         | 8       | ✅     |
+| `services/funding-arbitrage.ts`                       | `tests/unit/services/funding-arbitrage.test.ts`            | 13      | ✅     |
+| `components/group-form.tsx`                           | `tests/unit/components/group-form.test.tsx`                | 7       | ✅     |
+| `components/group-detail-page.tsx`                    | `tests/unit/components/group-detail-page.test.tsx`         | 8       | ✅     |
+| `components/trader-filters.tsx`                       | `tests/unit/components/trader-filters.test.tsx`            | 6       | ✅     |
+| `components/trader-table.tsx`                         | `tests/unit/components/trader-table.test.tsx`              | 7       | ✅     |
+| `components/add-to-trader-group-modal.tsx`            | `tests/unit/components/add-to-trader-group-modal.test.tsx` | 6       | ✅     |
+| `components/saved-searches.tsx`                       | `tests/unit/components/saved-searches.test.tsx`            | 2       | ✅     |
+| `app/[locale]/(protected)/traders/page.tsx`           | `tests/unit/components/trader-scanner-page.test.tsx`       | 15      | ✅     |
+| `app/[locale]/(protected)/traders/[address]/page.tsx` | `tests/unit/components/trader-detail-page.test.tsx`        | 7       | ✅     |
+| `components/copy-address.tsx`                         | `tests/unit/components/copy-address.test.tsx`              | 2       | ✅     |
+| `services/traders.ts`                                 | `tests/unit/services/traders.test.ts`                      | 10      | ✅     |
+| `lib/trader-validation.ts`                            | `tests/unit/lib/trader-validation.test.ts`                 | 13      | ✅     |
+| `lib/trader-format.ts`                                | `tests/unit/lib/trader-format.test.ts`                     | 12      | ✅     |
+| `lib/trader-url-state.ts`                             | `tests/unit/lib/trader-url-state.test.ts`                  | 6       | ✅     |
+| `lib/trader-filter-draft.ts`                          | `tests/unit/lib/trader-filter-draft.test.ts`               | 9       | ✅     |
+| `components/funding-table.tsx`                        | `tests/unit/components/funding-table.test.tsx`             | 26      | ✅     |
+| `infrastructure/api-client.ts`                        | `tests/unit/infrastructure/api-client.test.ts`             | 14      | ✅     |
+| **Total**                                             |                                                            | **202** |        |
 
 ### Test Details
 
@@ -200,7 +200,7 @@
 | long name + duplicate      | nameTooLong, GROUP-002 → inline   |
 | zero additions reported    | Added 0 for duplicates (FE-016)   |
 
-#### `wallets/page.tsx` trader scanner (13 tests)
+#### `traders/page.tsx` trader scanner (13 tests)
 
 | Test                            | Description                        |
 | ------------------------------- | ---------------------------------- |
@@ -217,8 +217,10 @@
 | reset clears all                | Form, rows, bare URL               |
 | URL restore + auto-search       | Params → form + search             |
 | group hint when unauthenticated | groupAuthHint shown                |
+| capped count when has_more      | "N shown, more available"          |
+| plain count when not capped     | "N results" kept                   |
 
-#### `wallets/[wallet]/page.tsx` trader detail (7 tests)
+#### `traders/[address]/page.tsx` trader detail (7 tests)
 
 | Test                       | Description                           |
 | -------------------------- | ------------------------------------- |
@@ -237,13 +239,19 @@
 | copies full address         | Clipboard + Copied    |
 | full display when short off | Detail header variant |
 
-#### `lib/trader-filter-draft.ts` (3 tests)
+#### `lib/trader-filter-draft.ts` (9 tests)
 
-| Test                     | Description                |
-| ------------------------ | -------------------------- |
-| query ↔ draft round-trip | Text ↔ numbers             |
-| invalid text stays NaN   | Page validation catches it |
-| immutable range update   | Original untouched         |
+| Test                      | Description                         |
+| ------------------------- | ----------------------------------- |
+| query ↔ draft round-trip  | Text ↔ numbers                      |
+| invalid text stays NaN    | Page validation catches it          |
+| immutable range update    | Original untouched                  |
+| comma as decimal mark     | `0,5` → 0.5 (locale vi)             |
+| strips currency on paste  | `$1,000` → 1000, `2 500` → 2500     |
+| blank cells → undefined   | Whitespace-only means "no filter"   |
+| garbage stays NaN         | `abc` passes through for validation |
+| lastTradeAfter round-trip | Draft ↔ query both directions       |
+| blank lastTradeAfter      | Empty string omitted from query     |
 
 #### `stores/auth.ts` (11 tests)
 
@@ -305,7 +313,7 @@
 | E15 | `groups.spec.ts`            | Member name + alias     | Mock member with alias            | Display name + alias shown    |
 | E16 | `groups.spec.ts`            | Empty members           | Mock [] members                   | No members yet                |
 | E17 | `groups.spec.ts`            | Remove member refetch   | DELETE members → {removed:1}      | DELETE sent, list reloads     |
-| E18 | `groups.spec.ts`            | Links to scanner        | Open /groups/g1                   | Link /wallets?group=g1        |
+| E18 | `groups.spec.ts`            | Links to scanner        | Open /groups/g1                   | Link /traders?group=g1        |
 | E19 | `groups.spec.ts`            | Scanner scans to list   | POST search mock → Search         | Name + address, body defaults |
 | E20 | `groups.spec.ts`            | Invalid min/max blocks  | ROI 5/1 → Search                  | Error, no API call            |
 | E21 | `groups.spec.ts`            | Non-numeric blocks      | PnL "abc" → Search                | invalidNumber, no API call    |

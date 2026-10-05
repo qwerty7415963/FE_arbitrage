@@ -23,6 +23,7 @@ export interface FilterDraft {
   venue: string;
   period: TraderPeriod;
   groupId: string;
+  lastTradeAfter: string; // ISO datetime hoac ''
   ranges: Record<MetricDraftKey, { min: string; max: string }>;
 }
 
@@ -35,7 +36,13 @@ export function defaultDraft(): FilterDraft {
   for (const key of METRIC_DRAFT_KEYS) {
     ranges[key] = { min: '', max: '' };
   }
-  return { venue: DEFAULT_VENUE, period: DEFAULT_TRADER_PERIOD, groupId: '', ranges };
+  return {
+    venue: DEFAULT_VENUE,
+    period: DEFAULT_TRADER_PERIOD,
+    groupId: '',
+    lastTradeAfter: '',
+    ranges,
+  };
 }
 
 export function draftFromQuery(query: TraderSearchQuery): FilterDraft {
@@ -43,6 +50,7 @@ export function draftFromQuery(query: TraderSearchQuery): FilterDraft {
   if (query.venue) draft.venue = query.venue;
   if (query.period) draft.period = query.period;
   if (query.groupId) draft.groupId = query.groupId;
+  if (query.lastTradeAfter) draft.lastTradeAfter = query.lastTradeAfter;
   for (const key of METRIC_DRAFT_KEYS) {
     const range = query[key];
     draft.ranges[key] = { min: text(range?.min), max: text(range?.max) };
@@ -50,13 +58,41 @@ export function draftFromQuery(query: TraderSearchQuery): FilterDraft {
   return draft;
 }
 
+/**
+ * Chuẩn hoá chuỗi người dùng gõ thành số.
+ * - Ô rỗng -> undefined (nghĩa là "không lọc theo chiều này").
+ * - Chấp nhận dấu phẩy làm dấu thập phân (locale vi).
+ * - Bỏ ký hiệu tiền tệ, phần trăm, khoảng trắng, dấu phân cách nghìn.
+ * - Giữ nguyên NaN cho rác thật, để validateTraderSearch bắt được.
+ */
 function parseRaw(raw: string): number | undefined {
   const trimmed = raw.trim();
   if (!trimmed) return undefined;
-  return Number(trimmed);
+
+  let normalized = trimmed.replace(/[$€£¥%\s]/g, '');
+
+  const hasComma = normalized.includes(',');
+  const hasDot = normalized.includes('.');
+  if (hasComma && hasDot) {
+    // "1.234,5" (vi) hoac "1,234.5" (en): dau xuat hien sau cung la dau thap phan
+    const lastComma = normalized.lastIndexOf(',');
+    const lastDot = normalized.lastIndexOf('.');
+    if (lastComma > lastDot) {
+      normalized = normalized.replace(/\./g, '').replace(',', '.');
+    } else {
+      normalized = normalized.replace(/,/g, '');
+    }
+  } else if (hasComma) {
+    // "1000,5" hoac "1,000" - neu la nhom 3 chu so o cuoi thi coi la phan cach nghin
+    normalized = /^-?\d{1,3}(,\d{3})+$/.test(normalized)
+      ? normalized.replace(/,/g, '')
+      : normalized.replace(',', '.');
+  }
+
+  return Number(normalized);
 }
 
-function toRange(raw: { min: string; max: string }): RangeFilter | undefined {
+export function toRange(raw: { min: string; max: string }): RangeFilter | undefined {
   const min = parseRaw(raw.min);
   const max = parseRaw(raw.max);
   if (min === undefined && max === undefined) return undefined;
@@ -72,6 +108,8 @@ export function draftToQuery(draft: FilterDraft): TraderSearchQuery {
     period: draft.period,
   };
   if (draft.groupId) query.groupId = draft.groupId;
+  const lastTrade = draft.lastTradeAfter.trim();
+  if (lastTrade) query.lastTradeAfter = lastTrade;
   for (const key of METRIC_DRAFT_KEYS) {
     const range = toRange(draft.ranges[key]);
     if (range) query[key] = range;

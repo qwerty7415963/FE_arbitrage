@@ -55,13 +55,13 @@ async function mockScanner(page: Page) {
 test.describe('Accessibility', () => {
   test('scanner default has no violations', async ({ page }) => {
     await mockScanner(page);
-    await page.goto('/en/wallets');
+    await page.goto('/en/traders');
     await expectNoViolations(page);
   });
 
   test('scanner with results has no violations', async ({ page }) => {
     await mockScanner(page);
-    await page.goto('/en/wallets');
+    await page.goto('/en/traders');
     await page.getByRole('button', { name: 'Search', exact: true }).click();
     await expect(page.getByText('Smart Money')).toBeVisible();
     await expectNoViolations(page);
@@ -76,7 +76,7 @@ test.describe('Accessibility', () => {
         body: JSON.stringify({ success: false, error: { code: 'INTERNAL', message: 'boom' } }),
       }),
     );
-    await page.goto('/en/wallets');
+    await page.goto('/en/traders');
     await page.getByRole('button', { name: 'Search', exact: true }).click();
     await expect(page.getByText('An error occurred, please try again')).toBeVisible();
     await expectNoViolations(page);
@@ -108,7 +108,7 @@ test.describe('Accessibility', () => {
         }),
       }),
     );
-    await page.goto(`/en/wallets/${TRADER.wallet_address}`);
+    await page.goto(`/en/traders/${TRADER.wallet_address}`);
     await expect(page.getByRole('heading', { name: 'Smart Money' })).toBeVisible();
     await expectNoViolations(page);
   });
@@ -144,7 +144,7 @@ test.describe('Accessibility', () => {
         }),
       }),
     );
-    await page.goto('/en/wallets');
+    await page.goto('/en/traders');
     await page.getByRole('button', { name: 'Search', exact: true }).click();
     await expect(page.getByText('Smart Money')).toBeVisible();
     await page.getByLabel(`Select ${TRADER.wallet_address}`).click();

@@ -53,7 +53,7 @@ test.describe('Performance smoke', () => {
         body: JSON.stringify({ success: true, data: rows, meta: { has_more: false } }),
       }),
     );
-    await page.goto('/en/wallets');
+    await page.goto('/en/traders');
     const started = Date.now();
     await page.getByRole('button', { name: 'Search', exact: true }).click();
     await expect(page.getByText('100 results')).toBeVisible({ timeout: 15000 });
@@ -86,7 +86,7 @@ test.describe('Performance smoke', () => {
         }, 800);
       });
     });
-    await page.goto('/en/wallets');
+    await page.goto('/en/traders');
     await page.getByRole('button', { name: 'Search', exact: true }).click();
     await expect(page.getByText('Trader 1')).toBeVisible();
     await page.getByLabel('ROI Min').fill('10');

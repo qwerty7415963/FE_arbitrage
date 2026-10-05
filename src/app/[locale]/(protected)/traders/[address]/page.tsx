@@ -67,19 +67,19 @@ export default function TraderDetailPage() {
 }
 
 function DetailContent() {
-  const params = useParams<{ locale: string; wallet: string }>();
+  const params = useParams<{ locale: string; address: string }>();
   const router = useRouter();
   const t = useTranslations('traders');
-  const wallet = params.wallet ?? '';
+  const address = params.address ?? '';
 
   const [period, setPeriod] = useState<TraderPeriod>(DEFAULT_TRADER_PERIOD);
   const [detail, setDetail] = useState<TraderDetail | null>(null);
-  const [isLoading, setIsLoading] = useState(() => isValidWalletAddress(wallet));
+  const [isLoading, setIsLoading] = useState(() => isValidWalletAddress(address));
   const [error, setError] = useState<DetailError | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
   const requestIdRef = useRef(0);
-  const addressValid = isValidWalletAddress(wallet);
+  const addressValid = isValidWalletAddress(address);
 
   useEffect(() => {
     if (!addressValid) return;
@@ -89,7 +89,7 @@ function DetailContent() {
       setIsLoading(true);
       setError(null);
       try {
-        const data = await fetchTraderDetail(wallet.toLowerCase(), { period });
+        const data = await fetchTraderDetail(address.toLowerCase(), { period });
         if (cancelled || requestIdRef.current !== requestId) return;
         setDetail(data);
       } catch (err) {
@@ -109,7 +109,7 @@ function DetailContent() {
     return () => {
       cancelled = true;
     };
-  }, [wallet, period, reloadKey, addressValid]);
+  }, [address, period, reloadKey, addressValid]);
 
   const registry = detail?.registry ?? null;
   const metrics = detail?.metrics ?? null;
@@ -119,7 +119,7 @@ function DetailContent() {
   function handleBack(): void {
     const lastScan = readLastScan();
     if (lastScan) {
-      router.push(`/${params.locale}/wallets?${lastScan}`);
+      router.push(`/${params.locale}/traders?${lastScan}`);
     } else {
       router.back();
     }

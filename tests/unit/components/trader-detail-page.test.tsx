@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { NextIntlClientProvider } from 'next-intl';
 import { ApiError } from '@/infrastructure/api-client';
-import DetailPage from '@/app/[locale]/(protected)/wallets/[wallet]/page';
+import DetailPage from '@/app/[locale]/(protected)/traders/[address]/page';
 import { fetchTraderDetail, listTraderGroups } from '@/services/traders';
 import type { TraderDetail } from '@/types/trader';
 import enMessages from '@/messages/en.json';
@@ -11,11 +11,11 @@ import enMessages from '@/messages/en.json';
 const nav = vi.hoisted(() => ({
   back: vi.fn(),
   push: vi.fn(),
-  wallet: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+  address: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
 }));
 
 vi.mock('next/navigation', () => ({
-  useParams: () => ({ locale: 'en', wallet: nav.wallet }),
+  useParams: () => ({ locale: 'en', address: nav.address }),
   useRouter: () => ({ back: nav.back, push: nav.push }),
 }));
 
@@ -85,13 +85,13 @@ function renderPage() {
 describe('TraderDetailPage', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
-    nav.wallet = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+    nav.address = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
     vi.mocked(fetchTraderDetail).mockResolvedValue(detail);
     vi.mocked(listTraderGroups).mockResolvedValue([]);
   });
 
   it('blocks invalid addresses without fetching', () => {
-    nav.wallet = 'not-an-address';
+    nav.address = 'not-an-address';
     renderPage();
     expect(screen.getByText('Invalid wallet address')).toBeInTheDocument();
     expect(fetchTraderDetail).not.toHaveBeenCalled();
@@ -169,7 +169,7 @@ describe('TraderDetailPage', () => {
     renderPage();
     await screen.findByRole('heading', { name: 'Smart Money' });
     await user.click(screen.getByRole('button', { name: 'Back to scanner' }));
-    expect(nav.push).toHaveBeenCalledWith('/en/wallets?period=7D&roi_min=25');
+    expect(nav.push).toHaveBeenCalledWith('/en/traders?period=7D&roi_min=25');
     expect(nav.back).not.toHaveBeenCalled();
     window.sessionStorage.clear();
   });

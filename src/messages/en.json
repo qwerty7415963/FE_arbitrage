@@ -15,7 +15,7 @@
   "navigation": {
     "fundingArbitrage": "Funding Arbitrage",
     "groups": "Groups",
-    "scanner": "Scanner",
+    "scanner": "Trader Scanner",
     "settings": "Settings",
     "logout": "Logout"
   },
@@ -155,7 +155,7 @@
     "period": "Period",
     "group": "Group",
     "allGroups": "All groups",
-    "groupAuthHint": "Connect your wallet to filter by group",
+    "groupAuthHint": "Connect a wallet to filter by group",
     "roi": "ROI",
     "winRate": "Win Rate",
     "pnl": "PnL",
@@ -169,6 +169,7 @@
     "search": "Search",
     "reset": "Reset",
     "results": "{count} results",
+    "resultsCapped": "{count} shown, more available",
     "loadMore": "Load more",
     "loading": "Loading...",
     "updating": "Updating...",

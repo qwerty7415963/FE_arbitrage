@@ -24,7 +24,7 @@ const navItems: NavItem[] = [
     labelKey: 'groups',
   },
   {
-    href: '/wallets',
+    href: '/traders',
     icon: RadarIcon,
     labelKey: 'scanner',
   },

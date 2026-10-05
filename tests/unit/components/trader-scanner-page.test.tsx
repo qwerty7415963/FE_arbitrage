@@ -3,7 +3,7 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { NextIntlClientProvider } from 'next-intl';
 import { ApiError } from '@/infrastructure/api-client';
-import ScannerPage from '@/app/[locale]/(protected)/wallets/page';
+import ScannerPage from '@/app/[locale]/(protected)/traders/page';
 import { listTraderGroups, searchTraders } from '@/services/traders';
 import type { PeriodMetrics } from '@/types/trader';
 import enMessages from '@/messages/en.json';
@@ -244,7 +244,7 @@ describe('TradersScannerPage', () => {
     await user.click(screen.getByRole('button', { name: 'Reset' }));
     expect(screen.getByLabelText('ROI Min')).toHaveValue('');
     expect(screen.queryByText('0xaaaa...aaaa')).not.toBeInTheDocument();
-    expect(nav.push).toHaveBeenLastCalledWith('/en/wallets', expect.anything());
+    expect(nav.push).toHaveBeenLastCalledWith('/en/traders', expect.anything());
   });
 
   it('restores state from URL and auto-searches', async () => {
@@ -262,6 +262,26 @@ describe('TradersScannerPage', () => {
   it('shows group auth hint when groups fail to load', async () => {
     vi.mocked(listTraderGroups).mockRejectedValue(new ApiError(403, 'AUTH-005', 'denied'));
     renderPage();
-    expect(await screen.findByText('Connect your wallet to filter by group')).toBeInTheDocument();
+    expect(await screen.findByText('Connect a wallet to filter by group')).toBeInTheDocument();
+  });
+
+  it('hien "con nua" khi has_more bat', async () => {
+    const user = userEvent.setup();
+    vi.mocked(searchTraders).mockResolvedValue({
+      data: [ROW_A, ROW_B],
+      meta: { has_more: true, cursor: 'c1' },
+    });
+    renderPage();
+    await user.click(screen.getByRole('button', { name: 'Search' }));
+    expect(await screen.findByText(/more available/)).toBeInTheDocument();
+    expect(screen.queryByText('2 results')).not.toBeInTheDocument();
+  });
+
+  it('giữ nhãn results thường khi has_more tắt', async () => {
+    const user = userEvent.setup();
+    vi.mocked(searchTraders).mockResolvedValue({ data: [ROW_A], meta: { has_more: false } });
+    renderPage();
+    await user.click(screen.getByRole('button', { name: 'Search' }));
+    expect(await screen.findByText('1 results')).toBeInTheDocument();
   });
 });

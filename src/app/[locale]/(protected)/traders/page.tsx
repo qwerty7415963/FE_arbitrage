@@ -114,7 +114,7 @@ function ScannerContent() {
       saveLastScan(serialized);
       // Push (not replace) so each search is a history entry and
       // browser back/forward restores prior searches (FE-025).
-      router.push(`/${locale}/wallets${serialized ? `?${serialized}` : ''}`, { scroll: false });
+      router.push(`/${locale}/traders${serialized ? `?${serialized}` : ''}`, { scroll: false });
     },
     [router, locale],
   );
@@ -345,7 +345,9 @@ function ScannerContent() {
       {hasSearched && (
         <div className="flex items-center justify-between">
           <p className="text-muted-foreground text-sm">
-            {t('results', { count: rows.length })}
+            {hasMore
+              ? t('resultsCapped', { count: rows.length })
+              : t('results', { count: rows.length })}
             {isSearching && rows.length > 0 && (
               <span className="ml-2 inline-flex items-center">
                 <Loader2Icon className="mr-1 h-3 w-3 animate-spin" />
@@ -381,7 +383,7 @@ function ScannerContent() {
               selectable
               selected={selected}
               onSelect={setSelected}
-              onView={(row) => router.push(`/${locale}/wallets/${row.wallet_address}`)}
+              onView={(row) => router.push(`/${locale}/traders/${row.wallet_address}`)}
               onAdd={(row) => openAddForAddresses([row.wallet_address])}
             />
             {hasMore && (

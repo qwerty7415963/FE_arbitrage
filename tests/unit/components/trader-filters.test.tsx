@@ -49,7 +49,7 @@ describe('TraderFilters', () => {
     expect(screen.getByLabelText('Venue')).toHaveValue('hyperliquid');
     expect(screen.getByLabelText('Period')).toHaveValue('30D');
     expect(screen.getByLabelText('ROI Min')).toHaveValue('');
-    expect(screen.getByText('Connect your wallet to filter by group')).toBeInTheDocument();
+    expect(screen.getByText('Connect a wallet to filter by group')).toBeInTheDocument();
   });
 
   it('renders group options when loaded', () => {

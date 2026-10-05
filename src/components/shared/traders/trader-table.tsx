@@ -48,7 +48,7 @@ const STATUS_LABEL_KEYS: Record<DataStatus, string> = {
 const STATUS_CLASSES: Record<DataStatus, string> = {
   ready: 'text-primary',
   syncing: 'text-muted-foreground',
-  stale: 'text-amber-600 dark:text-amber-500',
+  stale: 'text-freshness',
   error: 'text-destructive',
 };
 

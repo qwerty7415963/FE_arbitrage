@@ -49,7 +49,7 @@ async function mockScanner(page: Page) {
 test.describe('Keyboard', () => {
   test('tab reaches all filter controls in order', async ({ page }) => {
     await mockScanner(page);
-    await page.goto('/en/wallets');
+    await page.goto('/en/traders');
     await page.locator('body').click();
     const seen: string[] = [];
     for (let i = 0; i < 14; i += 1) {
@@ -85,7 +85,7 @@ test.describe('Keyboard', () => {
         body: JSON.stringify({ success: true, data: [TRADER], meta: {} }),
       });
     });
-    await page.goto('/en/wallets');
+    await page.goto('/en/traders');
     await page.getByRole('button', { name: 'Search', exact: true }).click();
     await expect(page.getByText('Smart Money')).toBeVisible();
     await page
@@ -133,7 +133,7 @@ test.describe('Keyboard', () => {
 
     test('table scrolls internally without page overflow', async ({ page }) => {
       await mockScanner(page);
-      await page.goto('/en/wallets');
+      await page.goto('/en/traders');
       await page.getByRole('button', { name: 'Search', exact: true }).click();
       await expect(page.getByText('Smart Money')).toBeVisible();
       const overflow = await page.evaluate(() => {

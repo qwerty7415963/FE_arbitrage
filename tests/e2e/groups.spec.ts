@@ -294,7 +294,7 @@ test.describe('Group Detail Membership', () => {
     await page.goto('/en/groups/g1');
     await expect(page.getByRole('link', { name: /Scan for more wallets/ })).toHaveAttribute(
       'href',
-      /\/wallets\?group=g1/,
+      /\/traders\?group=g1/,
     );
   });
 
@@ -431,7 +431,7 @@ test.describe('Wallet Scanner', () => {
       });
     });
     await mockGroupsRoute(page);
-    await page.goto('/en/wallets');
+    await page.goto('/en/traders');
     await expect(page.getByRole('button', { name: 'Search', exact: true })).toBeVisible();
     expect(bodies).toHaveLength(0);
     await page.getByRole('button', { name: 'Search', exact: true }).click();
@@ -457,7 +457,7 @@ test.describe('Wallet Scanner', () => {
       });
     });
     await mockGroupsRoute(page);
-    await page.goto('/en/wallets');
+    await page.goto('/en/traders');
     await page.getByLabel('ROI Min').fill('5');
     await page.getByLabel('ROI Max').fill('1');
     await page.getByRole('button', { name: 'Search', exact: true }).click();
@@ -477,7 +477,7 @@ test.describe('Wallet Scanner', () => {
       });
     });
     await mockGroupsRoute(page);
-    await page.goto('/en/wallets');
+    await page.goto('/en/traders');
     await page.getByLabel('PnL Min').fill('abc');
     await page.getByRole('button', { name: 'Search', exact: true }).click();
     await expect(page.getByText('Filter value must be a valid number')).toBeVisible();
@@ -496,7 +496,7 @@ test.describe('Wallet Scanner', () => {
       });
     });
     await mockGroupsRoute(page);
-    await page.goto('/en/wallets');
+    await page.goto('/en/traders');
     await page.getByRole('button', { name: 'Search', exact: true }).click();
     await expect(page.getByText('Smart Money')).toBeVisible();
     expect(bodies[0]).toMatchObject({ sort_by: 'pnl', sort_direction: 'desc' });
@@ -525,7 +525,7 @@ test.describe('Wallet Scanner', () => {
       });
     });
     await mockGroupsRoute(page);
-    await page.goto('/en/wallets');
+    await page.goto('/en/traders');
     await page.getByRole('button', { name: 'Search', exact: true }).click();
     await expect(page.getByText('0x1234...5678')).toBeVisible();
     await page.getByRole('button', { name: 'Load more' }).click();
@@ -544,7 +544,7 @@ test.describe('Wallet Scanner', () => {
       }),
     );
     await mockGroupsRoute(page);
-    await page.goto('/en/wallets');
+    await page.goto('/en/traders');
     await page.getByLabel('ROI Min').fill('99');
     await page.getByRole('button', { name: 'Search', exact: true }).click();
     await expect(page.getByText('No traders found')).toBeVisible();
@@ -571,7 +571,7 @@ test.describe('Wallet Scanner', () => {
       });
     });
     await mockGroupsRoute(page);
-    await page.goto('/en/wallets');
+    await page.goto('/en/traders');
     await page.getByRole('button', { name: 'Search', exact: true }).click();
     await expect(page.getByText('An error occurred, please try again')).toBeVisible();
     await page.getByRole('button', { name: 'Retry' }).click();
@@ -595,7 +595,7 @@ test.describe('Wallet Scanner', () => {
         body: JSON.stringify({ success: true, data: { added: 1 } }),
       }),
     );
-    await page.goto('/en/wallets');
+    await page.goto('/en/traders');
     await page.getByRole('button', { name: 'Search', exact: true }).click();
     await page.getByLabel('Select 0x1234567890abcdef1234567890abcdef12345678').click();
     await page.getByRole('button', { name: 'Add to group (1)', exact: true }).click();
@@ -623,7 +623,7 @@ test.describe('Wallet Scanner', () => {
       });
     });
     await mockGroupsRoute(page, [{ id: 'g1', name: 'Main', member_count: 0 }]);
-    await page.goto('/en/wallets');
+    await page.goto('/en/traders');
     await page.getByLabel('Group').selectOption('g1');
     await page.getByRole('button', { name: 'Search', exact: true }).click();
     await expect(page.getByText('Group filter requires authentication')).toBeVisible();
@@ -639,10 +639,10 @@ test.describe('Wallet Scanner', () => {
       }),
     );
     await page.route('**/api/v1/trader-groups', (route) => route.abort());
-    await page.goto('/en/wallets');
+    await page.goto('/en/traders');
     await page.getByRole('button', { name: 'Search', exact: true }).click();
     await expect(page.getByText('0x1234...5678')).toBeVisible();
-    await expect(page.getByText('Connect your wallet to filter by group')).toBeVisible();
+    await expect(page.getByText('Connect a wallet to filter by group')).toBeVisible();
   });
 
   test('save search persists across reload and re-applies filters', async ({ page }) => {
@@ -654,7 +654,7 @@ test.describe('Wallet Scanner', () => {
       }),
     );
     await mockGroupsRoute(page);
-    await page.goto('/en/wallets');
+    await page.goto('/en/traders');
     await page.getByLabel('Period').selectOption('7D');
     await page.getByLabel('ROI Min').fill('30');
     await page.getByRole('button', { name: 'Save search' }).click();
@@ -682,7 +682,7 @@ test.describe('Wallet Scanner', () => {
       });
     });
     await mockGroupsRoute(page);
-    await page.goto('/en/wallets?period=7D&roi_min=30&sort_by=roi');
+    await page.goto('/en/traders?period=7D&roi_min=30&sort_by=roi');
     await expect(page.getByText('Smart Money')).toBeVisible();
     await expect(page.getByLabel('Period')).toHaveValue('7D');
     await expect(page.getByLabel('ROI Min')).toHaveValue('30');
@@ -700,7 +700,7 @@ test.describe('Wallet Scanner', () => {
       });
     });
     await mockGroupsRoute(page);
-    await page.goto('/en/wallets');
+    await page.goto('/en/traders');
     await page.getByLabel('Period').selectOption('7D');
     await page.getByRole('button', { name: 'Search', exact: true }).click();
     await expect(page.getByText('0x1234...5678')).toBeVisible();
@@ -719,7 +719,7 @@ test.describe('Wallet Scanner', () => {
       });
     });
     await mockGroupsRoute(page, [{ id: 'g1', name: 'Main', member_count: 5 }]);
-    await page.goto('/en/wallets');
+    await page.goto('/en/traders');
     await page.getByLabel('Group').selectOption('g1');
     await page.getByLabel('ROI Min').fill('30');
     await page.getByLabel('PnL Min').fill('1000');
@@ -740,7 +740,7 @@ test.describe('Wallet Scanner', () => {
       });
     });
     await mockGroupsRoute(page);
-    await page.goto('/en/wallets');
+    await page.goto('/en/traders');
     await page.getByLabel('ROI Min').fill('10');
     await page.getByRole('button', { name: 'Search', exact: true }).click();
     await expect(page.getByText('Smart Money')).toBeVisible();
@@ -772,7 +772,7 @@ test.describe('Wallet Scanner', () => {
       });
     });
     await mockGroupsRoute(page);
-    await page.goto('/en/wallets');
+    await page.goto('/en/traders');
     await page.getByLabel('ROI Min').fill('10');
     await page.getByRole('button', { name: 'Search', exact: true }).click();
     await expect(page.getByText('An error occurred, please try again')).toBeVisible();
@@ -795,7 +795,7 @@ test.describe('Wallet Scanner', () => {
       }),
     );
     await mockGroupsRoute(page);
-    await page.goto('/en/wallets');
+    await page.goto('/en/traders');
     await page.getByRole('button', { name: 'Search', exact: true }).click();
     await expect(page.getByText('Smart Money')).toBeVisible();
     await expect(page.getByText('Stale')).toBeVisible();
@@ -903,16 +903,16 @@ test.describe('Trader Detail', () => {
         body: JSON.stringify({ success: true, data: [] }),
       }),
     );
-    await page.goto('/en/wallets');
+    await page.goto('/en/traders');
     await page.getByLabel('ROI Min').fill('25');
     await page.getByRole('button', { name: 'Search', exact: true }).click();
     await expect(page.getByText('Smart Money')).toBeVisible();
     await page.getByRole('button', { name: 'View detail' }).click();
-    await expect(page).toHaveURL(/\/wallets\/0x1234567890abcdef1234567890abcdef12345678/);
+    await expect(page).toHaveURL(/\/traders\/0x1234567890abcdef1234567890abcdef12345678/);
     await expect(page.getByRole('heading', { name: 'Smart Money' })).toBeVisible();
     await expect(page.getByText('Leaderboard')).toBeVisible();
     await page.getByRole('button', { name: 'Back to scanner' }).click();
-    await expect(page).toHaveURL(/\/wallets(\?|$)/);
+    await expect(page).toHaveURL(/\/traders(\?|$)/);
     await expect(page).toHaveURL(/roi_min=25/);
     await expect(page.getByLabel('ROI Min')).toHaveValue('25');
     await expect(page.getByText('0x1234...5678')).toBeVisible();
@@ -928,7 +928,7 @@ test.describe('Trader Detail', () => {
         body: JSON.stringify({ success: true, data: mockDetail }),
       });
     });
-    await page.goto('/en/wallets/0x1234567890abcdef1234567890abcdef12345678');
+    await page.goto('/en/traders/0x1234567890abcdef1234567890abcdef12345678');
     await expect(page.getByRole('heading', { name: 'Smart Money' })).toBeVisible();
     await page.getByRole('button', { name: '7D' }).click();
     await expect.poll(() => periods[periods.length - 1]).toBe('7D');
@@ -945,7 +945,7 @@ test.describe('Trader Detail', () => {
         }),
       }),
     );
-    await page.goto('/en/wallets/0x1234567890abcdef1234567890abcdef12345678');
+    await page.goto('/en/traders/0x1234567890abcdef1234567890abcdef12345678');
     await expect(page.getByText('Trader not found')).toBeVisible();
   });
 
@@ -982,7 +982,7 @@ test.describe('Trader Detail', () => {
         body: JSON.stringify({ success: true, data: { added: 1 } }),
       }),
     );
-    await page.goto('/en/wallets/0x1234567890abcdef1234567890abcdef12345678');
+    await page.goto('/en/traders/0x1234567890abcdef1234567890abcdef12345678');
     await expect(page.getByRole('heading', { name: 'Smart Money' })).toBeVisible();
     await page.getByRole('button', { name: 'Add to group' }).click();
     await expect(page.getByText('Add wallets to group')).toBeVisible();
@@ -1013,7 +1013,7 @@ test.describe('Trader Detail', () => {
         }),
       }),
     );
-    await page.goto('/en/wallets/0x1234567890abcdef1234567890abcdef12345678');
+    await page.goto('/en/traders/0x1234567890abcdef1234567890abcdef12345678');
     await expect(page.getByRole('heading', { name: 'Smart Money' })).toBeVisible();
     await expect(page.getByText(/Stale/)).toBeVisible();
     await expect(page.getByText(/Partial data/)).toBeVisible();

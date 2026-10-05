@@ -215,7 +215,7 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
           placeholder={t('searchPlaceholder')}
           className="w-56"
         />
-        <Link href={`/wallets?group=${group.id}`}>
+        <Link href={`/traders?group=${group.id}`}>
           <Button variant="outline" size="sm">
             <RadarIcon className="mr-2 h-4 w-4" />
             {t('scanMore')}

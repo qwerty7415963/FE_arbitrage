@@ -15,7 +15,7 @@
   "navigation": {
     "fundingArbitrage": "Funding Arbitrage",
     "groups": "Nhóm",
-    "scanner": "Quét ví",
+    "scanner": "Trader Scanner",
     "settings": "Cài đặt",
     "logout": "Đăng xuất"
   },
@@ -155,7 +155,7 @@
     "period": "Kỳ",
     "group": "Nhóm",
     "allGroups": "Tất cả nhóm",
-    "groupAuthHint": "Kết nối ví để lọc theo nhóm",
+    "groupAuthHint": "Kết nối một ví để lọc theo nhóm",
     "roi": "ROI",
     "winRate": "Tỷ lệ thắng",
     "pnl": "PnL",
@@ -169,6 +169,7 @@
     "search": "Tìm kiếm",
     "reset": "Đặt lại",
     "results": "{count} kết quả",
+    "resultsCapped": "{count} trader đầu · còn nữa",
     "loadMore": "Tải thêm",
     "loading": "Đang tải...",
     "updating": "Đang cập nhật...",
