@@ -5,3 +5,4 @@ public
 pnpm-lock.yaml
 *.min.js
 *.min.css
+opencode.json

@@ -78,6 +78,7 @@ test.describe('Visual desktop', () => {
     await page.goto('/en/traders');
     await expect(page.getByRole('button', { name: 'Filters', exact: true })).toBeVisible();
     await expect(page.getByText('Smart Money')).toBeVisible();
+    await expect(page.locator('tbody tr')).toHaveCount(1);
     await settle(page);
     await expect(page.locator('main')).toHaveScreenshot('scanner-default.png', SHOT);
   });

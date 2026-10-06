@@ -6,16 +6,16 @@
 
 ## Quyết định nền tảng
 
-| Hạng mục | Chuẩn dùng chung |
-| --- | --- |
-| Framework | Next.js, App Router |
-| Ngôn ngữ | TypeScript, strict mode |
-| Runtime | Node.js LTS, phiên bản cố định trong file version của repository |
-| Package manager | pnpm, lockfile được commit |
-| Styling | Tailwind CSS |
-| UI component | shadcn/ui chọn lọc, custom theme/component theo design system của dự án |
-| Localization | Chuẩn bị namespace `en` và `vi`; chưa cần nội dung dịch |
-| State/API | TanStack Query cho server state; Zustand cho client state dùng chung |
+| Hạng mục        | Chuẩn dùng chung                                                        |
+| --------------- | ----------------------------------------------------------------------- |
+| Framework       | Next.js, App Router                                                     |
+| Ngôn ngữ        | TypeScript, strict mode                                                 |
+| Runtime         | Node.js LTS, phiên bản cố định trong file version của repository        |
+| Package manager | pnpm, lockfile được commit                                              |
+| Styling         | Tailwind CSS                                                            |
+| UI component    | shadcn/ui chọn lọc, custom theme/component theo design system của dự án |
+| Localization    | Chuẩn bị namespace `en` và `vi`; chưa cần nội dung dịch                 |
+| State/API       | TanStack Query cho server state; Zustand cho client state dùng chung    |
 
 ## Cấu trúc thư mục thống nhất
 
@@ -115,13 +115,13 @@ src/messages/
 
 ## Quy ước quản lý state
 
-| Loại state | Công cụ | Ví dụ |
-| --- | --- | --- |
-| Server state | TanStack Query | Dữ liệu REST, cache, loading/error, mutation và đồng bộ dữ liệu WebSocket vào cache. |
-| Client state dùng chung | Zustand | Sidebar đang mở, giao diện đang chọn, subscription WebSocket và state UI cần nhiều feature cùng đọc. |
-| State cục bộ | React `useState` / `useReducer` | Modal của một màn hình, tab nội bộ, thao tác tạm thời của component. |
-| State có thể chia sẻ/link | URL search params | Filter, sort, phân trang, venue hoặc instrument đang chọn. |
-| Form state | React Hook Form khi cần form phức tạp | Xác thực, validation và trạng thái submit; không lưu form vào global store. |
+| Loại state                | Công cụ                               | Ví dụ                                                                                                |
+| ------------------------- | ------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| Server state              | TanStack Query                        | Dữ liệu REST, cache, loading/error, mutation và đồng bộ dữ liệu WebSocket vào cache.                 |
+| Client state dùng chung   | Zustand                               | Sidebar đang mở, giao diện đang chọn, subscription WebSocket và state UI cần nhiều feature cùng đọc. |
+| State cục bộ              | React `useState` / `useReducer`       | Modal của một màn hình, tab nội bộ, thao tác tạm thời của component.                                 |
+| State có thể chia sẻ/link | URL search params                     | Filter, sort, phân trang, venue hoặc instrument đang chọn.                                           |
+| Form state                | React Hook Form khi cần form phức tạp | Xác thực, validation và trạng thái submit; không lưu form vào global store.                          |
 
 Không dùng Zustand hoặc Redux để cache response API. TanStack Query chịu trách nhiệm cache, refetch, invalidation và error state của dữ liệu server. Với dữ liệu realtime tần suất cao, chỉ cập nhật phần dữ liệu cần thiết và dùng selector của Zustand để tránh render lại toàn bộ ứng dụng.
 
@@ -137,13 +137,13 @@ feature → service/repository → infrastructure/api-client → HTTP
 
 Chuẩn hiển thị thông báo:
 
-| Tình huống | Cách xử lý |
-| --- | --- |
-| Lỗi validation `400/422` | Trả về form để hiển thị tại field; không toast chung. |
-| Hết phiên `401` | Refresh token một lần; thất bại thì đăng xuất và chuyển về đăng nhập. |
-| Không có quyền `403` | Hiển thị trạng thái không có quyền; không retry. |
-| Lỗi mạng/timeout/`5xx` | Hiển thị toast lỗi có thông điệp dễ hiểu; giữ request ID cho debug nếu backend trả về. |
-| Thành công | Feature quyết định thông điệp thành công theo ngữ cảnh; không tự toast cho mọi request. |
+| Tình huống               | Cách xử lý                                                                              |
+| ------------------------ | --------------------------------------------------------------------------------------- |
+| Lỗi validation `400/422` | Trả về form để hiển thị tại field; không toast chung.                                   |
+| Hết phiên `401`          | Refresh token một lần; thất bại thì đăng xuất và chuyển về đăng nhập.                   |
+| Không có quyền `403`     | Hiển thị trạng thái không có quyền; không retry.                                        |
+| Lỗi mạng/timeout/`5xx`   | Hiển thị toast lỗi có thông điệp dễ hiểu; giữ request ID cho debug nếu backend trả về.  |
+| Thành công               | Feature quyết định thông điệp thành công theo ngữ cảnh; không tự toast cho mọi request. |
 
 WebSocket dùng `infrastructure/ws-manager` riêng. Nó dùng chung chuẩn auth, error và notification với REST, nhưng không đi qua `api-client`.
 
@@ -173,13 +173,13 @@ Dùng Zod tại ranh giới hệ thống:
 
 Tất cả biến môi trường được đọc qua một module cấu hình duy nhất và được kiểm tra khi ứng dụng khởi động.
 
-| Quy tắc | Áp dụng |
-| --- | --- |
-| Biến client | Chỉ dùng biến có tiền tố `NEXT_PUBLIC_`. |
-| Bí mật | Không đưa token, private key hay secret vào browser, source code hoặc log. |
-| Môi trường | Tách local, staging và production; có `.env.example` chỉ liệt kê tên biến. |
-| REST/WS endpoint | Được cấu hình bằng biến môi trường, không hard-code trong feature. |
-| Thiếu/sai cấu hình | App báo lỗi rõ ở thời điểm khởi động thay vì lỗi mơ hồ khi gọi API. |
+| Quy tắc            | Áp dụng                                                                    |
+| ------------------ | -------------------------------------------------------------------------- |
+| Biến client        | Chỉ dùng biến có tiền tố `NEXT_PUBLIC_`.                                   |
+| Bí mật             | Không đưa token, private key hay secret vào browser, source code hoặc log. |
+| Môi trường         | Tách local, staging và production; có `.env.example` chỉ liệt kê tên biến. |
+| REST/WS endpoint   | Được cấu hình bằng biến môi trường, không hard-code trong feature.         |
+| Thiếu/sai cấu hình | App báo lỗi rõ ở thời điểm khởi động thay vì lỗi mơ hồ khi gọi API.        |
 
 ## CI/CD với GitHub Actions
 
