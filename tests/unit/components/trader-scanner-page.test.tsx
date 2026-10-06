@@ -90,7 +90,7 @@ describe('TradersScannerPage', () => {
     vi.mocked(searchTraders).mockResolvedValue({ data: [ROW_A], meta: {} });
   });
 
-  it('searches on mount with defaults', async () => {
+  it('searches on mount with defaults (page 1)', async () => {
     renderPage();
     expect(screen.getByRole('heading', { name: 'Trader Scanner' })).toBeInTheDocument();
     expect(
@@ -107,6 +107,7 @@ describe('TradersScannerPage', () => {
         sortBy: 'pnl',
         sortDirection: 'desc',
         limit: 20,
+        page: 1,
       }),
       expect.anything(),
     );
@@ -133,11 +134,12 @@ describe('TradersScannerPage', () => {
         sortBy: 'pnl',
         sortDirection: 'desc',
         limit: 20,
+        page: 1,
       }),
       expect.anything(),
     );
     expect(await screen.findByText('0xaaaa...aaaa')).toBeInTheDocument();
-    expect(screen.getByText('1 results')).toBeInTheDocument();
+    expect(screen.getByText('Page 1 of 1 · 1 results')).toBeInTheDocument();
     expect(nav.push).toHaveBeenCalledWith(expect.stringContaining('roi_min=30'), expect.anything());
     expect(window.sessionStorage.getItem('trader.last-scan.v1')).toContain('roi_min=30');
   });
@@ -179,7 +181,7 @@ describe('TradersScannerPage', () => {
     expect(searchTraders).toHaveBeenCalledTimes(1);
   });
 
-  it('toggles sort direction via header click', async () => {
+  it('toggles sort direction via header click and resets to page 1', async () => {
     const user = userEvent.setup();
     renderPage();
     await screen.findByText('0xaaaa...aaaa');
@@ -188,27 +190,72 @@ describe('TradersScannerPage', () => {
     const pnlHeader = screen.getByRole('columnheader', { name: 'PnL' });
     await user.click(within(pnlHeader).getByRole('button', { name: 'PnL' }));
     expect(searchTraders).toHaveBeenLastCalledWith(
-      expect.objectContaining({ sortBy: 'pnl', sortDirection: 'asc', cursor: undefined }),
+      expect.objectContaining({ sortBy: 'pnl', sortDirection: 'asc', page: 1 }),
       expect.anything(),
     );
   });
 
-  it('appends deduplicated rows on load more', async () => {
+  it('replaces rows on page change (never appends)', async () => {
     const user = userEvent.setup();
     vi.mocked(searchTraders)
-      .mockResolvedValueOnce({ data: [ROW_A], meta: {} })
-      .mockResolvedValueOnce({ data: [ROW_A], meta: { has_more: true, cursor: 'c1' } })
-      .mockResolvedValueOnce({ data: [ROW_A, ROW_B], meta: { has_more: false } });
+      .mockResolvedValueOnce({ data: [ROW_A], meta: { page: 1, total: 2, total_pages: 2 } })
+      .mockResolvedValueOnce({ data: [ROW_A], meta: { page: 1, total: 2, total_pages: 2 } })
+      .mockResolvedValueOnce({ data: [ROW_B], meta: { page: 2, total: 2, total_pages: 2 } });
     renderPage();
     await screen.findByText('0xaaaa...aaaa');
     await applyFilters(user);
-    await user.click(await screen.findByRole('button', { name: 'Load more' }));
+    await user.click(await screen.findByRole('button', { name: 'Page 2' }));
     expect(searchTraders).toHaveBeenLastCalledWith(
-      expect.objectContaining({ cursor: 'c1' }),
+      expect.objectContaining({ page: 2 }),
       expect.anything(),
     );
     expect(await screen.findByText('0xbbbb...bbbb')).toBeInTheDocument();
-    expect(screen.getByText('2 results')).toBeInTheDocument();
+    expect(screen.queryByText('0xaaaa...aaaa')).not.toBeInTheDocument();
+    expect(screen.getByText('Page 2 of 2 · 2 results')).toBeInTheDocument();
+  });
+
+  it('sends no request when clicking the current page', async () => {
+    const user = userEvent.setup();
+    vi.mocked(searchTraders).mockResolvedValue({
+      data: [ROW_A],
+      meta: { page: 1, total: 2, total_pages: 2 },
+    });
+    renderPage();
+    await screen.findByText('0xaaaa...aaaa');
+    await applyFilters(user);
+    const calls = vi.mocked(searchTraders).mock.calls.length;
+    await user.click(screen.getByRole('button', { name: 'Page 1' }));
+    expect(vi.mocked(searchTraders).mock.calls.length).toBe(calls);
+  });
+
+  it('resets to page 1 when filters change', async () => {
+    const user = userEvent.setup();
+    vi.mocked(searchTraders)
+      .mockResolvedValueOnce({ data: [ROW_A], meta: { page: 2, total: 2, total_pages: 2 } })
+      .mockResolvedValue({ data: [ROW_A], meta: { page: 1, total: 1, total_pages: 1 } });
+    nav.params = new URLSearchParams('page=2');
+    renderPage();
+    await screen.findByText('0xaaaa...aaaa');
+    await openFilters(user);
+    await user.type(screen.getByLabelText('ROI from (%)'), '30');
+    await user.click(screen.getByRole('button', { name: 'Apply' }));
+    expect(searchTraders).toHaveBeenLastCalledWith(
+      expect.objectContaining({ page: 1, roi: { min: 30 } }),
+      expect.anything(),
+    );
+  });
+
+  it('falls back to the last page when page exceeds total pages', async () => {
+    vi.mocked(searchTraders)
+      .mockResolvedValueOnce({ data: [], meta: { page: 5, total: 2, total_pages: 2 } })
+      .mockResolvedValueOnce({ data: [ROW_B], meta: { page: 2, total: 2, total_pages: 2 } });
+    nav.params = new URLSearchParams('page=5');
+    renderPage();
+    expect(await screen.findByText('0xbbbb...bbbb')).toBeInTheDocument();
+    expect(searchTraders).toHaveBeenLastCalledWith(
+      expect.objectContaining({ page: 2 }),
+      expect.anything(),
+    );
   });
 
   it('shows error with retry and recovers', async () => {
@@ -300,6 +347,7 @@ describe('TradersScannerPage', () => {
         sortBy: 'pnl',
         sortDirection: 'desc',
         limit: 20,
+        page: 1,
       }),
       expect.anything(),
     );
@@ -340,25 +388,34 @@ describe('TradersScannerPage', () => {
     );
   });
 
-  it('hien "con nua" khi has_more bat', async () => {
+  it('hien Page X of Y khi co total_pages', async () => {
     const user = userEvent.setup();
     vi.mocked(searchTraders).mockResolvedValue({
       data: [ROW_A, ROW_B],
-      meta: { has_more: true, cursor: 'c1' },
+      meta: { page: 2, total: 40, total_pages: 20 },
     });
     renderPage();
     await screen.findByText('0xaaaa...aaaa');
     await applyFilters(user);
-    expect(await screen.findByText(/more available/)).toBeInTheDocument();
-    expect(screen.queryByText('2 results')).not.toBeInTheDocument();
+    expect(await screen.findByText('Page 2 of 20 · 40 results')).toBeInTheDocument();
   });
 
-  it('giữ nhãn results thường khi has_more tắt', async () => {
+  it('giữ nhãn Page 1 of 1 khi khong co phan trang', async () => {
     const user = userEvent.setup();
-    vi.mocked(searchTraders).mockResolvedValue({ data: [ROW_A], meta: { has_more: false } });
+    vi.mocked(searchTraders).mockResolvedValue({ data: [ROW_A], meta: {} });
     renderPage();
     await screen.findByText('0xaaaa...aaaa');
     await applyFilters(user);
-    expect(await screen.findByText('1 results')).toBeInTheDocument();
+    expect(await screen.findByText('Page 1 of 1 · 1 results')).toBeInTheDocument();
+  });
+
+  it('restores page 3 from the URL and searches with it', async () => {
+    nav.params = new URLSearchParams('period=7D&page=3');
+    renderPage();
+    expect(searchTraders).toHaveBeenCalledWith(
+      expect.objectContaining({ period: '7D', page: 3 }),
+      expect.anything(),
+    );
+    expect(await screen.findByText('0xaaaa...aaaa')).toBeInTheDocument();
   });
 });

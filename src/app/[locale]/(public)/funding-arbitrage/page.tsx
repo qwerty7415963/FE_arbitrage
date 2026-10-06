@@ -8,7 +8,7 @@ import { getVenues, getFundingArbitrage } from '@/services/funding-arbitrage';
 import type { Venue, ArbitragePair, SortOption } from '@/types/funding-arbitrage';
 import { VenueSelector } from './venue-selector';
 import { FundingTable } from './funding-table';
-import { Pagination } from './pagination';
+import { Pagination } from '@/components/shared/pagination';
 
 const SORT_OPTIONS: { value: SortOption; label: string }[] = [
   { value: 'rate_8h_desc', label: 'Rate 8h ↓' },

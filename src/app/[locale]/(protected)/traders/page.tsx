@@ -26,6 +26,7 @@ import { FilterSheet } from './_components/filter-sheet';
 import { FilterChips } from './_components/filter-chips';
 import { TraderTable } from '@/components/shared/traders/trader-table';
 import { AddToTraderGroupModal } from '@/components/shared/traders/add-to-trader-group-modal';
+import { Pagination } from '@/components/shared/pagination';
 import {
   DEFAULT_SORT_BY,
   DEFAULT_SORT_DIRECTION,
@@ -79,9 +80,12 @@ function ScannerContent() {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>(
     () => parseTraderSearchParams(searchParams).sortDirection ?? DEFAULT_SORT_DIRECTION,
   );
+  const [currentPage, setCurrentPage] = useState<number>(
+    () => parseTraderSearchParams(searchParams).page ?? 1,
+  );
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
   const [rows, setRows] = useState<PeriodMetrics[]>([]);
-  const [cursor, setCursor] = useState<string | null>(null);
-  const [hasMore, setHasMore] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [error, setError] = useState<SearchError | null>(null);
@@ -93,10 +97,15 @@ function ScannerContent() {
 
   const abortRef = useRef<AbortController | null>(null);
   const requestIdRef = useRef(0);
-  const lastRequestRef = useRef<{ query: TraderSearchQuery; append: boolean } | null>(null);
+  const lastRequestRef = useRef<{ query: TraderSearchQuery } | null>(null);
   const lastWrittenUrlRef = useRef<string | null>(null);
   const initialUrlRef = useRef<string | null>(null);
 
+  // Destructure push: the router object identity is not guaranteed stable
+  // (unit-test mocks return a fresh object per render), but push itself is
+  // a stable function, so callbacks built on it stay stable and the URL-sync
+  // effect below does not re-fire spuriously.
+  const { push: routerPush } = router;
   const syncUrl = useCallback(
     (query: TraderSearchQuery) => {
       const serialized = buildTraderSearchParams(query).toString();
@@ -104,52 +113,68 @@ function ScannerContent() {
       saveLastScan(serialized);
       // Push (not replace) so each search is a history entry and
       // browser back/forward restores prior searches (FE-025).
-      router.push(`/${locale}/traders${serialized ? `?${serialized}` : ''}`, { scroll: false });
+      routerPush(`/${locale}/traders${serialized ? `?${serialized}` : ''}`, { scroll: false });
     },
-    [router, locale],
+    [routerPush, locale],
   );
 
-  const runSearch = useCallback(async (query: TraderSearchQuery, append: boolean) => {
-    const invalid = validateTraderSearch(query);
-    if (invalid) {
-      setError(invalid);
-      setCanRetry(false);
-      return;
-    }
-
-    abortRef.current?.abort();
-    const controller = new AbortController();
-    abortRef.current = controller;
-    const requestId = ++requestIdRef.current;
-    lastRequestRef.current = { query, append };
-
-    setIsSearching(true);
-    setError(null);
-    setCanRetry(false);
-    try {
-      const result = await searchTraders(query, { signal: controller.signal });
-      if (requestIdRef.current !== requestId) return;
-      setRows((prev) => {
-        if (!append) return result.data;
-        const seen = new Set(prev.map((r) => `${r.venue}:${r.wallet_address}`));
-        return [...prev, ...result.data.filter((r) => !seen.has(`${r.venue}:${r.wallet_address}`))];
-      });
-      setCursor(result.meta.cursor ?? null);
-      setHasMore(result.meta.has_more ?? false);
-      setSelected([]);
-      setHasSearched(true);
-    } catch (err) {
-      if (requestIdRef.current !== requestId) return;
-      if (err instanceof ApiError && err.code === 'ABORTED') return;
-      if (err instanceof DOMException && err.name === 'AbortError') return;
-      setError('unknownError');
-      setCanRetry(true);
-    } finally {
-      if (requestIdRef.current === requestId) {
-        setIsSearching(false);
+  const runSearch = useCallback(
+    async function runSearchInner(query: TraderSearchQuery): Promise<void> {
+      const invalid = validateTraderSearch(query);
+      if (invalid) {
+        setError(invalid);
+        setCanRetry(false);
+        return;
       }
-    }
-  }, []);
+
+      abortRef.current?.abort();
+      const controller = new AbortController();
+      abortRef.current = controller;
+      const requestId = ++requestIdRef.current;
+      lastRequestRef.current = { query };
+
+      setIsSearching(true);
+      setError(null);
+      setCanRetry(false);
+      try {
+        const result = await searchTraders(query, { signal: controller.signal });
+        if (requestIdRef.current !== requestId) return;
+        const requestedPage = query.page ?? 1;
+        const serverPage = result.meta.page ?? requestedPage;
+        const serverTotalPages = result.meta.total_pages ?? 1;
+        const serverTotal = result.meta.total ?? result.data.length;
+        const safeTotalPages = Math.max(1, serverTotalPages);
+        // page > totalPages (total > 0): auto-fall to the last page.
+        if (serverTotal > 0 && requestedPage > safeTotalPages) {
+          const fallbackQuery: TraderSearchQuery = { ...query, page: safeTotalPages };
+          setCurrentPage(safeTotalPages);
+          setTotalPages(safeTotalPages);
+          setTotal(serverTotal);
+          syncUrl(fallbackQuery);
+          void runSearchInner(fallbackQuery);
+          return;
+        }
+        // Rows REPLACE on every page change, never append.
+        setRows(result.data);
+        setCurrentPage(serverPage);
+        setTotalPages(safeTotalPages);
+        setTotal(serverTotal);
+        setSelected([]);
+        setHasSearched(true);
+      } catch (err) {
+        if (requestIdRef.current !== requestId) return;
+        if (err instanceof ApiError && err.code === 'ABORTED') return;
+        if (err instanceof DOMException && err.name === 'AbortError') return;
+        setError('unknownError');
+        setCanRetry(true);
+      } finally {
+        if (requestIdRef.current === requestId) {
+          setIsSearching(false);
+        }
+      }
+    },
+    [syncUrl],
+  );
 
   const effectiveQuery = useCallback(
     (overrides: Partial<TraderSearchQuery> = {}): TraderSearchQuery => ({
@@ -157,10 +182,10 @@ function ScannerContent() {
       sortBy,
       sortDirection,
       limit: SCANNER_PAGE_SIZE,
-      cursor: undefined,
+      page: currentPage,
       ...overrides,
     }),
-    [form, sortBy, sortDirection],
+    [form, sortBy, sortDirection, currentPage],
   );
 
   const commitDraft = useCallback(
@@ -171,11 +196,11 @@ function ScannerContent() {
         sortBy,
         sortDirection,
         limit: SCANNER_PAGE_SIZE,
-        cursor: undefined,
+        page: 1,
       };
-      setCursor(null);
+      setCurrentPage(1);
       syncUrl(query);
-      void runSearch(query, false);
+      void runSearch(query);
     },
     [sortBy, sortDirection, syncUrl, runSearch],
   );
@@ -202,11 +227,11 @@ function ScannerContent() {
         sortBy,
         sortDirection,
         limit: SCANNER_PAGE_SIZE,
-        cursor: undefined,
+        page: 1,
       };
-      setCursor(null);
+      setCurrentPage(1);
       syncUrl(query);
-      void runSearch(query, false);
+      void runSearch(query);
     },
     [form, sortBy, sortDirection, syncUrl, runSearch],
   );
@@ -216,24 +241,29 @@ function ScannerContent() {
       const nextDirection = column === sortBy && sortDirection === 'desc' ? 'asc' : 'desc';
       setSortBy(column);
       setSortDirection(nextDirection);
-      const query = effectiveQuery({ sortBy: column, sortDirection: nextDirection });
-      setCursor(null);
+      const query = effectiveQuery({ sortBy: column, sortDirection: nextDirection, page: 1 });
+      setCurrentPage(1);
       syncUrl(query);
-      void runSearch(query, false);
+      void runSearch(query);
     },
     [effectiveQuery, sortBy, sortDirection, syncUrl, runSearch],
   );
 
-  const handleLoadMore = useCallback(() => {
-    if (!cursor) return;
-    const query = effectiveQuery({ cursor });
-    syncUrl(query);
-    void runSearch(query, true);
-  }, [cursor, effectiveQuery, syncUrl, runSearch]);
+  const handlePageChange = useCallback(
+    (page: number) => {
+      const target = Math.min(Math.max(1, Math.trunc(page)), Math.max(1, totalPages));
+      if (target === currentPage) return;
+      const query = effectiveQuery({ page: target });
+      setCurrentPage(target);
+      syncUrl(query);
+      void runSearch(query);
+    },
+    [currentPage, totalPages, effectiveQuery, syncUrl, runSearch],
+  );
 
   const handleRetry = useCallback(() => {
     const last = lastRequestRef.current;
-    if (last) void runSearch(last.query, last.append);
+    if (last) void runSearch(last.query);
   }, [runSearch]);
 
   const handleReset = useCallback(() => {
@@ -243,26 +273,24 @@ function ScannerContent() {
     setForm(nextForm);
     setSortBy(DEFAULT_SORT_BY);
     setSortDirection(DEFAULT_SORT_DIRECTION);
-    setCursor(null);
+    setCurrentPage(1);
     setSelected([]);
     syncUrl({});
     // Reset returns to the default list instead of a blank page.
-    void runSearch(
-      {
-        ...draftToQuery(nextForm),
-        sortBy: DEFAULT_SORT_BY,
-        sortDirection: DEFAULT_SORT_DIRECTION,
-        limit: SCANNER_PAGE_SIZE,
-        cursor: undefined,
-      },
-      false,
-    );
+    void runSearch({
+      ...draftToQuery(nextForm),
+      sortBy: DEFAULT_SORT_BY,
+      sortDirection: DEFAULT_SORT_DIRECTION,
+      limit: SCANNER_PAGE_SIZE,
+      page: 1,
+    });
   }, [syncUrl, runSearch]);
 
   const handleApplySavedSearch = useCallback(
     (savedQuery: TraderSearchQuery) => {
-      const { cursor: _cursor, groupId: _savedGroup, ...rest } = savedQuery;
+      const { cursor: _cursor, page: _page, groupId: _savedGroup, ...rest } = savedQuery;
       void _cursor;
+      void _page;
       void _savedGroup;
       const nextForm = draftFromQuery(rest);
       const query = {
@@ -270,14 +298,14 @@ function ScannerContent() {
         sortBy: rest.sortBy ?? DEFAULT_SORT_BY,
         sortDirection: rest.sortDirection ?? DEFAULT_SORT_DIRECTION,
         limit: SCANNER_PAGE_SIZE,
-        cursor: undefined,
+        page: 1,
       };
       setForm(nextForm);
       setSortBy(query.sortBy ?? DEFAULT_SORT_BY);
       setSortDirection(query.sortDirection ?? DEFAULT_SORT_DIRECTION);
-      setCursor(null);
+      setCurrentPage(1);
       syncUrl(query);
-      void runSearch(query, false);
+      void runSearch(query);
     },
     [syncUrl, runSearch],
   );
@@ -287,24 +315,24 @@ function ScannerContent() {
   const restoreFromParams = useCallback(
     (params: URLSearchParams) => {
       const parsed = parseTraderSearchParams(params);
-      const { cursor: parsedCursor, groupId: _restoredGroup, ...rest } = parsed;
+      const { cursor: _parsedCursor, groupId: _restoredGroup, ...rest } = parsed;
+      void _parsedCursor;
       void _restoredGroup;
       const base = { ...DEFAULT_TRADER_SEARCH_QUERY, ...rest };
       setForm(draftFromQuery(base));
       const nextSortBy = parsed.sortBy ?? DEFAULT_SORT_BY;
       const nextDirection = parsed.sortDirection ?? DEFAULT_SORT_DIRECTION;
+      const nextPage = parsed.page ?? 1;
       setSortBy(nextSortBy);
       setSortDirection(nextDirection);
-      void runSearch(
-        {
-          ...draftToQuery(draftFromQuery(base)),
-          sortBy: nextSortBy,
-          sortDirection: nextDirection,
-          limit: SCANNER_PAGE_SIZE,
-          cursor: parsedCursor,
-        },
-        false,
-      );
+      setCurrentPage(nextPage);
+      void runSearch({
+        ...draftToQuery(draftFromQuery(base)),
+        sortBy: nextSortBy,
+        sortDirection: nextDirection,
+        limit: SCANNER_PAGE_SIZE,
+        page: nextPage,
+      });
     },
     [runSearch],
   );
@@ -345,9 +373,7 @@ function ScannerContent() {
   const showEmpty = hasSearched && !isSearching && rows.length === 0 && !error;
 
   const resultText = hasSearched
-    ? hasMore
-      ? t('resultsCapped', { count: rows.length })
-      : t('results', { count: rows.length })
+    ? t('resultsPaged', { current: currentPage, total: totalPages, count: total })
     : null;
 
   return (
@@ -428,14 +454,12 @@ function ScannerContent() {
               onView={(row) => router.push(`/${locale}/traders/${row.wallet_address}`)}
               onAdd={(row) => openAddForAddresses([row.wallet_address])}
             />
-            {hasMore && (
-              <div className="flex justify-center">
-                <Button variant="outline" onClick={handleLoadMore} disabled={isSearching}>
-                  {isSearching && <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />}
-                  {t('loadMore')}
-                </Button>
-              </div>
-            )}
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+              disabled={isSearching}
+            />
           </>
         )
       )}

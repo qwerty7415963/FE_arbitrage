@@ -36,7 +36,18 @@ export function buildTraderSearchParams(query: TraderSearchQuery): URLSearchPara
   if (query.sortDirection) params.set('sort_direction', query.sortDirection);
   if (query.limit !== undefined) params.set('limit', String(query.limit));
   if (query.cursor) params.set('cursor', query.cursor);
+  if (query.page !== undefined && Number.isInteger(query.page) && query.page > 1) {
+    params.set('page', String(query.page));
+  }
   return params;
+}
+
+export const SCANNER_DEFAULT_PAGE = 1;
+
+export function clampPage(value: unknown): number {
+  const num = typeof value === 'string' ? Number(value.trim()) : Number(value);
+  if (!Number.isInteger(num) || num < 1) return SCANNER_DEFAULT_PAGE;
+  return num;
 }
 
 const LAST_SCAN_KEY = 'trader.last-scan.v1';
@@ -104,5 +115,9 @@ export function parseTraderSearchParams(params: URLSearchParams): TraderSearchQu
   if (limit !== undefined) query.limit = limit;
   const cursor = params.get('cursor');
   if (cursor) query.cursor = cursor;
+  const rawPage = params.get('page');
+  if (rawPage !== null && rawPage.trim() !== '') {
+    query.page = clampPage(rawPage);
+  }
   return query;
 }

@@ -22,7 +22,7 @@ import type { TraderGroup, TraderMember } from '@/types/trader';
 import { CheckIcon, PencilIcon, RadarIcon, Trash2Icon, XIcon } from 'lucide-react';
 import { GroupForm } from '../_components/group-form';
 import { DeleteGroupDialog } from '../_components/delete-group-dialog';
-import { Pagination } from '@/app/[locale]/(public)/funding-arbitrage/pagination';
+import { Pagination } from '@/components/shared/pagination';
 
 const PAGE_SIZE = 10;
 

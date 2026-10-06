@@ -205,8 +205,8 @@
       "errInvalidDateTime": "Thời điểm không hợp lệ"
     },
     "results": "{count} kết quả",
-    "resultsCapped": "{count} trader đầu · còn nữa",
-    "loadMore": "Tải thêm",
+    "pageOf": "Trang {current}/{total}",
+    "resultsPaged": "Trang {current}/{total} · {count} kết quả",
     "loading": "Đang tải...",
     "updating": "Đang cập nhật...",
     "noTraders": "Không tìm thấy trader",

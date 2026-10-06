@@ -30,6 +30,7 @@ export interface TraderSearchQuery {
   sortDirection?: SortDirection;
   limit?: number;
   cursor?: string;
+  page?: number;
 }
 
 export interface TraderSearchRequest {
@@ -57,6 +58,7 @@ export interface TraderSearchRequest {
   sort_direction?: SortDirection;
   limit?: number;
   cursor?: string;
+  page?: number;
 }
 
 export interface PeriodMetrics {
@@ -189,4 +191,5 @@ export const DEFAULT_TRADER_SEARCH_QUERY: TraderSearchQuery = {
   sortBy: DEFAULT_SORT_BY,
   sortDirection: DEFAULT_SORT_DIRECTION,
   limit: SCANNER_PAGE_SIZE,
+  page: 1,
 };

@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import {
   buildTraderSearchParams,
+  clampPage,
   parseTraderSearchParams,
   readLastScan,
   saveLastScan,
@@ -49,6 +50,35 @@ describe('trader-url-state', () => {
       limit: 20,
     };
     expect(parseTraderSearchParams(buildTraderSearchParams(query))).toEqual(query);
+  });
+
+  it('omits page=1 for clean links and keeps page>1', () => {
+    expect(buildTraderSearchParams({ page: 1 }).get('page')).toBeNull();
+    expect(buildTraderSearchParams({}).get('page')).toBeNull();
+    expect(buildTraderSearchParams({ page: 3 }).get('page')).toBe('3');
+  });
+
+  it('round-trips page>1', () => {
+    const query: TraderSearchQuery = { period: '30D', page: 3 };
+    expect(parseTraderSearchParams(buildTraderSearchParams(query))).toEqual(query);
+  });
+
+  it('clamps invalid page params to 1', () => {
+    expect(parseTraderSearchParams(new URLSearchParams('page=0'))).toEqual({ page: 1 });
+    expect(parseTraderSearchParams(new URLSearchParams('page=-2'))).toEqual({ page: 1 });
+    expect(parseTraderSearchParams(new URLSearchParams('page=abc'))).toEqual({ page: 1 });
+    expect(parseTraderSearchParams(new URLSearchParams('page=2.5'))).toEqual({ page: 1 });
+    expect(parseTraderSearchParams(new URLSearchParams(''))).toEqual({});
+    expect(parseTraderSearchParams(new URLSearchParams('page=3'))).toEqual({ page: 3 });
+  });
+
+  it('clampPage defaults invalid values to 1', () => {
+    expect(clampPage(0)).toBe(1);
+    expect(clampPage(-1)).toBe(1);
+    expect(clampPage('abc')).toBe(1);
+    expect(clampPage('  ')).toBe(1);
+    expect(clampPage(2)).toBe(2);
+    expect(clampPage('3')).toBe(3);
   });
 
   it('drops invalid values when parsing', () => {

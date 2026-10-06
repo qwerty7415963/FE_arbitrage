@@ -37,6 +37,7 @@ describe('traders service', () => {
           sortDirection: 'asc',
           limit: 20,
           cursor: 'c1',
+          page: 2,
         }),
       ).toEqual({
         venue: 'hyperliquid',
@@ -49,6 +50,7 @@ describe('traders service', () => {
         sort_direction: 'asc',
         limit: 20,
         cursor: 'c1',
+        page: 2,
       });
     });
 
@@ -62,7 +64,7 @@ describe('traders service', () => {
       vi.mocked(apiClient.apiClient).mockResolvedValue({
         success: true,
         data: [{ wallet_address: '0x1' }],
-        meta: { has_more: true, cursor: 'next' },
+        meta: { page: 1, total: 1, total_pages: 1 },
       });
       const result = await searchTraders({ roi: { min: 30 } });
       const [url, options] = vi.mocked(apiClient.apiClient).mock.calls[0] as [string, RequestInit];
@@ -75,8 +77,20 @@ describe('traders service', () => {
         sort_by: 'pnl',
         sort_direction: 'desc',
         limit: 50,
+        page: 1,
       });
-      expect(result.meta).toEqual({ has_more: true, cursor: 'next' });
+      expect(result.meta).toEqual({ page: 1, total: 1, total_pages: 1 });
+    });
+
+    it('sends the requested page', async () => {
+      vi.mocked(apiClient.apiClient).mockResolvedValue({
+        success: true,
+        data: [],
+        meta: { page: 2, total: 40, total_pages: 2 },
+      });
+      await searchTraders({ page: 2 });
+      const [, options] = vi.mocked(apiClient.apiClient).mock.calls[0] as [string, RequestInit];
+      expect(JSON.parse(options.body as string)).toMatchObject({ page: 2 });
     });
 
     it('throws when no data returned', async () => {

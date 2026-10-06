@@ -48,23 +48,29 @@ async function applyFilters(page: Page) {
 }
 
 test.describe('Performance smoke', () => {
-  test('renders 100 rows without blocking', async ({ page }) => {
-    const rows = Array.from({ length: 100 }, (_, i) => makeTrader(i));
+  test('renders a full numbered page without blocking', async ({ page }) => {
+    // 100 rows are now 5 numbered pages (20/page): the first page renders
+    // 20 rows with "Page 1 of 5" instead of all 100 at once.
+    const rows = Array.from({ length: 20 }, (_, i) => makeTrader(i));
     await mockGroups(page);
     await page.route('**/api/v1/traders/search', (route) =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ success: true, data: rows, meta: { has_more: false } }),
+        body: JSON.stringify({
+          success: true,
+          data: rows,
+          meta: { page: 1, total: 100, total_pages: 5 },
+        }),
       }),
     );
     await page.goto('/en/traders');
     const started = Date.now();
     await applyFilters(page);
-    await expect(page.getByText('100 results')).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText('Page 1 of 5 · 100 results')).toBeVisible({ timeout: 15000 });
     const elapsed = Date.now() - started;
     expect(elapsed).toBeLessThan(15000);
-    await expect(page.locator('tbody tr')).toHaveCount(100);
+    await expect(page.locator('tbody tr')).toHaveCount(20);
   });
 
   test('slow search keeps old rows visible with progress', async ({ page }) => {

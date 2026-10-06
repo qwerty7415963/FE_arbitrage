@@ -50,6 +50,7 @@ export function buildTraderSearchRequest(query: TraderSearchQuery): TraderSearch
   if (query.sortDirection) body.sort_direction = query.sortDirection;
   if (query.limit !== undefined) body.limit = query.limit;
   if (query.cursor) body.cursor = query.cursor;
+  if (query.page !== undefined) body.page = query.page;
   return body;
 }
 
@@ -71,6 +72,7 @@ export async function searchTraders(
         sortBy: query.sortBy ?? DEFAULT_SORT_BY,
         sortDirection: query.sortDirection ?? DEFAULT_SORT_DIRECTION,
         limit: query.limit ?? SEARCH_LIMIT_DEFAULT,
+        page: query.page ?? 1,
       }),
     ),
     signal: options.signal,

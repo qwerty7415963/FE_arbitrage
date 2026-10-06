@@ -531,30 +531,36 @@ test.describe('Wallet Scanner', () => {
     expect(bodies[2]).toMatchObject({ sort_by: 'pnl', sort_direction: 'asc' });
   });
 
-  test('cursor pagination appends rows without duplicates', async ({ page }) => {
+  test('numbered pagination replaces rows without duplicates', async ({ page }) => {
     await seedAuth(page);
     const bodies: Record<string, unknown>[] = [];
     const second = { ...mockTrader, wallet_address: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb' };
-    let calls = 0;
     await page.route('**/api/v1/traders/search', (route) => {
-      bodies.push(JSON.parse(route.request().postData() || '{}'));
-      calls += 1;
-      const data = calls <= 2 ? [mockTrader] : [mockTrader, second];
-      const meta = calls === 2 ? { has_more: true, cursor: 'c1' } : { has_more: false };
+      const body = JSON.parse(route.request().postData() || '{}');
+      bodies.push(body);
+      const requestedPage = typeof body.page === 'number' ? body.page : 1;
+      const data = requestedPage === 2 ? [second] : [mockTrader];
       return route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ success: true, data, meta }),
+        body: JSON.stringify({
+          success: true,
+          data,
+          meta: { page: requestedPage, total: 2, total_pages: 2 },
+        }),
       });
     });
     await mockGroupsRoute(page);
     await page.goto('/en/traders');
     await applyFilters(page);
     await expect(page.getByText('0x1234...5678')).toBeVisible();
-    await page.getByRole('button', { name: 'Load more' }).click();
+    await expect(page.getByText('Page 1 of 2 · 2 results')).toBeVisible();
+    await page.getByRole('button', { name: 'Page 2' }).click();
     await expect(page.getByText('0xbbbb...bbbb')).toBeVisible();
-    expect(bodies[2]).toMatchObject({ cursor: 'c1' });
-    await expect(page.getByText('0x1234...5678')).toHaveCount(1);
+    expect(bodies[bodies.length - 1]).toMatchObject({ page: 2 });
+    await expect(page.getByText('0x1234...5678')).toHaveCount(0);
+    await expect(page.getByText('Page 2 of 2 · 2 results')).toBeVisible();
+    await expect(page).toHaveURL(/page=2/);
   });
 
   test('empty state offers reset filters', async ({ page }) => {

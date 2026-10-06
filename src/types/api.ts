@@ -16,4 +16,8 @@ export interface Meta {
   cursor?: string;
   has_more?: boolean;
   limit?: number;
+  offset?: number;
+  page?: number;
+  total?: number;
+  total_pages?: number;
 }

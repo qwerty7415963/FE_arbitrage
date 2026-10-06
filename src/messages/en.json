@@ -205,8 +205,8 @@
       "errInvalidDateTime": "Invalid date and time"
     },
     "results": "{count} results",
-    "resultsCapped": "{count} shown, more available",
-    "loadMore": "Load more",
+    "pageOf": "Page {current} of {total}",
+    "resultsPaged": "Page {current} of {total} · {count} results",
     "loading": "Loading...",
     "updating": "Updating...",
     "noTraders": "No traders found",

@@ -50,18 +50,19 @@
 | `traders/_components/filter-chips.tsx`                | `tests/unit/components/filter-chips.test.tsx`              | 6       | ✅     |
 | `components/add-to-trader-group-modal.tsx`            | `tests/unit/components/add-to-trader-group-modal.test.tsx` | 5       | ✅     |
 | `components/saved-searches.tsx`                       | `tests/unit/components/saved-searches.test.tsx`            | 3       | ✅     |
-| `app/[locale]/(protected)/traders/page.tsx`           | `tests/unit/components/trader-scanner-page.test.tsx`       | 16      | ✅     |
+| `app/[locale]/(protected)/traders/page.tsx`           | `tests/unit/components/trader-scanner-page.test.tsx`       | 20      | ✅     |
 | `app/[locale]/(protected)/traders/[address]/page.tsx` | `tests/unit/components/trader-detail-page.test.tsx`        | 8       | ✅     |
 | `components/copy-address.tsx`                         | `tests/unit/components/copy-address.test.tsx`              | 2       | ✅     |
-| `services/traders.ts`                                 | `tests/unit/services/traders.test.ts`                      | 11      | ✅     |
+| `services/traders.ts`                                 | `tests/unit/services/traders.test.ts`                      | 12      | ✅     |
 | `lib/trader-saved-searches.ts`                        | `tests/unit/lib/trader-saved-searches.test.ts`             | 4       | ✅     |
 | `lib/trader-validation.ts`                            | `tests/unit/lib/trader-validation.test.ts`                 | 13      | ✅     |
 | `lib/trader-format.ts`                                | `tests/unit/lib/trader-format.test.ts`                     | 12      | ✅     |
-| `lib/trader-url-state.ts`                             | `tests/unit/lib/trader-url-state.test.ts`                  | 6       | ✅     |
+| `lib/trader-url-state.ts`                             | `tests/unit/lib/trader-url-state.test.ts`                  | 10      | ✅     |
+| `components/shared/pagination.tsx`                    | `tests/unit/components/pagination.test.tsx`                | 5       | ✅     |
 | `lib/trader-filter-draft.ts`                          | `tests/unit/lib/trader-filter-draft.test.ts`               | 9       | ✅     |
 | `components/funding-table.tsx`                        | `tests/unit/components/funding-table.test.tsx`             | 26      | ✅     |
 | `infrastructure/api-client.ts`                        | `tests/unit/infrastructure/api-client.test.ts`             | 14      | ✅     |
-| **Total**                                             |                                                            | **224** |        |
+| **Total**                                             |                                                            | **238** |        |
 
 ### Test Details
 
@@ -113,20 +114,21 @@
 | getFundingArbitrage no data        | Empty response                |
 | getFundingArbitrage API error      | Network error                 |
 
-#### `services/traders.ts` (10 tests)
+#### `services/traders.ts` (12 tests)
 
-| Test                          | Description                 |
-| ----------------------------- | --------------------------- |
-| buildSearchRequest maps       | snake_case, omits undefined |
-| buildSearchRequest empty      | Empty body                  |
-| searchTraders POSTs defaults  | venue/period/sort/limit     |
-| searchTraders no data         | Empty response              |
-| fetchTraderDetail GETs        | venue + period params       |
-| getTraderGroup GETs           | GET trader-groups/{id}      |
-| getTraderGroup missing        | Empty response              |
-| groups CRUD + members         | added/removed counts        |
-| members period param          | default 30D + custom        |
-| patch members reports updated | PATCH → {updated}           |
+| Test                          | Description                    |
+| ----------------------------- | ------------------------------ |
+| buildSearchRequest maps       | snake_case, omits undefined    |
+| buildSearchRequest empty      | Empty body                     |
+| searchTraders POSTs defaults  | venue/period/sort/limit/page:1 |
+| searchTraders sends page      | page:2 in body                 |
+| searchTraders no data         | Empty response                 |
+| fetchTraderDetail GETs        | venue + period params          |
+| getTraderGroup GETs           | GET trader-groups/{id}         |
+| getTraderGroup missing        | Empty response                 |
+| groups CRUD + members         | added/removed counts           |
+| members period param          | default 30D + custom           |
+| patch members reports updated | PATCH → {updated}              |
 
 #### `components/group-form.tsx` (7 tests)
 
@@ -234,26 +236,40 @@
 | long name + duplicate      | nameTooLong, GROUP-002 → inline   |
 | zero additions reported    | Added 0 for duplicates (FE-016)   |
 
-#### `traders/page.tsx` trader scanner (16 tests)
+#### `traders/page.tsx` trader scanner (20 tests)
 
-| Test                         | Description                            |
-| ---------------------------- | -------------------------------------- |
-| auto-search on mount         | Controls visible, defaults POST, rows  |
-| does not fetch groups        | No listTraderGroups call on load       |
-| search merges defaults + URL | venue/period/sort/limit, push URL      |
-| skeleton on first search     | role=status while loading (FE-010)     |
-| invalid min/max blocks       | Error, exactly 1 call (mount)          |
-| non-numeric blocks           | invalidNumber, exactly 1 call (mount)  |
-| header toggles sort          | desc → asc, cursor reset               |
-| load more appends deduped    | cursor sent, count grows               |
-| error + retry recovers       | Banner, Retry → rows                   |
-| keep rows + Updating         | Old rows visible during search         |
-| latest overlapping wins      | Stale response ignored (FE-034)        |
-| reset re-runs default search | Form, rows, bare URL, re-fetch         |
-| URL restore + auto-search    | Params → form + search                 |
-| ignores ?group_id=           | Param stripped, search without groupId |
-| capped count when has_more   | "N shown, more available"              |
-| plain count when not capped  | "N results" kept                       |
+| Test                          | Description                                 |
+| ----------------------------- | ------------------------------------------- |
+| auto-search on mount (page 1) | Controls visible, defaults POST incl page:1 |
+| does not fetch groups         | No listTraderGroups call on load            |
+| search merges defaults + URL  | venue/period/sort/limit/page:1, push URL    |
+| skeleton on first search      | role=status while loading (FE-010)          |
+| invalid min/max blocks        | Error, exactly 1 call (mount)               |
+| non-numeric blocks            | invalidNumber, exactly 1 call (mount)       |
+| header toggles sort           | desc → asc, page reset to 1                 |
+| page change replaces rows     | page:2 sent, rows replaced (never append)   |
+| current-page click no-op      | No request when clicking the active page    |
+| filter change resets to 1     | ROI apply re-searches with page:1           |
+| beyond-total falls back       | page=5 → empty → auto re-search last page   |
+| error + retry recovers        | Banner, Retry → rows                        |
+| keep rows + Updating          | Old rows visible during search              |
+| latest overlapping wins       | Stale response ignored (FE-034)             |
+| reset re-runs default search  | Form, rows, bare URL, re-fetch page:1       |
+| URL restore + auto-search     | Params → form + search                      |
+| ignores ?group_id=            | Param stripped, search without groupId      |
+| Page X of Y count             | "Page 2 of 20 · 40 results"                 |
+| Page 1 of 1 fallback          | "Page 1 of 1 · 1 results" when no meta      |
+| restores ?page=3              | Deep link searches with page:3              |
+
+#### `components/shared/pagination.tsx` (5 tests)
+
+| Test                         | Description                         |
+| ---------------------------- | ----------------------------------- |
+| single page renders nothing  | totalPages<=1 → null                |
+| numbers + aria-current       | Active page has aria-current="page" |
+| ellipsis for long ranges     | 10 pages collapse with …            |
+| prev/next disabled at bounds | First/last page edge states         |
+| disabled while loading       | All buttons disabled                |
 
 #### `traders/[address]/page.tsx` trader detail (8 tests)
 
@@ -329,62 +345,72 @@
 
 ### Test Matrix
 
-| #   | File                        | Flow                    | Steps                             | Expected                      |
-| --- | --------------------------- | ----------------------- | --------------------------------- | ----------------------------- |
-| E1  | `protected.spec.ts`         | Settings open access    | Navigate /settings                | Settings renders, no redirect |
-| E2  | `protected.spec.ts`         | Groups open access      | Navigate /groups                  | Groups renders, no redirect   |
-| E3  | `protected.spec.ts`         | Mutation needs wallet   | Create group unauthenticated      | Connect wallet modal opens    |
-| E4  | `funding-arbitrage.spec.ts` | Page renders            | Navigate /funding-arbitrage       | Title + buttons visible       |
-| E5  | `funding-arbitrage.spec.ts` | Venue selector opens    | Click "Select venues"             | Dropdown with venues shown    |
-| E6  | `funding-arbitrage.spec.ts` | Select All works        | Click "Select All"                | "10 venues" displayed         |
-| E7  | `funding-arbitrage.spec.ts` | Clear works             | Click "Clear"                     | "Select venues" displayed     |
-| E8  | `funding-arbitrage.spec.ts` | Search disabled         | No venues selected                | Search button disabled        |
-| E9  | `groups.spec.ts`            | Groups page renders     | Navigate /groups                  | Title + Create visible        |
-| E10 | `groups.spec.ts`            | Empty state             | Mock [] → /groups                 | "No groups yet"               |
-| E11 | `groups.spec.ts`            | Create validates blank  | Open dialog → blank name → submit | "Group name is required"      |
-| E12 | `groups.spec.ts`            | Lists groups            | Mock [Main] → /groups             | Name + count visible          |
-| E13 | `groups.spec.ts`            | Error retry             | Mock 500 → /groups                | Retry button visible          |
-| E14 | `groups.spec.ts`            | Detail lists members    | Mock group+members → /groups/g1   | Address row, no Scan needed   |
-| E15 | `groups.spec.ts`            | Member name + alias     | Mock member with alias            | Display name + alias shown    |
-| E16 | `groups.spec.ts`            | Empty members           | Mock [] members                   | No members yet                |
-| E17 | `groups.spec.ts`            | Remove member refetch   | DELETE members → {removed:1}      | DELETE sent, list reloads     |
-| E18 | `groups.spec.ts`            | Links to scanner        | Open /groups/g1                   | Link /traders?group=g1        |
-| E19 | `groups.spec.ts`            | Scanner scans to list   | POST search mock → Search         | Name + address, body defaults |
-| E20 | `groups.spec.ts`            | Invalid min/max blocks  | ROI 5/1 → Search                  | Error, no API call            |
-| E21 | `groups.spec.ts`            | Non-numeric blocks      | PnL "abc" → Search                | invalidNumber, no API call    |
-| E22 | `groups.spec.ts`            | Header sorts desc→asc   | Click PnL header                  | 2nd body sort_direction asc   |
-| E23 | `groups.spec.ts`            | Cursor appends deduped  | Load more with cursor c1          | 2 rows, A shown once          |
-| E24 | `groups.spec.ts`            | Empty + reset filters   | Mock [] → Search → Reset          | No traders, form cleared      |
-| E25 | `groups.spec.ts`            | Error + retry recovers  | 500 → Retry                       | Rows after retry              |
-| E26 | `groups.spec.ts`            | Group needs auth        | Group + 401 search                | Auth message shown            |
-| E27 | `groups.spec.ts`            | Add modal from scan     | Tick + Add to group (1)           | Modal → Added 1               |
-| E28 | `groups.spec.ts`            | Scan without wallet     | No auth → Search                  | Rows + group hint, no modal   |
-| E29 | `groups.spec.ts`            | Save search persists    | Save "My 7D" → reload → apply     | Chip kept, period 7D, rows    |
-| E30 | `groups.spec.ts`            | URL restores on refresh | ?period=7D&roi_min=30             | Form + auto search            |
-| E31 | `groups.spec.ts`            | Venue/period in body    | Period 7D → Search                | venue + period in POST body   |
-| E32 | `groups.spec.ts`            | Detail open + back      | View → detail → Back              | Filters + rows preserved      |
-| E33 | `groups.spec.ts`            | Detail period tabs      | Click 7D on detail                | period=7D refetch             |
-| E34 | `groups.spec.ts`            | Detail 404              | Direct detail URL, 404 mock       | Trader not found              |
-| E35 | `groups.spec.ts`            | Create group dialog     | Fill name+desc → Create           | Row appears in list           |
-| E36 | `groups.spec.ts`            | Edit group name         | Edit → rename → Save              | New name in list              |
-| E37 | `groups.spec.ts`            | Delete with warning     | Delete → confirm text → confirm   | Membership text, row gone     |
-| E38 | `groups.spec.ts`            | Group+ROI combine       | Group + ROI/PnL → Search          | group_id + mins in body       |
-| E39 | `groups.spec.ts`            | Back restores search    | Search A → B → back               | Form A + refetch roi_min      |
-| E40 | `groups.spec.ts`            | Network fail + retry    | Abort → error → Retry             | Filters kept, rows recover    |
-| E41 | `groups.spec.ts`            | Stale rows inspectable  | Stale status mock → Search        | Stale text + data visible     |
-| E42 | `groups.spec.ts`            | Detail inline create    | Add → new group → Add 1           | Added 1                       |
-| E43 | `groups.spec.ts`            | Stale detail            | Stale + partial mock              | Stale + Partial + data        |
-| E44 | `groups.spec.ts`            | Add/remove member flow  | 2 members → remove 1              | Count + table update          |
-| E45 | `groups.spec.ts`            | Groups 500 while authed | 500 → error + Retry → 200         | No auth hint, Main in Group   |
+| #   | File                         | Flow                    | Steps                             | Expected                           |
+| --- | ---------------------------- | ----------------------- | --------------------------------- | ---------------------------------- |
+| E1  | `protected.spec.ts`          | Settings open access    | Navigate /settings                | Settings renders, no redirect      |
+| E2  | `protected.spec.ts`          | Groups open access      | Navigate /groups                  | Groups renders, no redirect        |
+| E3  | `protected.spec.ts`          | Mutation needs wallet   | Create group unauthenticated      | Connect wallet modal opens         |
+| E4  | `funding-arbitrage.spec.ts`  | Page renders            | Navigate /funding-arbitrage       | Title + buttons visible            |
+| E5  | `funding-arbitrage.spec.ts`  | Venue selector opens    | Click "Select venues"             | Dropdown with venues shown         |
+| E6  | `funding-arbitrage.spec.ts`  | Select All works        | Click "Select All"                | "10 venues" displayed              |
+| E7  | `funding-arbitrage.spec.ts`  | Clear works             | Click "Clear"                     | "Select venues" displayed          |
+| E8  | `funding-arbitrage.spec.ts`  | Search disabled         | No venues selected                | Search button disabled             |
+| E9  | `groups.spec.ts`             | Groups page renders     | Navigate /groups                  | Title + Create visible             |
+| E10 | `groups.spec.ts`             | Empty state             | Mock [] → /groups                 | "No groups yet"                    |
+| E11 | `groups.spec.ts`             | Create validates blank  | Open dialog → blank name → submit | "Group name is required"           |
+| E12 | `groups.spec.ts`             | Lists groups            | Mock [Main] → /groups             | Name + count visible               |
+| E13 | `groups.spec.ts`             | Error retry             | Mock 500 → /groups                | Retry button visible               |
+| E14 | `groups.spec.ts`             | Detail lists members    | Mock group+members → /groups/g1   | Address row, no Scan needed        |
+| E15 | `groups.spec.ts`             | Member name + alias     | Mock member with alias            | Display name + alias shown         |
+| E16 | `groups.spec.ts`             | Empty members           | Mock [] members                   | No members yet                     |
+| E17 | `groups.spec.ts`             | Remove member refetch   | DELETE members → {removed:1}      | DELETE sent, list reloads          |
+| E18 | `groups.spec.ts`             | Links to scanner        | Open /groups/g1                   | Link /traders?group=g1             |
+| E19 | `groups.spec.ts`             | Scanner scans to list   | POST search mock → Search         | Name + address, body defaults      |
+| E20 | `groups.spec.ts`             | Invalid min/max blocks  | ROI 5/1 → Search                  | Error, no API call                 |
+| E21 | `groups.spec.ts`             | Non-numeric blocks      | PnL "abc" → Search                | invalidNumber, no API call         |
+| E22 | `groups.spec.ts`             | Header sorts desc→asc   | Click PnL header                  | 2nd body sort_direction asc        |
+| E23 | `groups.spec.ts`             | Numbered page replaces  | Page 2 click, page:2 in body      | 2nd row only, Page 2 of 2, ?page=2 |
+| E24 | `groups.spec.ts`             | Empty + reset filters   | Mock [] → Search → Reset          | No traders, form cleared           |
+| E25 | `groups.spec.ts`             | Error + retry recovers  | 500 → Retry                       | Rows after retry                   |
+| E26 | `groups.spec.ts`             | Group needs auth        | Group + 401 search                | Auth message shown                 |
+| E27 | `groups.spec.ts`             | Add modal from scan     | Tick + Add to group (1)           | Modal → Added 1                    |
+| E28 | `groups.spec.ts`             | Scan without wallet     | No auth → Search                  | Rows + group hint, no modal        |
+| E29 | `groups.spec.ts`             | Save search persists    | Save "My 7D" → reload → apply     | Chip kept, period 7D, rows         |
+| E30 | `groups.spec.ts`             | URL restores on refresh | ?period=7D&roi_min=30             | Form + auto search                 |
+| E31 | `groups.spec.ts`             | Venue/period in body    | Period 7D → Search                | venue + period in POST body        |
+| E32 | `groups.spec.ts`             | Detail open + back      | View → detail → Back              | Filters + rows preserved           |
+| E33 | `groups.spec.ts`             | Detail period tabs      | Click 7D on detail                | period=7D refetch                  |
+| E34 | `groups.spec.ts`             | Detail 404              | Direct detail URL, 404 mock       | Trader not found                   |
+| E35 | `groups.spec.ts`             | Create group dialog     | Fill name+desc → Create           | Row appears in list                |
+| E36 | `groups.spec.ts`             | Edit group name         | Edit → rename → Save              | New name in list                   |
+| E37 | `groups.spec.ts`             | Delete with warning     | Delete → confirm text → confirm   | Membership text, row gone          |
+| E38 | `groups.spec.ts`             | Group+ROI combine       | Group + ROI/PnL → Search          | group_id + mins in body            |
+| E39 | `groups.spec.ts`             | Back restores search    | Search A → B → back               | Form A + refetch roi_min           |
+| E40 | `groups.spec.ts`             | Network fail + retry    | Abort → error → Retry             | Filters kept, rows recover         |
+| E41 | `groups.spec.ts`             | Stale rows inspectable  | Stale status mock → Search        | Stale text + data visible          |
+| E42 | `groups.spec.ts`             | Detail inline create    | Add → new group → Add 1           | Added 1                            |
+| E43 | `groups.spec.ts`             | Stale detail            | Stale + partial mock              | Stale + Partial + data             |
+| E44 | `groups.spec.ts`             | Add/remove member flow  | 2 members → remove 1              | Count + table update               |
+| E45 | `groups.spec.ts`             | Groups 500 while authed | 500 → error + Retry → 200         | No auth hint, Main in Group        |
+| E46 | `scanner-pagination.spec.ts` | Page click replaces     | Page 2 → page:2 in body           | Trader 21 only, ?page=2            |
+| E47 | `scanner-pagination.spec.ts` | Deep link ?page=3       | Goto ?page=3                      | page:3 sent, Page 3 current        |
+| E48 | `scanner-pagination.spec.ts` | Back/forward restores   | Page 2 → back → forward           | Trader 1 → 2 → 1 → 2               |
+| E49 | `scanner-pagination.spec.ts` | Beyond-total clamps     | Goto ?page=9 (2 pages)            | Falls to page 2, Page 2 of 2       |
+| E50 | `scanner-pagination.spec.ts` | Rapid 2→3 latest wins   | Click 2 then 3 (2 delayed)        | Trader 3 only                      |
+| E51 | `scanner-pagination.spec.ts` | 500 on page 2 + retry   | Page 2 fails → Retry              | Trader 2, page:2 kept, ?page=2     |
+| E52 | `scanner-pagination.spec.ts` | Invalid ?page= clamps   | Goto ?page=0                      | page:1 sent                        |
+| E53 | `scanner-pagination.spec.ts` | Axe on paginated list   | wcag2a+aa                         | No violations                      |
+| E54 | `scanner-pagination.spec.ts` | Keyboard pagination     | Focus Page 2 + Enter              | Trader 2 visible                   |
+| E55 | `scanner-pagination.spec.ts` | Narrow no overflow      | 640px, 10 pages                   | Pagination visible, no overflow    |
 
 ### Accessibility / Keyboard / Visual / Performance
 
-| ID   | File                    | Coverage                                                                                                                                            |
-| ---- | ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| A1-9 | `accessibility.spec.ts` | axe wcag2a+aa: scanner (default/results/error), detail, groups+dialog, add modal, open filter sheet ×2 locales + active chip                        |
-| K1-5 | `keyboard.spec.ts`      | Tab order, Enter-to-sort, focus trap + Escape, filter sheet Escape + focus return, narrow scroll                                                    |
-| V1-9 | `visual.spec.ts`        | Baselines (frozen clock): scanner ×4, filter sheet open (whole-page viewport, not `fullPage`; sheet portals to `<body>`), detail, groups, narrow ×2 |
-| P1-3 | `performance.spec.ts`   | 100 rows <15s, slow-search keeps rows, 500-member group pages                                                                                       |
+| ID   | File                    | Coverage                                                                                                                                                                                                                                                                                                                                                                 |
+| ---- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| A1-9 | `accessibility.spec.ts` | axe wcag2a+aa: scanner (default/results/error), detail, groups+dialog, add modal, open filter sheet ×2 locales + active chip                                                                                                                                                                                                                                             |
+| K1-5 | `keyboard.spec.ts`      | Tab order, Enter-to-sort, focus trap + Escape, filter sheet Escape + focus return, narrow scroll                                                                                                                                                                                                                                                                         |
+| V1-9 | `visual.spec.ts`        | Baselines (frozen clock): scanner ×4, filter sheet open (whole-page viewport, not `fullPage`; sheet portals to `<body>`), detail, groups, narrow ×2 — STALE after numbered pagination (Load more gone, `resultsPaged` copy): `scanner-results.png` + `scanner-results-narrow.png` (+ `scanner-default.png` count copy) need per-image review before `--update-snapshots` |
+| P1-3 | `performance.spec.ts`   | Numbered page (20 rows, Page 1 of 5) <15s, slow-search keeps rows, 500-member group pages                                                                                                                                                                                                                                                                                |
 
 ---
 
@@ -398,7 +424,7 @@
 | FE-004 | Reset filters             | unit reset + E24                                     |
 | FE-005 | Period switch             | E31 (period in body); cursor reset in unit sort test |
 | FE-006 | Server sort               | unit header toggle + E22                             |
-| FE-007 | Cursor pagination         | unit load-more + E23                                 |
+| FE-007 | Numbered pagination       | unit page replace/no-op/reset/clamp + E23 + E46-E55  |
 | FE-008 | Empty state               | unit (page) + E24                                    |
 | FE-009 | Scanner error             | unit error + E25                                     |
 | FE-010 | Loading state             | unit skeleton + P2 perf transition                   |
@@ -505,23 +531,24 @@ reviewing diffs — never blindly.
 
 ## VI. Changelog
 
-| Date       | Change                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | Author |
-| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
-| 2026-09-19 | Initial test cases                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | —      |
-| 2026-09-29 | Saved searches (localStorage) + public scan tests                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | —      |
-| 2026-09-30 | Filter-config integration: DEX dropdown + config-driven filters                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | —      |
-| 2026-09-30 | Human-readable labels: metric/sort/operator/order options + i18n frame labels                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | —      |
-| 2026-10-01 | P0 trader foundation: types/service/validation/format/url-state (spec v1.1)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | —      |
-| 2026-10-01 | P1 scanner redo: filter grid, header sort, cursor pages, URL state, trader-groups modal (spec v1.1)                                                                                                                                                                                                                                                                                                                                                                                                                                                               | —      |
-| 2026-10-02 | P2 trader detail: header/tabs/cards/long-short/freshness/add-to-group (spec v1.1)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | —      |
-| 2026-10-02 | Cutover groups to trader-groups API: list/form/delete/detail, remove dead wallets/groups code                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | —      |
-| 2026-10-03 | P4 a11y/visual/perf/keyboard suites + P5 FE-040 gap closure (spec v1.1 exit criteria)                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | —      |
-| 2026-10-03 | F1 member metrics columns + F2 inline alias/note edit via PATCH members                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | —      |
-| 2026-10-05 | Phase 4 scanner header: period segmented, venue badge, group select, filters toggle, sort select, rank column, mono numerals, status moved to identity cell (9 new unit tests, 3 visual baselines refreshed)                                                                                                                                                                                                                                                                                                                                                      | —      |
-| 2026-10-05 | Header bugfix: numeric headers right-aligned, header Sort select removed (table sort only), groups refetch on auth change with 401/403 vs load-error split + Retry (E45)                                                                                                                                                                                                                                                                                                                                                                                          | —      |
-| 2026-10-05 | Phase 5 sheet: metric filters moved from inline panel into `filter-sheet.tsx` (3 clusters, 9 metrics, presets + Custom, per-field validation, group cluster only disabled when unauthenticated). New `filter-sheet.test.tsx` (10 tests); deferred 5.4 reset/period behaviour and 5.5 saved-search move to Batch 5B                                                                                                                                                                                                                                                | —      |
-| 2026-10-05 | Phase 5B chips + saved searches: `filter-chips.tsx` shows one short key-value chip per active metric filter (4 visible + `+N`), each `×` removes exactly that filter and re-runs; sheet Reset now clears only the 9 metric filters, keeps Period/Venue/Group, and re-runs; `saved-searches.tsx` renders as a "Saved filters" fieldset cluster inside the sheet. New `filter-chips.test.tsx` (6 tests), saved-searches +1, scanner reset test repointed to the empty-state full reset                                                                              | —      |
-| 2026-10-05 | Phase 5 review fixes: sheet width override uses the base's `data-[side=right]:sm:` modifier order so `cn` drops `sm:max-w-sm` (400px honored); `SheetContent` gains `showOverlay` (defaults true) and the non-modal filter sheet renders no backdrop so page controls stay clickable; overlay honors `prefers-reduced-motion`; header Group select now commits + re-runs the search like Period; `deriveCustom` reopens an applied preset as a preset. filter-sheet +2, scanner page +1                                                                           | —      |
-| 2026-10-05 | Phase 5C (5.7 non-visual): accessibility +3 (open filter sheet axe-clean in en + vi, and with an active filter chip) and keyboard +1 (Escape closes the sheet and returns focus to the header Filters button). Deleted dead `trader-filters.tsx` + its 6-test spec (no `src` importer; replaced by `filter-sheet.tsx`). Unit total 237 → 231                                                                                                                                                                                                                      | —      |
-| 2026-10-06 | Scanner direction change (human-approved): header Group select and the sheet Group cluster are removed, so the earlier group-select entries above no longer describe the product. Entering the scanner always searches — URL params restore that search, an empty URL loads the default list (venue hyperliquid, period 30D, sort pnl desc), `?group_id=` is stripped and Reset re-runs the default search. Unit specs re-synced (scanner-header 10→6, filter-sheet 12→10, scanner page 18→16; unit total 231→223) and dead group i18n keys removed from en + vi. | —      |
-| 2026-10-06 | Phase 5 review fixes: `errOutOfRange` copy made range-agnostic (en/vi); `matchesPreset` compares parsed numeric values so profit-factor presets (1.0/1.5/2.0) survive the URL round-trip; dead `traders.minPlaceholder`/`maxPlaceholder`/`search`/`reset` keys removed from en + vi; `visual.spec.ts` filter-sheet-open now mocks `/api/v1/traders/search` (baseline `scanner-sheet-open` refreshed). filter-sheet +1 (unit total 223→224).                                                                                                                       | —      |
+| Date       | Change                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | Author |
+| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| 2026-09-19 | Initial test cases                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | —      |
+| 2026-09-29 | Saved searches (localStorage) + public scan tests                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | —      |
+| 2026-09-30 | Filter-config integration: DEX dropdown + config-driven filters                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | —      |
+| 2026-09-30 | Human-readable labels: metric/sort/operator/order options + i18n frame labels                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | —      |
+| 2026-10-01 | P0 trader foundation: types/service/validation/format/url-state (spec v1.1)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | —      |
+| 2026-10-01 | P1 scanner redo: filter grid, header sort, cursor pages, URL state, trader-groups modal (spec v1.1)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | —      |
+| 2026-10-02 | P2 trader detail: header/tabs/cards/long-short/freshness/add-to-group (spec v1.1)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | —      |
+| 2026-10-02 | Cutover groups to trader-groups API: list/form/delete/detail, remove dead wallets/groups code                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | —      |
+| 2026-10-03 | P4 a11y/visual/perf/keyboard suites + P5 FE-040 gap closure (spec v1.1 exit criteria)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | —      |
+| 2026-10-03 | F1 member metrics columns + F2 inline alias/note edit via PATCH members                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | —      |
+| 2026-10-05 | Phase 4 scanner header: period segmented, venue badge, group select, filters toggle, sort select, rank column, mono numerals, status moved to identity cell (9 new unit tests, 3 visual baselines refreshed)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | —      |
+| 2026-10-05 | Header bugfix: numeric headers right-aligned, header Sort select removed (table sort only), groups refetch on auth change with 401/403 vs load-error split + Retry (E45)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | —      |
+| 2026-10-05 | Phase 5 sheet: metric filters moved from inline panel into `filter-sheet.tsx` (3 clusters, 9 metrics, presets + Custom, per-field validation, group cluster only disabled when unauthenticated). New `filter-sheet.test.tsx` (10 tests); deferred 5.4 reset/period behaviour and 5.5 saved-search move to Batch 5B                                                                                                                                                                                                                                                                                                                                                                                                                                                | —      |
+| 2026-10-05 | Phase 5B chips + saved searches: `filter-chips.tsx` shows one short key-value chip per active metric filter (4 visible + `+N`), each `×` removes exactly that filter and re-runs; sheet Reset now clears only the 9 metric filters, keeps Period/Venue/Group, and re-runs; `saved-searches.tsx` renders as a "Saved filters" fieldset cluster inside the sheet. New `filter-chips.test.tsx` (6 tests), saved-searches +1, scanner reset test repointed to the empty-state full reset                                                                                                                                                                                                                                                                              | —      |
+| 2026-10-05 | Phase 5 review fixes: sheet width override uses the base's `data-[side=right]:sm:` modifier order so `cn` drops `sm:max-w-sm` (400px honored); `SheetContent` gains `showOverlay` (defaults true) and the non-modal filter sheet renders no backdrop so page controls stay clickable; overlay honors `prefers-reduced-motion`; header Group select now commits + re-runs the search like Period; `deriveCustom` reopens an applied preset as a preset. filter-sheet +2, scanner page +1                                                                                                                                                                                                                                                                           | —      |
+| 2026-10-05 | Phase 5C (5.7 non-visual): accessibility +3 (open filter sheet axe-clean in en + vi, and with an active filter chip) and keyboard +1 (Escape closes the sheet and returns focus to the header Filters button). Deleted dead `trader-filters.tsx` + its 6-test spec (no `src` importer; replaced by `filter-sheet.tsx`). Unit total 237 → 231                                                                                                                                                                                                                                                                                                                                                                                                                      | —      |
+| 2026-10-06 | Scanner direction change (human-approved): header Group select and the sheet Group cluster are removed, so the earlier group-select entries above no longer describe the product. Entering the scanner always searches — URL params restore that search, an empty URL loads the default list (venue hyperliquid, period 30D, sort pnl desc), `?group_id=` is stripped and Reset re-runs the default search. Unit specs re-synced (scanner-header 10→6, filter-sheet 12→10, scanner page 18→16; unit total 231→223) and dead group i18n keys removed from en + vi.                                                                                                                                                                                                 | —      |
+| 2026-10-06 | Numbered pagination (CONTRACT.md §3): scanner cursor/Load-more replaced by numbered pages (20/page, `?page=` omitted when 1, clamp 0/abc→1, reset-to-1 on filter/sort/period, beyond-total falls to last page, current-page click no-op). `Meta` + `page/total/total_pages/offset` + `TraderSearchQuery.page` match BE swagger exactly; shared `components/shared/pagination.tsx` (funding + groups + scanner); copy `resultsPaged`/`pageOf` in en+vi. Tests: url-state 6→10, services 11→12, scanner 16→20, new pagination unit (5) + `scanner-pagination.spec.ts` (E46-E55); P1 reworked to 20 rows / Page 1 of 5. Visual `scanner-results*` baselines change (Load more gone, new count copy) — NOT regenerated, needs per-image approval. Unit total 224→238. | —      |
+| 2026-10-06 | Phase 5 review fixes: `errOutOfRange` copy made range-agnostic (en/vi); `matchesPreset` compares parsed numeric values so profit-factor presets (1.0/1.5/2.0) survive the URL round-trip; dead `traders.minPlaceholder`/`maxPlaceholder`/`search`/`reset` keys removed from en + vi; `visual.spec.ts` filter-sheet-open now mocks `/api/v1/traders/search` (baseline `scanner-sheet-open` refreshed). filter-sheet +1 (unit total 223→224).                                                                                                                                                                                                                                                                                                                       | —      |
