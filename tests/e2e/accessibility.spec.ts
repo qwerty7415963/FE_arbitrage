@@ -35,6 +35,11 @@ async function expectNoViolations(page: Page) {
   expect(results.violations).toEqual([]);
 }
 
+async function applyFilters(page: Page) {
+  await page.getByRole('button', { name: 'Filters', exact: true }).click();
+  await page.getByRole('button', { name: 'Apply', exact: true }).click();
+}
+
 async function mockScanner(page: Page) {
   await page.route('**/api/v1/traders/search', (route) =>
     route.fulfill({
@@ -62,7 +67,7 @@ test.describe('Accessibility', () => {
   test('scanner with results has no violations', async ({ page }) => {
     await mockScanner(page);
     await page.goto('/en/traders');
-    await page.getByRole('button', { name: 'Search', exact: true }).click();
+    await applyFilters(page);
     await expect(page.getByText('Smart Money')).toBeVisible();
     await expectNoViolations(page);
   });
@@ -77,7 +82,7 @@ test.describe('Accessibility', () => {
       }),
     );
     await page.goto('/en/traders');
-    await page.getByRole('button', { name: 'Search', exact: true }).click();
+    await applyFilters(page);
     await expect(page.getByText('An error occurred, please try again')).toBeVisible();
     await expectNoViolations(page);
   });
@@ -145,11 +150,38 @@ test.describe('Accessibility', () => {
       }),
     );
     await page.goto('/en/traders');
-    await page.getByRole('button', { name: 'Search', exact: true }).click();
+    await applyFilters(page);
     await expect(page.getByText('Smart Money')).toBeVisible();
     await page.getByLabel(`Select ${TRADER.wallet_address}`).click();
     await page.getByRole('button', { name: 'Add to group (1)', exact: true }).click();
     await expect(page.getByText('Add wallets to group')).toBeVisible();
+    await expectNoViolations(page);
+  });
+
+  const FILTER_SHEET_LOCALES = [
+    { locale: 'en', filters: 'Filters' },
+    { locale: 'vi', filters: 'Lọc' },
+  ] as const;
+
+  for (const { locale, filters } of FILTER_SHEET_LOCALES) {
+    test(`open filter sheet has no violations (${locale})`, async ({ page }) => {
+      await mockScanner(page);
+      await page.goto(`/${locale}/traders`);
+      await page.getByRole('button', { name: filters, exact: true }).click();
+      await expect(page.locator('[data-slot="sheet-content"]')).toBeVisible();
+      await expectNoViolations(page);
+    });
+  }
+
+  test('open filter sheet with an active chip has no violations', async ({ page }) => {
+    await mockScanner(page);
+    await page.goto('/en/traders');
+    await page.getByRole('button', { name: 'Filters', exact: true }).click();
+    await page.getByLabel('ROI from (%)').fill('20');
+    await page.getByRole('button', { name: 'Apply', exact: true }).click();
+    await expect(page.getByTestId('filter-chips')).toBeVisible();
+    await page.getByRole('button', { name: 'Filters', exact: true }).click();
+    await expect(page.locator('[data-slot="sheet-content"]')).toBeVisible();
     await expectNoViolations(page);
   });
 });

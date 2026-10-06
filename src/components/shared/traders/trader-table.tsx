@@ -110,11 +110,12 @@ export function TraderTable({
       <TableHead
         key={column}
         aria-sort={active ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
+        className="text-right"
       >
         <button
           type="button"
           onClick={() => onSortChange(column)}
-          className="inline-flex items-center gap-1 hover:underline"
+          className="inline-flex w-full items-center justify-end gap-1 hover:underline"
         >
           {label}
           {sortIndicator(column)}
@@ -149,8 +150,8 @@ export function TraderTable({
             {SORTABLE_COLUMNS.filter((c) => c.key !== 'last_trade').map((c) =>
               sortableHead(c.key, t(c.labelKey)),
             )}
-            <TableHead>{t('colProfitFactor')}</TableHead>
-            <TableHead>{t('colLongShortWr')}</TableHead>
+            <TableHead className="text-right">{t('colProfitFactor')}</TableHead>
+            <TableHead className="text-right">{t('colLongShortWr')}</TableHead>
             {sortableHead('last_trade', t('colLastTrade'))}
             {(onView || onAdd) && <TableHead />}
           </TableRow>

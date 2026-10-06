@@ -42,6 +42,11 @@ async function mockGroups(page: Page) {
   );
 }
 
+async function applyFilters(page: Page) {
+  await page.getByRole('button', { name: 'Filters', exact: true }).click();
+  await page.getByRole('button', { name: 'Apply', exact: true }).click();
+}
+
 test.describe('Performance smoke', () => {
   test('renders 100 rows without blocking', async ({ page }) => {
     const rows = Array.from({ length: 100 }, (_, i) => makeTrader(i));
@@ -55,7 +60,7 @@ test.describe('Performance smoke', () => {
     );
     await page.goto('/en/traders');
     const started = Date.now();
-    await page.getByRole('button', { name: 'Search', exact: true }).click();
+    await applyFilters(page);
     await expect(page.getByText('100 results')).toBeVisible({ timeout: 15000 });
     const elapsed = Date.now() - started;
     expect(elapsed).toBeLessThan(15000);
@@ -87,10 +92,10 @@ test.describe('Performance smoke', () => {
       });
     });
     await page.goto('/en/traders');
-    await page.getByRole('button', { name: 'Search', exact: true }).click();
     await expect(page.getByText('Trader 1')).toBeVisible();
-    await page.getByLabel('ROI Min').fill('10');
-    await page.getByRole('button', { name: 'Search', exact: true }).click();
+    await page.getByRole('button', { name: 'Filters', exact: true }).click();
+    await page.getByLabel('ROI from (%)').fill('10');
+    await page.getByRole('button', { name: 'Apply', exact: true }).click();
     await expect(page.getByText('Updating...')).toBeVisible();
     await expect(page.getByText('Trader 1')).toBeVisible();
     await expect(page.getByText('Trader 2')).toBeVisible();

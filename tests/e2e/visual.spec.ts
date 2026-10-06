@@ -59,14 +59,48 @@ async function mockGroups(page: Page, groups: unknown[] = []) {
   );
 }
 
+async function applyFilters(page: Page) {
+  await page.getByRole('button', { name: 'Filters', exact: true }).click();
+  await page.getByRole('button', { name: 'Apply', exact: true }).click();
+}
+
 test.describe('Visual desktop', () => {
   test('scanner default', async ({ page }) => {
     await freezeClock(page);
     await mockGroups(page);
+    await page.route('**/api/v1/traders/search', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, data: [TRADER], meta: {} }),
+      }),
+    );
     await page.goto('/en/traders');
-    await expect(page.getByRole('button', { name: 'Search', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Filters', exact: true })).toBeVisible();
+    await expect(page.getByText('Smart Money')).toBeVisible();
     await settle(page);
     await expect(page.locator('main')).toHaveScreenshot('scanner-default.png', SHOT);
+  });
+
+  test('filter sheet open', async ({ page }) => {
+    await freezeClock(page);
+    await mockGroups(page);
+    await page.route('**/api/v1/traders/search', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, data: [TRADER], meta: {} }),
+      }),
+    );
+    await page.goto('/en/traders');
+    await page.getByRole('button', { name: 'Filters', exact: true }).click();
+    // The sheet is portaled to <body>, so capture the page rather than `main`.
+    // Asserting the Apply button settles the 180ms open transition.
+    await expect(page.locator('[data-slot="sheet-content"]')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Apply', exact: true })).toBeVisible();
+    await expect(page.getByText('Smart Money')).toBeVisible();
+    await settle(page);
+    await expect(page).toHaveScreenshot('scanner-sheet-open.png', SHOT);
   });
 
   test('scanner results', async ({ page }) => {
@@ -80,7 +114,7 @@ test.describe('Visual desktop', () => {
       }),
     );
     await page.goto('/en/traders');
-    await page.getByRole('button', { name: 'Search', exact: true }).click();
+    await applyFilters(page);
     await expect(page.getByText('Smart Money')).toBeVisible();
     await settle(page);
     await expect(page.locator('main')).toHaveScreenshot('scanner-results.png', SHOT);
@@ -97,7 +131,7 @@ test.describe('Visual desktop', () => {
       }),
     );
     await page.goto('/en/traders');
-    await page.getByRole('button', { name: 'Search', exact: true }).click();
+    await applyFilters(page);
     await expect(page.getByText('No traders found')).toBeVisible();
     await settle(page);
     await expect(page.locator('main')).toHaveScreenshot('scanner-empty.png', SHOT);
@@ -114,7 +148,7 @@ test.describe('Visual desktop', () => {
       }),
     );
     await page.goto('/en/traders');
-    await page.getByRole('button', { name: 'Search', exact: true }).click();
+    await applyFilters(page);
     await expect(page.getByText('An error occurred, please try again')).toBeVisible();
     await settle(page);
     await expect(page.locator('main')).toHaveScreenshot('scanner-error.png', SHOT);
@@ -179,7 +213,7 @@ test.describe('Visual narrow', () => {
       }),
     );
     await page.goto('/en/traders');
-    await page.getByRole('button', { name: 'Search', exact: true }).click();
+    await applyFilters(page);
     await expect(page.getByText('Smart Money')).toBeVisible();
     await page.locator('main').evaluate((el) => {
       el.scrollTo(0, 0);

@@ -5,7 +5,7 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { ApiError } from '@/infrastructure/api-client';
-import { listTraderGroups, searchTraders } from '@/services/traders';
+import { searchTraders } from '@/services/traders';
 import { validateTraderSearch } from '@/lib/trader-validation';
 import {
   buildTraderSearchParams,
@@ -13,17 +13,19 @@ import {
   saveLastScan,
 } from '@/lib/trader-url-state';
 import {
+  clearMetricFilter,
+  clearMetricFilters,
   defaultDraft,
   draftFromQuery,
   draftToQuery,
   type FilterDraft,
+  type MetricFilterKey,
 } from '@/lib/trader-filter-draft';
 import { ScannerHeader } from './_components/scanner-header';
-import { TraderFilters } from '@/components/shared/traders/trader-filters';
-import { SavedSearches } from '@/components/shared/traders/saved-searches';
+import { FilterSheet } from './_components/filter-sheet';
+import { FilterChips } from './_components/filter-chips';
 import { TraderTable } from '@/components/shared/traders/trader-table';
 import { AddToTraderGroupModal } from '@/components/shared/traders/add-to-trader-group-modal';
-import { ConnectWalletButton } from '@/components/shared/auth/connect-wallet-button';
 import {
   DEFAULT_SORT_BY,
   DEFAULT_SORT_DIRECTION,
@@ -31,7 +33,6 @@ import {
   SCANNER_PAGE_SIZE,
   type MemberInput,
   type PeriodMetrics,
-  type TraderGroup,
   type TraderPeriod,
   type TraderSearchQuery,
   type TraderSortBy,
@@ -47,7 +48,6 @@ type SearchError =
   | 'invalidLimit'
   | 'invalidSort'
   | 'invalidPeriod'
-  | 'groupAuthRequired'
   | 'unknownError';
 
 export default function TradersScannerPage() {
@@ -66,9 +66,13 @@ function ScannerContent() {
   const groupParam = searchParams.get('group') ?? undefined;
   const t = useTranslations('traders');
 
-  const [form, setForm] = useState<FilterDraft>(() =>
-    draftFromQuery({ ...DEFAULT_TRADER_SEARCH_QUERY, ...parseTraderSearchParams(searchParams) }),
-  );
+  const [form, setForm] = useState<FilterDraft>(() => {
+    // The scanner no longer has a group picker: an explicit ?group_id= in a
+    // shared link is ignored instead of becoming a ghost filter.
+    const { groupId: _initialGroup, ...initialRest } = parseTraderSearchParams(searchParams);
+    void _initialGroup;
+    return draftFromQuery({ ...DEFAULT_TRADER_SEARCH_QUERY, ...initialRest });
+  });
   const [sortBy, setSortBy] = useState<TraderSortBy>(
     () => parseTraderSearchParams(searchParams).sortBy ?? DEFAULT_SORT_BY,
   );
@@ -85,30 +89,13 @@ function ScannerContent() {
   const [selected, setSelected] = useState<string[]>([]);
   const [addOpen, setAddOpen] = useState(false);
   const [addMembers, setAddMembers] = useState<MemberInput[]>([]);
-  const [groups, setGroups] = useState<TraderGroup[] | null>(null);
-  const [filtersOpen, setFiltersOpen] = useState(true);
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const abortRef = useRef<AbortController | null>(null);
   const requestIdRef = useRef(0);
   const lastRequestRef = useRef<{ query: TraderSearchQuery; append: boolean } | null>(null);
   const lastWrittenUrlRef = useRef<string | null>(null);
   const initialUrlRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    async function loadGroups() {
-      try {
-        const data = await listTraderGroups();
-        if (!cancelled) setGroups(data);
-      } catch {
-        if (!cancelled) setGroups(null);
-      }
-    }
-    loadGroups();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   const syncUrl = useCallback(
     (query: TraderSearchQuery) => {
@@ -155,11 +142,7 @@ function ScannerContent() {
       if (requestIdRef.current !== requestId) return;
       if (err instanceof ApiError && err.code === 'ABORTED') return;
       if (err instanceof DOMException && err.name === 'AbortError') return;
-      if (err instanceof ApiError && err.status === 401 && query.groupId) {
-        setError('groupAuthRequired');
-      } else {
-        setError('unknownError');
-      }
+      setError('unknownError');
       setCanRetry(true);
     } finally {
       if (requestIdRef.current === requestId) {
@@ -180,12 +163,35 @@ function ScannerContent() {
     [form, sortBy, sortDirection],
   );
 
-  const handleSearch = useCallback(() => {
-    const query = effectiveQuery();
-    setCursor(null);
-    syncUrl(query);
-    void runSearch(query, false);
-  }, [effectiveQuery, syncUrl, runSearch]);
+  const commitDraft = useCallback(
+    (nextDraft: FilterDraft) => {
+      setForm(nextDraft);
+      const query: TraderSearchQuery = {
+        ...draftToQuery(nextDraft),
+        sortBy,
+        sortDirection,
+        limit: SCANNER_PAGE_SIZE,
+        cursor: undefined,
+      };
+      setCursor(null);
+      syncUrl(query);
+      void runSearch(query, false);
+    },
+    [sortBy, sortDirection, syncUrl, runSearch],
+  );
+
+  const applyDraft = commitDraft;
+
+  const handleRemoveMetricFilter = useCallback(
+    (key: MetricFilterKey) => {
+      commitDraft(clearMetricFilter(form, key));
+    },
+    [commitDraft, form],
+  );
+
+  const handleResetFilters = useCallback(() => {
+    commitDraft(clearMetricFilters(form));
+  }, [commitDraft, form]);
 
   const handlePeriodChange = useCallback(
     (period: TraderPeriod) => {
@@ -203,22 +209,6 @@ function ScannerContent() {
       void runSearch(query, false);
     },
     [form, sortBy, sortDirection, syncUrl, runSearch],
-  );
-
-  const handleGroupChange = useCallback((groupId: string) => {
-    setForm((prev) => ({ ...prev, groupId }));
-  }, []);
-
-  const handleSortSelect = useCallback(
-    (column: TraderSortBy, direction: 'asc' | 'desc') => {
-      setSortBy(column);
-      setSortDirection(direction);
-      const query = effectiveQuery({ sortBy: column, sortDirection: direction });
-      setCursor(null);
-      syncUrl(query);
-      void runSearch(query, false);
-    },
-    [effectiveQuery, syncUrl, runSearch],
   );
 
   const handleSortChange = useCallback(
@@ -249,23 +239,31 @@ function ScannerContent() {
   const handleReset = useCallback(() => {
     abortRef.current?.abort();
     requestIdRef.current += 1;
-    setForm(defaultDraft());
+    const nextForm = defaultDraft();
+    setForm(nextForm);
     setSortBy(DEFAULT_SORT_BY);
     setSortDirection(DEFAULT_SORT_DIRECTION);
-    setRows([]);
     setCursor(null);
-    setHasMore(false);
-    setHasSearched(false);
-    setError(null);
-    setCanRetry(false);
     setSelected([]);
     syncUrl({});
-  }, [syncUrl]);
+    // Reset returns to the default list instead of a blank page.
+    void runSearch(
+      {
+        ...draftToQuery(nextForm),
+        sortBy: DEFAULT_SORT_BY,
+        sortDirection: DEFAULT_SORT_DIRECTION,
+        limit: SCANNER_PAGE_SIZE,
+        cursor: undefined,
+      },
+      false,
+    );
+  }, [syncUrl, runSearch]);
 
   const handleApplySavedSearch = useCallback(
     (savedQuery: TraderSearchQuery) => {
-      const { cursor: _cursor, ...rest } = savedQuery;
+      const { cursor: _cursor, groupId: _savedGroup, ...rest } = savedQuery;
       void _cursor;
+      void _savedGroup;
       const nextForm = draftFromQuery(rest);
       const query = {
         ...draftToQuery(nextForm),
@@ -289,7 +287,8 @@ function ScannerContent() {
   const restoreFromParams = useCallback(
     (params: URLSearchParams) => {
       const parsed = parseTraderSearchParams(params);
-      const { cursor: parsedCursor, ...rest } = parsed;
+      const { cursor: parsedCursor, groupId: _restoredGroup, ...rest } = parsed;
+      void _restoredGroup;
       const base = { ...DEFAULT_TRADER_SEARCH_QUERY, ...rest };
       setForm(draftFromQuery(base));
       const nextSortBy = parsed.sortBy ?? DEFAULT_SORT_BY;
@@ -313,14 +312,17 @@ function ScannerContent() {
   const urlString = searchParams.toString();
   // Syncs browser navigation (refresh with params, back/forward) into state.
   // The URL is the external system here; syncing it in this effect is intentional.
+  // Entering the scanner always runs a search: with URL params it restores
+  // that search, without params it loads the default list (venue + period +
+  // default sort) instead of leaving a blank page.
   useEffect(() => {
     if (initialUrlRef.current === null) {
       initialUrlRef.current = urlString;
       // Claim the initial URL so a repeated effect run (StrictMode dev
       // double-invoke) does not mistake mount for a back/forward navigation.
       lastWrittenUrlRef.current = urlString;
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      if (urlString) restoreFromParams(searchParams);
+
+      restoreFromParams(searchParams);
       return;
     }
     if (urlString === lastWrittenUrlRef.current) return;
@@ -354,44 +356,31 @@ function ScannerContent() {
         period={form.period}
         onPeriodChange={handlePeriodChange}
         venue={form.venue}
-        groups={groups}
-        groupId={form.groupId}
-        onGroupChange={handleGroupChange}
         resultText={resultText}
         filtersOpen={filtersOpen}
         onToggleFilters={() => setFiltersOpen((open) => !open)}
-        sortBy={sortBy}
-        sortDirection={sortDirection}
-        onSortSelect={handleSortSelect}
         disabled={isSearching}
       />
 
       <div id="scanner-metric-filters">
-        {filtersOpen && (
-          <TraderFilters
-            draft={form}
-            onDraftChange={setForm}
-            onSearch={handleSearch}
-            onReset={handleReset}
-            disabled={isSearching}
-          />
-        )}
+        <FilterSheet
+          open={filtersOpen}
+          onOpenChange={setFiltersOpen}
+          draft={form}
+          onApply={applyDraft}
+          onResetFilters={handleResetFilters}
+          onApplySavedSearch={handleApplySavedSearch}
+          sortBy={sortBy}
+          sortDirection={sortDirection}
+          disabled={isSearching}
+        />
       </div>
 
-      <SavedSearches
-        query={{ ...draftToQuery(form), sortBy, sortDirection, limit: SCANNER_PAGE_SIZE }}
-        onApply={handleApplySavedSearch}
-        disabled={isSearching}
-      />
+      <FilterChips draft={form} onRemove={handleRemoveMetricFilter} disabled={isSearching} />
 
       {error && (
         <div className="bg-destructive/10 text-destructive rounded-md p-3 text-sm">
           {t(error)}{' '}
-          {error === 'groupAuthRequired' && (
-            <span className="ml-2 inline-flex">
-              <ConnectWalletButton />
-            </span>
-          )}{' '}
           {canRetry && (
             <Button variant="outline" size="sm" className="ml-2" onClick={handleRetry}>
               {t('retry')}

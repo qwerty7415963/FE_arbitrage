@@ -19,6 +19,8 @@ export const METRIC_DRAFT_KEYS = [
 
 export type MetricDraftKey = (typeof METRIC_DRAFT_KEYS)[number];
 
+export type MetricFilterKey = MetricDraftKey | 'lastTradeAfter';
+
 export interface FilterDraft {
   venue: string;
   period: TraderPeriod;
@@ -124,4 +126,22 @@ export function updateDraftRange(
   value: string,
 ): FilterDraft {
   return { ...draft, ranges: { ...draft.ranges, [key]: { ...draft.ranges[key], [bound]: value } } };
+}
+
+/**
+ * Xoá cả 9 bộ lọc chỉ số (8 khoảng + "giao dịch gần nhất"),
+ * giữ nguyên Period, Venue và Nhóm.
+ */
+export function clearMetricFilters(draft: FilterDraft): FilterDraft {
+  return { ...draft, lastTradeAfter: '', ranges: defaultDraft().ranges };
+}
+
+/**
+ * Xoá đúng một bộ lọc chỉ số khỏi draft, các bộ lọc khác giữ nguyên.
+ */
+export function clearMetricFilter(draft: FilterDraft, key: MetricFilterKey): FilterDraft {
+  if (key === 'lastTradeAfter') {
+    return { ...draft, lastTradeAfter: '' };
+  }
+  return { ...draft, ranges: { ...draft.ranges, [key]: { min: '', max: '' } } };
 }

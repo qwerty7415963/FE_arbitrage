@@ -59,76 +59,87 @@ export function SavedSearches({ query, onApply, disabled }: SavedSearchesProps) 
   }
 
   return (
-    <div
-      className="flex flex-wrap items-center gap-2 rounded-lg border p-3"
-      data-testid="saved-searches"
-    >
-      <span className="text-muted-foreground text-xs">{t('savedSearches')}</span>
+    <fieldset className="flex flex-col gap-2 rounded-lg border p-3" data-testid="saved-searches">
+      <legend className="text-sm font-medium">{t('savedSearchesCluster')}</legend>
 
-      {searches.map((search) => (
-        <span
-          key={search.id}
-          className="bg-muted/40 inline-flex items-center gap-1 rounded-full border py-1 pr-1 pl-3 text-sm"
-        >
-          <button
-            type="button"
-            className="max-w-40 truncate hover:underline"
-            disabled={disabled}
-            title={search.name}
-            onClick={() => onApply(sanitizeTraderSearchQuery(search.query))}
+      <div className="flex flex-wrap items-center gap-2">
+        {searches.map((search) => (
+          <span
+            key={search.id}
+            className="bg-muted/40 inline-flex items-center gap-1 rounded-full border py-1 pr-1 pl-3 text-sm"
           >
-            {search.name}
-          </button>
-          <button
+            <button
+              type="button"
+              className="max-w-40 truncate hover:underline"
+              disabled={disabled}
+              title={search.name}
+              onClick={() => onApply(sanitizeTraderSearchQuery(search.query))}
+            >
+              {search.name}
+            </button>
+            <button
+              type="button"
+              className="text-muted-foreground hover:text-foreground rounded-full p-0.5"
+              disabled={disabled}
+              aria-label={t('deleteSavedSearch', { name: search.name })}
+              onClick={() => handleRemove(search.id)}
+            >
+              <XIcon className="h-3.5 w-3.5" />
+            </button>
+          </span>
+        ))}
+
+        {isNaming ? (
+          <span className="flex items-center gap-1">
+            <Input
+              autoFocus
+              value={name}
+              aria-label={t('saveSearchPlaceholder')}
+              placeholder={t('saveSearchPlaceholder')}
+              className="h-8 w-40"
+              disabled={disabled}
+              onChange={(e) => {
+                setName(e.target.value);
+                if (nameError) setNameError(null);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleSave();
+                } else if (e.key === 'Escape') {
+                  cancelNaming();
+                }
+              }}
+            />
+            <Button type="button" size="sm" onClick={handleSave} disabled={disabled}>
+              {tc('save')}
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              onClick={cancelNaming}
+              disabled={disabled}
+            >
+              {tc('cancel')}
+            </Button>
+            {nameError && <span className="text-destructive text-xs">{nameError}</span>}
+          </span>
+        ) : (
+          <Button
             type="button"
-            className="text-muted-foreground hover:text-foreground rounded-full p-0.5"
+            size="sm"
+            variant="outline"
+            onClick={startNaming}
             disabled={disabled}
-            aria-label={t('deleteSavedSearch', { name: search.name })}
-            onClick={() => handleRemove(search.id)}
           >
-            <XIcon className="h-3.5 w-3.5" />
-          </button>
-        </span>
-      ))}
-
-      {isNaming ? (
-        <span className="flex items-center gap-1">
-          <Input
-            autoFocus
-            value={name}
-            aria-label={t('saveSearchPlaceholder')}
-            placeholder={t('saveSearchPlaceholder')}
-            className="h-8 w-40"
-            disabled={disabled}
-            onChange={(e) => {
-              setName(e.target.value);
-              if (nameError) setNameError(null);
-            }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                handleSave();
-              } else if (e.key === 'Escape') {
-                cancelNaming();
-              }
-            }}
-          />
-          <Button size="sm" onClick={handleSave} disabled={disabled}>
-            {tc('save')}
+            <BookmarkIcon className="mr-1 h-4 w-4" />
+            {t('saveSearch')}
           </Button>
-          <Button size="sm" variant="ghost" onClick={cancelNaming} disabled={disabled}>
-            {tc('cancel')}
-          </Button>
-          {nameError && <span className="text-destructive text-xs">{nameError}</span>}
-        </span>
-      ) : (
-        <Button size="sm" variant="outline" onClick={startNaming} disabled={disabled}>
-          <BookmarkIcon className="mr-1 h-4 w-4" />
-          {t('saveSearch')}
-        </Button>
-      )}
+        )}
+      </div>
 
-      <span className="text-muted-foreground ml-auto text-xs">{t('savedSearchesLocalNote')}</span>
-    </div>
+      <span className="text-muted-foreground text-xs">{t('savedSearchesLocalNote')}</span>
+    </fieldset>
   );
 }

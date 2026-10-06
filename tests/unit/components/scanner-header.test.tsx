@@ -10,15 +10,9 @@ function renderHeader(props: Partial<React.ComponentProps<typeof ScannerHeader>>
     period: '30D',
     onPeriodChange: vi.fn(),
     venue: 'hyperliquid',
-    groups: [],
-    groupId: '',
-    onGroupChange: vi.fn(),
     resultText: null,
     filtersOpen: true,
     onToggleFilters: vi.fn(),
-    sortBy: 'pnl',
-    sortDirection: 'desc',
-    onSortSelect: vi.fn(),
   };
   return render(
     <NextIntlClientProvider locale="en" messages={enMessages}>
@@ -55,28 +49,12 @@ describe('ScannerHeader', () => {
     expect(screen.queryByLabelText('Venue')).not.toBeInTheDocument();
   });
 
-  it('renders group options when loaded', () => {
-    renderHeader({
-      groups: [{ id: 'g1', user_id: 'u1', name: 'Main', description: null, member_count: 3 }],
-    });
-    expect(screen.getByRole('option', { name: 'Main' })).toBeInTheDocument();
-  });
-
-  it('shows an auth hint and disables the group select when groups are unavailable', () => {
-    renderHeader({ groups: null });
-    expect(screen.getByLabelText('Group')).toBeDisabled();
-    expect(screen.getByText('Connect a wallet to filter by group')).toBeInTheDocument();
-  });
-
-  it('notifies group changes', async () => {
-    const user = userEvent.setup();
-    const onGroupChange = vi.fn();
-    renderHeader({
-      groups: [{ id: 'g1', user_id: 'u1', name: 'Main', description: null, member_count: 3 }],
-      onGroupChange,
-    });
-    await user.selectOptions(screen.getByLabelText('Group'), 'g1');
-    expect(onGroupChange).toHaveBeenCalledWith('g1');
+  it('does not render a group control', () => {
+    renderHeader();
+    expect(screen.queryByLabelText('Group')).not.toBeInTheDocument();
+    expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
+    expect(screen.queryByText('Connect a wallet to filter by group')).not.toBeInTheDocument();
+    expect(screen.queryByText("Couldn't load groups")).not.toBeInTheDocument();
   });
 
   it('toggles the metric filters with an expanded state', async () => {
@@ -88,14 +66,6 @@ describe('ScannerHeader', () => {
     expect(toggle).toHaveAttribute('aria-controls', 'scanner-metric-filters');
     await user.click(toggle);
     expect(onToggleFilters).toHaveBeenCalledTimes(1);
-  });
-
-  it('notifies sort selection with column and direction', async () => {
-    const user = userEvent.setup();
-    const onSortSelect = vi.fn();
-    renderHeader({ onSortSelect });
-    await user.selectOptions(screen.getByLabelText('Sort'), 'roi:asc');
-    expect(onSortSelect).toHaveBeenCalledWith('roi', 'asc');
   });
 
   it('shows the result count when provided', () => {

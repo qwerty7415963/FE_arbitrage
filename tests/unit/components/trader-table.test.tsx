@@ -146,4 +146,12 @@ describe('TraderTable', () => {
     expect(pnlCell?.className).toMatch('text-right');
     expect(pnlCell?.className).toMatch('tabular-nums');
   });
+
+  it('right-aligns numeric headers above numeric cells', () => {
+    renderTable();
+    const pnlHeader = screen.getByRole('columnheader', { name: 'PnL' });
+    expect(pnlHeader.className).toMatch('text-right');
+    const pfHeader = screen.getByRole('columnheader', { name: 'PF' });
+    expect(pfHeader.className).toMatch('text-right');
+  });
 });

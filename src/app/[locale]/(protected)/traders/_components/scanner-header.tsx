@@ -3,37 +3,15 @@
 import { useTranslations } from 'next-intl';
 import { cn } from 'cn';
 import { Button } from '@/components/ui/button';
-import {
-  TRADER_PERIODS,
-  TRADER_SORT_COLUMNS,
-  type SortDirection,
-  type TraderGroup,
-  type TraderPeriod,
-  type TraderSortBy,
-} from '@/types/trader';
-
-const SORT_LABEL_KEYS: Record<TraderSortBy, string> = {
-  pnl: 'colPnl',
-  roi: 'colRoi',
-  win_rate: 'colWinRate',
-  volume: 'colVolume',
-  trade_count: 'colTrades',
-  last_trade: 'colLastTrade',
-};
+import { TRADER_PERIODS, type TraderPeriod } from '@/types/trader';
 
 export interface ScannerHeaderProps {
   period: TraderPeriod;
   onPeriodChange: (period: TraderPeriod) => void;
   venue: string;
-  groups: TraderGroup[] | null;
-  groupId: string;
-  onGroupChange: (groupId: string) => void;
   resultText: string | null;
   filtersOpen: boolean;
   onToggleFilters: () => void;
-  sortBy: TraderSortBy;
-  sortDirection: SortDirection;
-  onSortSelect: (sortBy: TraderSortBy, direction: SortDirection) => void;
   disabled?: boolean;
 }
 
@@ -41,25 +19,12 @@ export function ScannerHeader({
   period,
   onPeriodChange,
   venue,
-  groups,
-  groupId,
-  onGroupChange,
   resultText,
   filtersOpen,
   onToggleFilters,
-  sortBy,
-  sortDirection,
-  onSortSelect,
   disabled,
 }: ScannerHeaderProps) {
   const t = useTranslations('traders');
-
-  function handleSortValue(value: string) {
-    const separator = value.lastIndexOf(':');
-    const nextSort = value.slice(0, separator) as TraderSortBy;
-    const nextDirection = value.slice(separator + 1) as SortDirection;
-    onSortSelect(nextSort, nextDirection);
-  }
 
   return (
     <div className="flex flex-col gap-3">
@@ -106,29 +71,6 @@ export function ScannerHeader({
           </span>
         </span>
 
-        <label className="flex flex-col gap-1 text-xs">
-          <span className="text-muted-foreground">{t('group')}</span>
-          <select
-            value={groupId}
-            onChange={(e) => onGroupChange(e.target.value)}
-            className="border-input bg-background text-foreground h-8 min-w-36 rounded-lg border px-2 text-sm"
-            disabled={disabled || groups === null}
-            aria-describedby={groups === null ? 'group-auth-hint' : undefined}
-          >
-            <option value="">{t('allGroups')}</option>
-            {(groups ?? []).map((g) => (
-              <option key={g.id} value={g.id}>
-                {g.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        {groups === null && (
-          <span id="group-auth-hint" className="text-muted-foreground text-xs">
-            {t('groupAuthHint')}
-          </span>
-        )}
-
         <Button
           variant="outline"
           size="sm"
@@ -139,24 +81,6 @@ export function ScannerHeader({
         >
           {t('filters')}
         </Button>
-
-        <label className="flex flex-col gap-1 text-xs">
-          <span className="text-muted-foreground">{t('sortLabel')}</span>
-          <select
-            value={`${sortBy}:${sortDirection}`}
-            onChange={(e) => handleSortValue(e.target.value)}
-            className="border-input bg-background text-foreground h-8 rounded-lg border px-2 text-sm"
-            disabled={disabled}
-          >
-            {TRADER_SORT_COLUMNS.map((column) =>
-              (['desc', 'asc'] as const).map((direction) => (
-                <option key={`${column}:${direction}`} value={`${column}:${direction}`}>
-                  {t(SORT_LABEL_KEYS[column])} {direction === 'desc' ? '↓' : '↑'}
-                </option>
-              )),
-            )}
-          </select>
-        </label>
       </div>
     </div>
   );

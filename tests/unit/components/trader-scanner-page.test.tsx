@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { NextIntlClientProvider } from 'next-intl';
-import { ApiError } from '@/infrastructure/api-client';
 import ScannerPage from '@/app/[locale]/(protected)/traders/page';
 import { listTraderGroups, searchTraders } from '@/services/traders';
 import type { PeriodMetrics } from '@/types/trader';
@@ -72,6 +71,15 @@ function renderPage() {
   );
 }
 
+async function openFilters(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByRole('button', { name: 'Filters' }));
+}
+
+async function applyFilters(user: ReturnType<typeof userEvent.setup>) {
+  await openFilters(user);
+  await user.click(screen.getByRole('button', { name: 'Apply' }));
+}
+
 describe('TradersScannerPage', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
@@ -82,7 +90,7 @@ describe('TradersScannerPage', () => {
     vi.mocked(searchTraders).mockResolvedValue({ data: [ROW_A], meta: {} });
   });
 
-  it('shows default controls without auto-searching', () => {
+  it('searches on mount with defaults', async () => {
     renderPage();
     expect(screen.getByRole('heading', { name: 'Trader Scanner' })).toBeInTheDocument();
     expect(
@@ -90,15 +98,34 @@ describe('TradersScannerPage', () => {
         name: '30D',
       }),
     ).toHaveAttribute('aria-pressed', 'true');
-    expect(searchTraders).not.toHaveBeenCalled();
+    expect(await screen.findByText('0xaaaa...aaaa')).toBeInTheDocument();
+    expect(searchTraders).toHaveBeenCalledTimes(1);
+    expect(searchTraders).toHaveBeenCalledWith(
+      expect.objectContaining({
+        venue: 'hyperliquid',
+        period: '30D',
+        sortBy: 'pnl',
+        sortDirection: 'desc',
+        limit: 20,
+      }),
+      expect.anything(),
+    );
+  });
+
+  it('does not fetch groups', async () => {
+    renderPage();
+    expect(await screen.findByText('0xaaaa...aaaa')).toBeInTheDocument();
+    expect(listTraderGroups).not.toHaveBeenCalled();
   });
 
   it('searches with merged defaults and syncs the URL', async () => {
     const user = userEvent.setup();
     renderPage();
-    await user.type(screen.getByLabelText('ROI Min'), '30');
-    await user.click(screen.getByRole('button', { name: 'Search' }));
-    expect(searchTraders).toHaveBeenCalledWith(
+    await screen.findByText('0xaaaa...aaaa');
+    await openFilters(user);
+    await user.type(screen.getByLabelText('ROI from (%)'), '30');
+    await user.click(screen.getByRole('button', { name: 'Apply' }));
+    expect(searchTraders).toHaveBeenLastCalledWith(
       expect.objectContaining({
         venue: 'hyperliquid',
         period: '30D',
@@ -116,7 +143,6 @@ describe('TradersScannerPage', () => {
   });
 
   it('shows a skeleton on first search', async () => {
-    const user = userEvent.setup();
     let resolveSearch: ((v: { data: PeriodMetrics[]; meta: object }) => void) | null = null;
     vi.mocked(searchTraders).mockImplementationOnce(
       () =>
@@ -125,35 +151,39 @@ describe('TradersScannerPage', () => {
         }),
     );
     renderPage();
-    await user.click(screen.getByRole('button', { name: 'Search' }));
     expect(await screen.findByRole('status', { name: 'Loading...' })).toBeInTheDocument();
     resolveSearch!({ data: [ROW_A], meta: {} });
     expect(await screen.findByText('0xaaaa...aaaa')).toBeInTheDocument();
   });
 
-  it('blocks invalid filters without calling the API', async () => {
+  it('blocks invalid filters without a second API call', async () => {
     const user = userEvent.setup();
     renderPage();
-    await user.type(screen.getByLabelText('ROI Min'), '5');
-    await user.type(screen.getByLabelText('ROI Max'), '1');
-    await user.click(screen.getByRole('button', { name: 'Search' }));
+    await screen.findByText('0xaaaa...aaaa');
+    await openFilters(user);
+    await user.type(screen.getByLabelText('ROI from (%)'), '5');
+    await user.type(screen.getByLabelText('ROI to (%)'), '1');
+    await user.click(screen.getByRole('button', { name: 'Apply' }));
     expect(await screen.findByText('Min must be less than or equal to max')).toBeInTheDocument();
-    expect(searchTraders).not.toHaveBeenCalled();
+    expect(searchTraders).toHaveBeenCalledTimes(1);
   });
 
-  it('blocks non-numeric input', async () => {
+  it('blocks non-numeric input without a second API call', async () => {
     const user = userEvent.setup();
     renderPage();
-    await user.type(screen.getByLabelText('PnL Min'), 'abc');
-    await user.click(screen.getByRole('button', { name: 'Search' }));
+    await screen.findByText('0xaaaa...aaaa');
+    await openFilters(user);
+    await user.type(screen.getByLabelText('PnL from ($)'), 'abc');
+    await user.click(screen.getByRole('button', { name: 'Apply' }));
     expect(await screen.findByText('Filter value must be a valid number')).toBeInTheDocument();
-    expect(searchTraders).not.toHaveBeenCalled();
+    expect(searchTraders).toHaveBeenCalledTimes(1);
   });
 
   it('toggles sort direction via header click', async () => {
     const user = userEvent.setup();
     renderPage();
-    await user.click(screen.getByRole('button', { name: 'Search' }));
+    await screen.findByText('0xaaaa...aaaa');
+    await applyFilters(user);
     await screen.findByText('0xaaaa...aaaa');
     const pnlHeader = screen.getByRole('columnheader', { name: 'PnL' });
     await user.click(within(pnlHeader).getByRole('button', { name: 'PnL' }));
@@ -166,10 +196,12 @@ describe('TradersScannerPage', () => {
   it('appends deduplicated rows on load more', async () => {
     const user = userEvent.setup();
     vi.mocked(searchTraders)
+      .mockResolvedValueOnce({ data: [ROW_A], meta: {} })
       .mockResolvedValueOnce({ data: [ROW_A], meta: { has_more: true, cursor: 'c1' } })
       .mockResolvedValueOnce({ data: [ROW_A, ROW_B], meta: { has_more: false } });
     renderPage();
-    await user.click(screen.getByRole('button', { name: 'Search' }));
+    await screen.findByText('0xaaaa...aaaa');
+    await applyFilters(user);
     await user.click(await screen.findByRole('button', { name: 'Load more' }));
     expect(searchTraders).toHaveBeenLastCalledWith(
       expect.objectContaining({ cursor: 'c1' }),
@@ -183,9 +215,11 @@ describe('TradersScannerPage', () => {
     const user = userEvent.setup();
     vi.mocked(searchTraders)
       .mockRejectedValueOnce(new Error('boom'))
+      .mockRejectedValueOnce(new Error('boom'))
       .mockResolvedValueOnce({ data: [ROW_B], meta: {} });
     renderPage();
-    await user.click(screen.getByRole('button', { name: 'Search' }));
+    expect(await screen.findByText('An error occurred, please try again')).toBeInTheDocument();
+    await applyFilters(user);
     expect(await screen.findByText('An error occurred, please try again')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Retry' }));
     expect(await screen.findByText('0xbbbb...bbbb')).toBeInTheDocument();
@@ -193,65 +227,89 @@ describe('TradersScannerPage', () => {
 
   it('keeps old rows with progress during a new search', async () => {
     const user = userEvent.setup();
-    let resolveSecond: ((v: { data: PeriodMetrics[]; meta: object }) => void) | null = null;
+    let resolveThird: ((v: { data: PeriodMetrics[]; meta: object }) => void) | null = null;
     vi.mocked(searchTraders)
+      .mockResolvedValueOnce({ data: [ROW_A], meta: {} })
       .mockResolvedValueOnce({ data: [ROW_A], meta: {} })
       .mockImplementationOnce(
         () =>
           new Promise((resolve) => {
-            resolveSecond = resolve;
+            resolveThird = resolve;
           }),
       );
     renderPage();
-    await user.click(screen.getByRole('button', { name: 'Search' }));
     await screen.findByText('0xaaaa...aaaa');
-    await user.type(screen.getByLabelText('ROI Min'), '50');
-    await user.click(screen.getByRole('button', { name: 'Search' }));
+    await applyFilters(user);
+    await screen.findByText('0xaaaa...aaaa');
+    await openFilters(user);
+    await user.type(screen.getByLabelText('ROI from (%)'), '50');
+    await user.click(screen.getByRole('button', { name: 'Apply' }));
     expect(screen.getByText('0xaaaa...aaaa')).toBeInTheDocument();
     expect(screen.getByText('Updating...')).toBeInTheDocument();
-    resolveSecond!({ data: [ROW_B], meta: {} });
+    resolveThird!({ data: [ROW_B], meta: {} });
     expect(await screen.findByText('0xbbbb...bbbb')).toBeInTheDocument();
   });
 
   it('lets the latest overlapping search win', async () => {
     const user = userEvent.setup();
-    let resolveSecond: ((v: { data: PeriodMetrics[]; meta: object }) => void) | null = null;
+    let resolveThird: ((v: { data: PeriodMetrics[]; meta: object }) => void) | null = null;
     vi.mocked(searchTraders)
+      .mockResolvedValueOnce({ data: [ROW_A], meta: {} })
       .mockResolvedValueOnce({ data: [ROW_A], meta: {} })
       .mockImplementationOnce(
         () =>
           new Promise((resolve) => {
-            resolveSecond = resolve;
+            resolveThird = resolve;
           }),
       )
       .mockResolvedValue({ data: [ROW_B], meta: {} });
     renderPage();
-    await user.click(screen.getByRole('button', { name: 'Search' }));
     await screen.findByText('0xaaaa...aaaa');
-    await user.type(screen.getByLabelText('ROI Min'), '30');
-    await user.click(screen.getByRole('button', { name: 'Search' }));
+    await applyFilters(user);
+    await screen.findByText('0xaaaa...aaaa');
+    await openFilters(user);
+    await user.type(screen.getByLabelText('ROI from (%)'), '30');
+    await user.click(screen.getByRole('button', { name: 'Apply' }));
     const pnlHeader = screen.getByRole('columnheader', { name: 'PnL' });
     await user.click(within(pnlHeader).getByRole('button', { name: 'PnL' }));
     await screen.findByText('0xbbbb...bbbb');
-    resolveSecond!({ data: [ROW_A], meta: {} });
+    resolveThird!({ data: [ROW_A], meta: {} });
     await new Promise((r) => setTimeout(r, 20));
     expect(screen.queryByText('0xaaaa...aaaa')).not.toBeInTheDocument();
     expect(screen.getByText('0xbbbb...bbbb')).toBeInTheDocument();
   });
 
-  it('resets filters, rows and URL', async () => {
+  it('empty-state reset re-runs the default search', async () => {
     const user = userEvent.setup();
+    vi.mocked(searchTraders).mockResolvedValue({ data: [], meta: {} });
     renderPage();
-    await user.type(screen.getByLabelText('ROI Min'), '30');
-    await user.click(screen.getByRole('button', { name: 'Search' }));
-    await screen.findByText('0xaaaa...aaaa');
-    await user.click(screen.getByRole('button', { name: 'Reset' }));
-    expect(screen.getByLabelText('ROI Min')).toHaveValue('');
-    expect(screen.queryByText('0xaaaa...aaaa')).not.toBeInTheDocument();
+    await screen.findByText('No traders found');
+    await openFilters(user);
+    await user.type(screen.getByLabelText('ROI from (%)'), '30');
+    await user.click(screen.getByRole('button', { name: 'Apply' }));
+    await screen.findByText('No traders found');
+    const callsAfterApply = vi.mocked(searchTraders).mock.calls.length;
+    expect(callsAfterApply).toBe(2);
+    await user.click(screen.getByRole('button', { name: 'Reset filters' }));
+    await screen.findByText('No traders found');
+    expect(vi.mocked(searchTraders).mock.calls.length).toBe(callsAfterApply + 1);
+    expect(searchTraders).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        venue: 'hyperliquid',
+        period: '30D',
+        sortBy: 'pnl',
+        sortDirection: 'desc',
+        limit: 20,
+      }),
+      expect.anything(),
+    );
+    await openFilters(user);
+    expect(screen.getByLabelText('ROI from (%)')).toHaveValue('');
     expect(nav.push).toHaveBeenLastCalledWith('/en/traders', expect.anything());
   });
 
   it('restores state from URL and auto-searches', async () => {
+    const user = userEvent.setup();
     nav.params = new URLSearchParams('period=7D&roi_min=30&sort_by=roi');
     renderPage();
     expect(
@@ -259,7 +317,8 @@ describe('TradersScannerPage', () => {
         name: '7D',
       }),
     ).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.getByLabelText('ROI Min')).toHaveValue('30');
+    await openFilters(user);
+    expect(screen.getByLabelText('ROI from (%)')).toHaveValue('30');
     expect(searchTraders).toHaveBeenCalledWith(
       expect.objectContaining({ period: '7D', roi: { min: 30 }, sortBy: 'roi' }),
       expect.anything(),
@@ -267,10 +326,18 @@ describe('TradersScannerPage', () => {
     expect(await screen.findByText('0xaaaa...aaaa')).toBeInTheDocument();
   });
 
-  it('shows group auth hint when groups fail to load', async () => {
-    vi.mocked(listTraderGroups).mockRejectedValue(new ApiError(403, 'AUTH-005', 'denied'));
+  it('ignores ?group_id= in the URL and searches without it', async () => {
+    nav.params = new URLSearchParams('group_id=g1&period=7D');
     renderPage();
-    expect(await screen.findByText('Connect a wallet to filter by group')).toBeInTheDocument();
+    expect(await screen.findByText('0xaaaa...aaaa')).toBeInTheDocument();
+    expect(searchTraders).toHaveBeenCalledWith(
+      expect.not.objectContaining({ groupId: expect.anything() }),
+      expect.anything(),
+    );
+    expect(searchTraders).toHaveBeenCalledWith(
+      expect.objectContaining({ period: '7D' }),
+      expect.anything(),
+    );
   });
 
   it('hien "con nua" khi has_more bat', async () => {
@@ -280,7 +347,8 @@ describe('TradersScannerPage', () => {
       meta: { has_more: true, cursor: 'c1' },
     });
     renderPage();
-    await user.click(screen.getByRole('button', { name: 'Search' }));
+    await screen.findByText('0xaaaa...aaaa');
+    await applyFilters(user);
     expect(await screen.findByText(/more available/)).toBeInTheDocument();
     expect(screen.queryByText('2 results')).not.toBeInTheDocument();
   });
@@ -289,7 +357,8 @@ describe('TradersScannerPage', () => {
     const user = userEvent.setup();
     vi.mocked(searchTraders).mockResolvedValue({ data: [ROW_A], meta: { has_more: false } });
     renderPage();
-    await user.click(screen.getByRole('button', { name: 'Search' }));
+    await screen.findByText('0xaaaa...aaaa');
+    await applyFilters(user);
     expect(await screen.findByText('1 results')).toBeInTheDocument();
   });
 });

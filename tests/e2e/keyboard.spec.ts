@@ -29,6 +29,11 @@ const TRADER = {
   calculation_version: 1,
 };
 
+async function applyFilters(page: Page) {
+  await page.getByRole('button', { name: 'Filters', exact: true }).click();
+  await page.getByRole('button', { name: 'Apply', exact: true }).click();
+}
+
 async function mockScanner(page: Page) {
   await page.route('**/api/v1/traders/search', (route) =>
     route.fulfill({
@@ -71,11 +76,16 @@ test.describe('Keyboard', () => {
     }
     // Venue is static text since Phase 4, so it is intentionally absent here.
     expect(seen).not.toContain('Venue');
-    for (const expected of ['Period', 'Group', 'Filters', 'Search', 'Reset']) {
+    // Search/Reset moved into the filter sheet (Phase 5), so they are not in the
+    // closed-sheet tab order. Only the header controls remain reachable.
+    // The scanner no longer has a group picker, so Group is absent.
+    for (const expected of ['Period', 'Filters']) {
       expect(seen).toContain(expected);
     }
-    expect(seen.indexOf('Period')).toBeLessThan(seen.indexOf('Group'));
-    expect(seen.indexOf('Group')).toBeLessThan(seen.indexOf('Filters'));
+    expect(seen).not.toContain('Group');
+    expect(seen).not.toContain('Search');
+    expect(seen).not.toContain('Reset');
+    expect(seen.indexOf('Period')).toBeLessThan(seen.indexOf('Filters'));
   });
 
   test('sort header activates with Enter', async ({ page }) => {
@@ -90,15 +100,15 @@ test.describe('Keyboard', () => {
       });
     });
     await page.goto('/en/traders');
-    await page.getByRole('button', { name: 'Search', exact: true }).click();
+    await applyFilters(page);
     await expect(page.getByText('Smart Money')).toBeVisible();
     await page
       .getByRole('columnheader', { name: 'PnL' })
       .getByRole('button', { name: 'PnL' })
       .focus();
     await page.keyboard.press('Enter');
-    await expect.poll(() => bodies.length).toBe(2);
-    expect(bodies[1]).toMatchObject({ sort_direction: 'asc' });
+    await expect.poll(() => bodies.length).toBe(3);
+    expect(bodies[2]).toMatchObject({ sort_direction: 'asc' });
   });
 
   test('dialog traps focus and closes with Escape', async ({ page }) => {
@@ -132,13 +142,28 @@ test.describe('Keyboard', () => {
     await expect(dialog).not.toBeVisible();
   });
 
+  test('filter sheet closes with Escape and returns focus to the header Filters button', async ({
+    page,
+  }) => {
+    await mockScanner(page);
+    await page.goto('/en/traders');
+    const filters = page.getByRole('button', { name: 'Filters', exact: true });
+    await filters.focus();
+    await filters.click();
+    const sheet = page.locator('[data-slot="sheet-content"]');
+    await expect(sheet).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(sheet).not.toBeVisible();
+    await expect(filters).toBeFocused();
+  });
+
   test.describe('narrow viewport', () => {
     test.use({ viewport: { width: 640, height: 900 } });
 
     test('table scrolls internally without page overflow', async ({ page }) => {
       await mockScanner(page);
       await page.goto('/en/traders');
-      await page.getByRole('button', { name: 'Search', exact: true }).click();
+      await applyFilters(page);
       await expect(page.getByText('Smart Money')).toBeVisible();
       const overflow = await page.evaluate(() => {
         const doc = document.scrollingElement as HTMLElement;

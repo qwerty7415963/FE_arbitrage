@@ -18,6 +18,11 @@ describe('SavedSearches', () => {
     window.localStorage.clear();
   });
 
+  it('renders as a labelled cluster for the filter sheet', () => {
+    renderSearches();
+    expect(screen.getByRole('group', { name: 'Saved filters' })).toBeInTheDocument();
+  });
+
   it('saves and applies a search', async () => {
     const user = userEvent.setup();
     const onApply = vi.fn();
