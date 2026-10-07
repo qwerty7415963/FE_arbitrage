@@ -5,9 +5,12 @@ import { useParams, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { ApiError } from '@/infrastructure/api-client';
-import { fetchTraderDetail } from '@/services/traders';
+import { fetchTraderDetail, fetchTraderPositions } from '@/services/traders';
+import { useTraderActivity } from '@/hooks/use-trader-activity';
 import { readLastScan } from '@/lib/trader-url-state';
 import { isValidWalletAddress } from '@/lib/trader-validation';
+import { PositionsSection } from './_components/positions-section';
+import { ActivityFeed } from './_components/activity-feed';
 import {
   deriveWinRate,
   formatDateTimeUtc,
@@ -27,6 +30,7 @@ import {
   TRADER_PERIODS,
   type DiscoverySource,
   type MemberInput,
+  type PositionSnapshot,
   type TraderDetail,
   type TraderPeriod,
 } from '@/types/trader';
@@ -80,6 +84,11 @@ function DetailContent() {
   const [reloadKey, setReloadKey] = useState(0);
   const requestIdRef = useRef(0);
   const addressValid = isValidWalletAddress(address);
+  const [positions, setPositions] = useState<PositionSnapshot | null>(null);
+  const [positionsLoading, setPositionsLoading] = useState(() => isValidWalletAddress(address));
+  const [positionsError, setPositionsError] = useState<unknown>(null);
+  const [positionsReloadKey, setPositionsReloadKey] = useState(0);
+  const activity = useTraderActivity(addressValid ? address.toLowerCase() : '');
 
   useEffect(() => {
     if (!addressValid) return;
@@ -110,6 +119,29 @@ function DetailContent() {
       cancelled = true;
     };
   }, [address, period, reloadKey, addressValid]);
+
+  useEffect(() => {
+    if (!addressValid) return;
+    let cancelled = false;
+    async function fetchPositions() {
+      setPositionsLoading(true);
+      setPositionsError(null);
+      try {
+        const snap = await fetchTraderPositions(address.toLowerCase());
+        if (cancelled) return;
+        setPositions(snap);
+      } catch (err) {
+        if (cancelled) return;
+        setPositionsError(err);
+      } finally {
+        if (!cancelled) setPositionsLoading(false);
+      }
+    }
+    void fetchPositions();
+    return () => {
+      cancelled = true;
+    };
+  }, [address, addressValid, positionsReloadKey]);
 
   const registry = detail?.registry ?? null;
   const metrics = detail?.metrics ?? null;
@@ -181,98 +213,124 @@ function DetailContent() {
         </div>
       ) : (
         registry && (
-          <>
-            <div className="flex flex-col gap-2 rounded-lg border p-4">
-              <h1 className="text-xl font-bold">
-                {registry.display_name ?? shortAddress(registry.wallet_address)}
-              </h1>
-              <CopyAddress address={registry.wallet_address} short={false} />
-              <dl className="grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
-                <div>
-                  <dt className="text-muted-foreground text-xs">{t('firstSeen')}</dt>
-                  <dd>{formatDateTimeUtc(registry.first_seen_at) ?? NULL_DISPLAY}</dd>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground text-xs">{t('lastSeen')}</dt>
-                  <dd>{formatDateTimeUtc(registry.last_seen_at) ?? NULL_DISPLAY}</dd>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground text-xs">{t('colLastTrade')}</dt>
-                  <dd title={formatDateTimeUtc(registry.last_trade_at) ?? undefined}>
-                    {formatRelativeTime(registry.last_trade_at) ?? NULL_DISPLAY}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground text-xs">{t('discoverySource')}</dt>
-                  <dd>{t(SOURCE_LABEL_KEYS[registry.discovery_source])}</dd>
-                </div>
-              </dl>
-            </div>
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+            <div className="flex flex-col gap-4 lg:col-span-2">
+              <div className="flex flex-col gap-2 rounded-lg border p-4">
+                <h1 className="text-xl font-bold">
+                  {registry.display_name ?? shortAddress(registry.wallet_address)}
+                </h1>
+                <CopyAddress address={registry.wallet_address} short={false} />
+                <dl className="grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
+                  <div>
+                    <dt className="text-muted-foreground text-xs">{t('firstSeen')}</dt>
+                    <dd>{formatDateTimeUtc(registry.first_seen_at) ?? NULL_DISPLAY}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-muted-foreground text-xs">{t('lastSeen')}</dt>
+                    <dd>{formatDateTimeUtc(registry.last_seen_at) ?? NULL_DISPLAY}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-muted-foreground text-xs">{t('colLastTrade')}</dt>
+                    <dd title={formatDateTimeUtc(registry.last_trade_at) ?? undefined}>
+                      {formatRelativeTime(registry.last_trade_at) ?? NULL_DISPLAY}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-muted-foreground text-xs">{t('discoverySource')}</dt>
+                    <dd>{t(SOURCE_LABEL_KEYS[registry.discovery_source])}</dd>
+                  </div>
+                </dl>
+              </div>
 
-            {metrics && (
-              <p className="text-muted-foreground text-xs">
-                {t(STATUS_LABEL_KEYS[metrics.data_status])}
-                {metrics.metrics_as_of &&
-                  ` · ${t('metricsAsOf', { time: formatRelativeTime(metrics.metrics_as_of) ?? '' })}`}
-                {metrics.is_partial && ` · ${t('partialData')}`}
-              </p>
-            )}
+              {metrics && (
+                <p className="text-muted-foreground text-xs">
+                  {t(STATUS_LABEL_KEYS[metrics.data_status])}
+                  {metrics.metrics_as_of &&
+                    ` · ${t('metricsAsOf', { time: formatRelativeTime(metrics.metrics_as_of) ?? '' })}`}
+                  {metrics.is_partial && ` · ${t('partialData')}`}
+                </p>
+              )}
 
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-              <MetricCard label="ROI" value={formatSignedPercent(metrics?.roi) ?? NULL_DISPLAY} />
-              <MetricCard
-                label={t('pnl')}
-                value={
-                  metrics?.pnl === null || metrics?.pnl === undefined
-                    ? NULL_DISPLAY
-                    : `${metrics.pnl > 0 ? '+' : ''}${formatUsd(metrics.pnl)}`
-                }
-              />
-              <MetricCard
-                label={t('winRate')}
-                value={formatPercent(metrics?.win_rate) ?? NULL_DISPLAY}
-              />
-              <MetricCard label={t('volume')} value={formatUsd(metrics?.volume) ?? NULL_DISPLAY} />
-              <MetricCard
-                label={t('tradeCount')}
-                value={formatInteger(metrics?.trade_count) ?? NULL_DISPLAY}
-              />
-              <MetricCard
-                label={t('profitFactor')}
-                value={formatDecimal(metrics?.profit_factor) ?? NULL_DISPLAY}
-              />
-              <MetricCard
-                label={t('maxDrawdown')}
-                value={formatDecimal(metrics?.max_drawdown_pct) ?? NULL_DISPLAY}
-              />
-            </div>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                <MetricCard label="ROI" value={formatSignedPercent(metrics?.roi) ?? NULL_DISPLAY} />
+                <MetricCard
+                  label={t('pnl')}
+                  value={
+                    metrics?.pnl === null || metrics?.pnl === undefined
+                      ? NULL_DISPLAY
+                      : `${metrics.pnl > 0 ? '+' : ''}${formatUsd(metrics.pnl)}`
+                  }
+                />
+                <MetricCard
+                  label={t('winRate')}
+                  value={formatPercent(metrics?.win_rate) ?? NULL_DISPLAY}
+                />
+                <MetricCard
+                  label={t('volume')}
+                  value={formatUsd(metrics?.volume) ?? NULL_DISPLAY}
+                />
+                <MetricCard
+                  label={t('tradeCount')}
+                  value={formatInteger(metrics?.trade_count) ?? NULL_DISPLAY}
+                />
+                <MetricCard
+                  label={t('profitFactor')}
+                  value={formatDecimal(metrics?.profit_factor) ?? NULL_DISPLAY}
+                />
+                <MetricCard
+                  label={t('maxDrawdown')}
+                  value={formatDecimal(metrics?.max_drawdown_pct) ?? NULL_DISPLAY}
+                />
+              </div>
 
-            <div className="flex flex-col gap-2 rounded-lg border p-4">
-              <h2 className="text-sm font-semibold">{t('longShortStats')}</h2>
-              <div className="grid grid-cols-2 gap-2">
-                <div className="flex flex-col gap-1 text-sm">
-                  <span className="text-muted-foreground text-xs">{t('longPositions')}</span>
-                  <span>
-                    {formatPercent(longWr) ?? NULL_DISPLAY} ·{' '}
-                    {t('countWins', {
-                      wins: metrics?.long_wins ?? 0,
-                      count: metrics?.long_count ?? 0,
-                    })}
-                  </span>
-                </div>
-                <div className="flex flex-col gap-1 text-sm">
-                  <span className="text-muted-foreground text-xs">{t('shortPositions')}</span>
-                  <span>
-                    {formatPercent(shortWr) ?? NULL_DISPLAY} ·{' '}
-                    {t('countWins', {
-                      wins: metrics?.short_wins ?? 0,
-                      count: metrics?.short_count ?? 0,
-                    })}
-                  </span>
+              <div className="flex flex-col gap-2 rounded-lg border p-4">
+                <h2 className="text-sm font-semibold">{t('longShortStats')}</h2>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="flex flex-col gap-1 text-sm">
+                    <span className="text-muted-foreground text-xs">{t('longPositions')}</span>
+                    <span>
+                      {formatPercent(longWr) ?? NULL_DISPLAY} ·{' '}
+                      {t('countWins', {
+                        wins: metrics?.long_wins ?? 0,
+                        count: metrics?.long_count ?? 0,
+                      })}
+                    </span>
+                  </div>
+                  <div className="flex flex-col gap-1 text-sm">
+                    <span className="text-muted-foreground text-xs">{t('shortPositions')}</span>
+                    <span>
+                      {formatPercent(shortWr) ?? NULL_DISPLAY} ·{' '}
+                      {t('countWins', {
+                        wins: metrics?.short_wins ?? 0,
+                        count: metrics?.short_count ?? 0,
+                      })}
+                    </span>
+                  </div>
                 </div>
               </div>
+
+              <PositionsSection
+                snapshot={positions}
+                isLoading={positionsLoading}
+                error={positionsError}
+                onRetry={() => setPositionsReloadKey((k) => k + 1)}
+              />
             </div>
-          </>
+            <div className="lg:col-span-1">
+              <div className="lg:sticky lg:top-4 lg:max-h-[80vh] lg:overflow-y-auto">
+                <ActivityFeed
+                  trades={activity.trades}
+                  liveFills={activity.liveFills}
+                  isLoading={activity.isLoading}
+                  error={activity.error}
+                  hasMore={activity.hasMore}
+                  onLoadMore={activity.fetchNextPage}
+                  onRetry={activity.refetch}
+                  live={activity.live}
+                />
+              </div>
+            </div>
+          </div>
         )
       )}
 

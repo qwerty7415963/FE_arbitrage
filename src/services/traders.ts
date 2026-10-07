@@ -6,8 +6,10 @@ import {
   DEFAULT_TRADER_PERIOD,
   DEFAULT_VENUE,
   SEARCH_LIMIT_DEFAULT,
+  type ActivityPage,
   type MemberInput,
   type PeriodMetrics,
+  type PositionSnapshot,
   type RangeFilter,
   type TraderDetail,
   type TraderGroup,
@@ -91,6 +93,40 @@ export async function fetchTraderDetail(
   params.set('period', query.period ?? DEFAULT_TRADER_PERIOD);
   const res = await apiClient<ApiResponse<TraderDetail>>(
     `${TRADERS_BASE}/${walletAddress}?${params.toString()}`,
+    { signal: options.signal },
+  );
+  if (!res.data) throw new Error('No data returned');
+  return res.data;
+}
+
+export const ACTIVITY_LIMIT_DEFAULT = 20;
+
+export async function fetchTraderPositions(
+  walletAddress: string,
+  query: { venue?: string } = {},
+  options: SearchOptions = {},
+): Promise<PositionSnapshot> {
+  const params = new URLSearchParams();
+  params.set('venue', query.venue ?? DEFAULT_VENUE);
+  const res = await apiClient<ApiResponse<PositionSnapshot>>(
+    `${TRADERS_BASE}/${walletAddress}/positions?${params.toString()}`,
+    { signal: options.signal },
+  );
+  if (!res.data) throw new Error('No data returned');
+  return res.data;
+}
+
+export async function fetchTraderActivity(
+  walletAddress: string,
+  query: { venue?: string; limit?: number; cursor?: string } = {},
+  options: SearchOptions = {},
+): Promise<ActivityPage> {
+  const params = new URLSearchParams();
+  params.set('venue', query.venue ?? DEFAULT_VENUE);
+  params.set('limit', String(query.limit ?? ACTIVITY_LIMIT_DEFAULT));
+  if (query.cursor) params.set('cursor', query.cursor);
+  const res = await apiClient<ApiResponse<ActivityPage>>(
+    `${TRADERS_BASE}/${walletAddress}/activity?${params.toString()}`,
     { signal: options.signal },
   );
   if (!res.data) throw new Error('No data returned');

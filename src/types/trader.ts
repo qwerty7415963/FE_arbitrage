@@ -128,6 +128,67 @@ export interface TraderMember {
   metrics: PeriodMetrics | null;
 }
 
+export type PositionSide = 'LONG' | 'SHORT';
+
+export type PositionDataStatus = 'ready' | 'syncing' | 'stale' | 'error';
+
+export interface OpenPosition {
+  coin: string;
+  side: PositionSide;
+  size: number;
+  entry_price: number | null;
+  mark_price: number | null;
+  position_value: number | null;
+  unrealized_pnl: number | null;
+  return_on_equity: number | null;
+  liquidation_price: number | null;
+  leverage: number | null;
+  max_leverage: number | null;
+  margin_used: number | null;
+  as_of: string | null;
+}
+
+export interface PositionSummary {
+  account_value: number | null;
+  total_ntl_pos: number | null;
+  total_margin_used: number | null;
+  as_of: string | null;
+}
+
+export interface PositionSnapshot {
+  summary: PositionSummary | null;
+  positions: OpenPosition[];
+  data_status: PositionDataStatus;
+  as_of: string | null;
+}
+
+export interface ActivityTrade {
+  market: string;
+  side: PositionSide;
+  opened_at: string;
+  closed_at: string;
+  volume: number;
+  pnl: number;
+  fees: number;
+  net_pnl: number;
+  fills: number;
+}
+
+export interface ActivityPage {
+  rows: ActivityTrade[];
+  next_cursor: string | null;
+  has_more: boolean;
+}
+
+export interface ActivityFill {
+  coin: string;
+  side: 'BUY' | 'SELL';
+  size: number;
+  price: number;
+  time: string;
+  tid: number;
+}
+
 export interface MemberInput {
   venue: string;
   wallet_address: string;

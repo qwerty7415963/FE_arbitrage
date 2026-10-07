@@ -63,3 +63,37 @@ export function shortAddress(address: string): string {
   if (address.length <= 12) return address;
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
 }
+
+const NULL_GLYPH = '—';
+
+export function formatSignedUsd(value: number | null | undefined): string {
+  if (value === null || value === undefined || Number.isNaN(value)) return NULL_GLYPH;
+  const sign = value < 0 ? '-' : '+';
+  const abs = Math.abs(value);
+  const grouped = abs.toLocaleString('en-US', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  });
+  return `${sign}$${grouped}`;
+}
+
+export function formatSignedPct(value: number | null | undefined, digits = 2): string {
+  if (value === null || value === undefined || Number.isNaN(value)) return NULL_GLYPH;
+  const sign = value < 0 ? '-' : '+';
+  return `${sign}${Math.abs(value).toFixed(digits)}%`;
+}
+
+export function formatNumber(value: number | null | undefined, digits = 4): string {
+  if (value === null || value === undefined || Number.isNaN(value)) return NULL_GLYPH;
+  return value.toLocaleString('en-US', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: digits,
+  });
+}
+
+export type ActivityTone = 'positive' | 'negative';
+
+export function activitySideTone(side: 'LONG' | 'SHORT' | 'BUY' | 'SELL' | string): ActivityTone {
+  if (side === 'LONG' || side === 'BUY') return 'positive';
+  return 'negative';
+}

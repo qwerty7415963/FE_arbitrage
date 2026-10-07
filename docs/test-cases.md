@@ -53,16 +53,20 @@
 | `app/[locale]/(protected)/traders/page.tsx`           | `tests/unit/components/trader-scanner-page.test.tsx`       | 20      | ✅     |
 | `app/[locale]/(protected)/traders/[address]/page.tsx` | `tests/unit/components/trader-detail-page.test.tsx`        | 8       | ✅     |
 | `components/copy-address.tsx`                         | `tests/unit/components/copy-address.test.tsx`              | 2       | ✅     |
-| `services/traders.ts`                                 | `tests/unit/services/traders.test.ts`                      | 12      | ✅     |
+| `services/traders.ts`                                 | `tests/unit/services/traders.test.ts`                      | 17      | ✅     |
 | `lib/trader-saved-searches.ts`                        | `tests/unit/lib/trader-saved-searches.test.ts`             | 4       | ✅     |
 | `lib/trader-validation.ts`                            | `tests/unit/lib/trader-validation.test.ts`                 | 13      | ✅     |
-| `lib/trader-format.ts`                                | `tests/unit/lib/trader-format.test.ts`                     | 12      | ✅     |
+| `lib/trader-format.ts`                                | `tests/unit/lib/trader-format.test.ts`                     | 17      | ✅     |
 | `lib/trader-url-state.ts`                             | `tests/unit/lib/trader-url-state.test.ts`                  | 10      | ✅     |
 | `components/shared/pagination.tsx`                    | `tests/unit/components/pagination.test.tsx`                | 5       | ✅     |
 | `lib/trader-filter-draft.ts`                          | `tests/unit/lib/trader-filter-draft.test.ts`               | 9       | ✅     |
 | `components/funding-table.tsx`                        | `tests/unit/components/funding-table.test.tsx`             | 26      | ✅     |
 | `infrastructure/api-client.ts`                        | `tests/unit/infrastructure/api-client.test.ts`             | 14      | ✅     |
-| **Total**                                             |                                                            | **238** |        |
+| `lib/trader-activity-ws.ts`                           | `tests/unit/lib/trader-activity-ws.test.ts`                | 7       | ✅     |
+| `hooks/use-trader-activity.ts`                        | `tests/unit/hooks/use-trader-activity.test.tsx`            | 2       | ✅     |
+| `traders/[address]/_components/positions-section.tsx` | `tests/unit/components/positions-section.test.tsx`         | 3       | ✅     |
+| `traders/[address]/_components/activity-feed.tsx`     | `tests/unit/components/activity-feed.test.tsx`             | 3       | ✅     |
+| **Total**                                             |                                                            | **263** |        |
 
 ### Test Details
 
@@ -114,7 +118,7 @@
 | getFundingArbitrage no data        | Empty response                |
 | getFundingArbitrage API error      | Network error                 |
 
-#### `services/traders.ts` (12 tests)
+#### `services/traders.ts` (17 tests)
 
 | Test                          | Description                    |
 | ----------------------------- | ------------------------------ |
@@ -124,11 +128,51 @@
 | searchTraders sends page      | page:2 in body                 |
 | searchTraders no data         | Empty response                 |
 | fetchTraderDetail GETs        | venue + period params          |
+| fetchTraderPositions GETs     | venue default, maps snapshot   |
+| fetchTraderPositions no data  | Empty response                 |
+| fetchTraderActivity default   | venue + limit=20               |
+| fetchTraderActivity paged     | limit + cursor forwarded       |
+| fetchTraderActivity no data   | Empty response                 |
 | getTraderGroup GETs           | GET trader-groups/{id}         |
 | getTraderGroup missing        | Empty response                 |
 | groups CRUD + members         | added/removed counts           |
 | members period param          | default 30D + custom           |
 | patch members reports updated | PATCH → {updated}              |
+
+#### `lib/trader-activity-ws.ts` (7 tests)
+
+| Test                      | Description                                |
+| ------------------------- | ------------------------------------------ |
+| builds ws url lowercase   | `ws://host/api/v1/traders/ws?wallet=`      |
+| uses wss for https        | `wss://` scheme                            |
+| backoff caps at 30s       | 1s→2s→4s→…→30s                             |
+| activity routes to onFill | `subscribed` ignored, `activity` validated |
+| ping every 25s            | heartbeat `{type:ping}`                    |
+| reconnect after close     | `reconnecting` + new socket after 1s       |
+| hidden suspends (M4)      | `visibilitychange` closes + resubscribes   |
+
+#### `hooks/use-trader-activity.ts` (2 tests)
+
+| Test                      | Description                     |
+| ------------------------- | ------------------------------- |
+| maps pages + cursor       | `next_cursor` → `fetchNextPage` |
+| starts empty disconnected | `liveFills=[]`, `hasMore=false` |
+
+#### `traders/[address]/_components/positions-section.tsx` (3 tests)
+
+| Test                    | Description                        |
+| ----------------------- | ---------------------------------- |
+| renders row + chips     | BTC LONG + account/notional/margin |
+| empty state             | `noOpenPositions` when `[]`        |
+| never-synced syncing M5 | `syncing` when `summary=null`      |
+
+#### `traders/[address]/_components/activity-feed.tsx` (3 tests)
+
+| Test                   | Description                        |
+| ---------------------- | ---------------------------------- |
+| live + closed render   | LIVE badge, ETH fill + BTC trade   |
+| empty state            | `noActivity` when both lists empty |
+| load more when hasMore | Button calls `onLoadMore`          |
 
 #### `components/group-form.tsx` (7 tests)
 
@@ -345,63 +389,68 @@
 
 ### Test Matrix
 
-| #   | File                         | Flow                    | Steps                             | Expected                           |
-| --- | ---------------------------- | ----------------------- | --------------------------------- | ---------------------------------- |
-| E1  | `protected.spec.ts`          | Settings open access    | Navigate /settings                | Settings renders, no redirect      |
-| E2  | `protected.spec.ts`          | Groups open access      | Navigate /groups                  | Groups renders, no redirect        |
-| E3  | `protected.spec.ts`          | Mutation needs wallet   | Create group unauthenticated      | Connect wallet modal opens         |
-| E4  | `funding-arbitrage.spec.ts`  | Page renders            | Navigate /funding-arbitrage       | Title + buttons visible            |
-| E5  | `funding-arbitrage.spec.ts`  | Venue selector opens    | Click "Select venues"             | Dropdown with venues shown         |
-| E6  | `funding-arbitrage.spec.ts`  | Select All works        | Click "Select All"                | "10 venues" displayed              |
-| E7  | `funding-arbitrage.spec.ts`  | Clear works             | Click "Clear"                     | "Select venues" displayed          |
-| E8  | `funding-arbitrage.spec.ts`  | Search disabled         | No venues selected                | Search button disabled             |
-| E9  | `groups.spec.ts`             | Groups page renders     | Navigate /groups                  | Title + Create visible             |
-| E10 | `groups.spec.ts`             | Empty state             | Mock [] → /groups                 | "No groups yet"                    |
-| E11 | `groups.spec.ts`             | Create validates blank  | Open dialog → blank name → submit | "Group name is required"           |
-| E12 | `groups.spec.ts`             | Lists groups            | Mock [Main] → /groups             | Name + count visible               |
-| E13 | `groups.spec.ts`             | Error retry             | Mock 500 → /groups                | Retry button visible               |
-| E14 | `groups.spec.ts`             | Detail lists members    | Mock group+members → /groups/g1   | Address row, no Scan needed        |
-| E15 | `groups.spec.ts`             | Member name + alias     | Mock member with alias            | Display name + alias shown         |
-| E16 | `groups.spec.ts`             | Empty members           | Mock [] members                   | No members yet                     |
-| E17 | `groups.spec.ts`             | Remove member refetch   | DELETE members → {removed:1}      | DELETE sent, list reloads          |
-| E18 | `groups.spec.ts`             | Links to scanner        | Open /groups/g1                   | Link /traders?group=g1             |
-| E19 | `groups.spec.ts`             | Scanner scans to list   | POST search mock → Search         | Name + address, body defaults      |
-| E20 | `groups.spec.ts`             | Invalid min/max blocks  | ROI 5/1 → Search                  | Error, no API call                 |
-| E21 | `groups.spec.ts`             | Non-numeric blocks      | PnL "abc" → Search                | invalidNumber, no API call         |
-| E22 | `groups.spec.ts`             | Header sorts desc→asc   | Click PnL header                  | 2nd body sort_direction asc        |
-| E23 | `groups.spec.ts`             | Numbered page replaces  | Page 2 click, page:2 in body      | 2nd row only, Page 2 of 2, ?page=2 |
-| E24 | `groups.spec.ts`             | Empty + reset filters   | Mock [] → Search → Reset          | No traders, form cleared           |
-| E25 | `groups.spec.ts`             | Error + retry recovers  | 500 → Retry                       | Rows after retry                   |
-| E26 | `groups.spec.ts`             | Group needs auth        | Group + 401 search                | Auth message shown                 |
-| E27 | `groups.spec.ts`             | Add modal from scan     | Tick + Add to group (1)           | Modal → Added 1                    |
-| E28 | `groups.spec.ts`             | Scan without wallet     | No auth → Search                  | Rows + group hint, no modal        |
-| E29 | `groups.spec.ts`             | Save search persists    | Save "My 7D" → reload → apply     | Chip kept, period 7D, rows         |
-| E30 | `groups.spec.ts`             | URL restores on refresh | ?period=7D&roi_min=30             | Form + auto search                 |
-| E31 | `groups.spec.ts`             | Venue/period in body    | Period 7D → Search                | venue + period in POST body        |
-| E32 | `groups.spec.ts`             | Detail open + back      | View → detail → Back              | Filters + rows preserved           |
-| E33 | `groups.spec.ts`             | Detail period tabs      | Click 7D on detail                | period=7D refetch                  |
-| E34 | `groups.spec.ts`             | Detail 404              | Direct detail URL, 404 mock       | Trader not found                   |
-| E35 | `groups.spec.ts`             | Create group dialog     | Fill name+desc → Create           | Row appears in list                |
-| E36 | `groups.spec.ts`             | Edit group name         | Edit → rename → Save              | New name in list                   |
-| E37 | `groups.spec.ts`             | Delete with warning     | Delete → confirm text → confirm   | Membership text, row gone          |
-| E38 | `groups.spec.ts`             | Group+ROI combine       | Group + ROI/PnL → Search          | group_id + mins in body            |
-| E39 | `groups.spec.ts`             | Back restores search    | Search A → B → back               | Form A + refetch roi_min           |
-| E40 | `groups.spec.ts`             | Network fail + retry    | Abort → error → Retry             | Filters kept, rows recover         |
-| E41 | `groups.spec.ts`             | Stale rows inspectable  | Stale status mock → Search        | Stale text + data visible          |
-| E42 | `groups.spec.ts`             | Detail inline create    | Add → new group → Add 1           | Added 1                            |
-| E43 | `groups.spec.ts`             | Stale detail            | Stale + partial mock              | Stale + Partial + data             |
-| E44 | `groups.spec.ts`             | Add/remove member flow  | 2 members → remove 1              | Count + table update               |
-| E45 | `groups.spec.ts`             | Groups 500 while authed | 500 → error + Retry → 200         | No auth hint, Main in Group        |
-| E46 | `scanner-pagination.spec.ts` | Page click replaces     | Page 2 → page:2 in body           | Trader 21 only, ?page=2            |
-| E47 | `scanner-pagination.spec.ts` | Deep link ?page=3       | Goto ?page=3                      | page:3 sent, Page 3 current        |
-| E48 | `scanner-pagination.spec.ts` | Back/forward restores   | Page 2 → back → forward           | Trader 1 → 2 → 1 → 2               |
-| E49 | `scanner-pagination.spec.ts` | Beyond-total clamps     | Goto ?page=9 (2 pages)            | Falls to page 2, Page 2 of 2       |
-| E50 | `scanner-pagination.spec.ts` | Rapid 2→3 latest wins   | Click 2 then 3 (2 delayed)        | Trader 3 only                      |
-| E51 | `scanner-pagination.spec.ts` | 500 on page 2 + retry   | Page 2 fails → Retry              | Trader 2, page:2 kept, ?page=2     |
-| E52 | `scanner-pagination.spec.ts` | Invalid ?page= clamps   | Goto ?page=0                      | page:1 sent                        |
-| E53 | `scanner-pagination.spec.ts` | Axe on paginated list   | wcag2a+aa                         | No violations                      |
-| E54 | `scanner-pagination.spec.ts` | Keyboard pagination     | Focus Page 2 + Enter              | Trader 2 visible                   |
-| E55 | `scanner-pagination.spec.ts` | Narrow no overflow      | 640px, 10 pages                   | Pagination visible, no overflow    |
+| #   | File                         | Flow                         | Steps                             | Expected                           |
+| --- | ---------------------------- | ---------------------------- | --------------------------------- | ---------------------------------- |
+| E1  | `protected.spec.ts`          | Settings open access         | Navigate /settings                | Settings renders, no redirect      |
+| E2  | `protected.spec.ts`          | Groups open access           | Navigate /groups                  | Groups renders, no redirect        |
+| E3  | `protected.spec.ts`          | Mutation needs wallet        | Create group unauthenticated      | Connect wallet modal opens         |
+| E4  | `funding-arbitrage.spec.ts`  | Page renders                 | Navigate /funding-arbitrage       | Title + buttons visible            |
+| E5  | `funding-arbitrage.spec.ts`  | Venue selector opens         | Click "Select venues"             | Dropdown with venues shown         |
+| E6  | `funding-arbitrage.spec.ts`  | Select All works             | Click "Select All"                | "10 venues" displayed              |
+| E7  | `funding-arbitrage.spec.ts`  | Clear works                  | Click "Clear"                     | "Select venues" displayed          |
+| E8  | `funding-arbitrage.spec.ts`  | Search disabled              | No venues selected                | Search button disabled             |
+| E9  | `groups.spec.ts`             | Groups page renders          | Navigate /groups                  | Title + Create visible             |
+| E10 | `groups.spec.ts`             | Empty state                  | Mock [] → /groups                 | "No groups yet"                    |
+| E11 | `groups.spec.ts`             | Create validates blank       | Open dialog → blank name → submit | "Group name is required"           |
+| E12 | `groups.spec.ts`             | Lists groups                 | Mock [Main] → /groups             | Name + count visible               |
+| E13 | `groups.spec.ts`             | Error retry                  | Mock 500 → /groups                | Retry button visible               |
+| E14 | `groups.spec.ts`             | Detail lists members         | Mock group+members → /groups/g1   | Address row, no Scan needed        |
+| E15 | `groups.spec.ts`             | Member name + alias          | Mock member with alias            | Display name + alias shown         |
+| E16 | `groups.spec.ts`             | Empty members                | Mock [] members                   | No members yet                     |
+| E17 | `groups.spec.ts`             | Remove member refetch        | DELETE members → {removed:1}      | DELETE sent, list reloads          |
+| E18 | `groups.spec.ts`             | Links to scanner             | Open /groups/g1                   | Link /traders?group=g1             |
+| E19 | `groups.spec.ts`             | Scanner scans to list        | POST search mock → Search         | Name + address, body defaults      |
+| E20 | `groups.spec.ts`             | Invalid min/max blocks       | ROI 5/1 → Search                  | Error, no API call                 |
+| E21 | `groups.spec.ts`             | Non-numeric blocks           | PnL "abc" → Search                | invalidNumber, no API call         |
+| E22 | `groups.spec.ts`             | Header sorts desc→asc        | Click PnL header                  | 2nd body sort_direction asc        |
+| E23 | `groups.spec.ts`             | Numbered page replaces       | Page 2 click, page:2 in body      | 2nd row only, Page 2 of 2, ?page=2 |
+| E24 | `groups.spec.ts`             | Empty + reset filters        | Mock [] → Search → Reset          | No traders, form cleared           |
+| E25 | `groups.spec.ts`             | Error + retry recovers       | 500 → Retry                       | Rows after retry                   |
+| E26 | `groups.spec.ts`             | Group needs auth             | Group + 401 search                | Auth message shown                 |
+| E27 | `groups.spec.ts`             | Add modal from scan          | Tick + Add to group (1)           | Modal → Added 1                    |
+| E28 | `groups.spec.ts`             | Scan without wallet          | No auth → Search                  | Rows + group hint, no modal        |
+| E29 | `groups.spec.ts`             | Save search persists         | Save "My 7D" → reload → apply     | Chip kept, period 7D, rows         |
+| E30 | `groups.spec.ts`             | URL restores on refresh      | ?period=7D&roi_min=30             | Form + auto search                 |
+| E31 | `groups.spec.ts`             | Venue/period in body         | Period 7D → Search                | venue + period in POST body        |
+| E32 | `groups.spec.ts`             | Detail open + back           | View → detail → Back              | Filters + rows preserved           |
+| E33 | `groups.spec.ts`             | Detail period tabs           | Click 7D on detail                | period=7D refetch                  |
+| E34 | `groups.spec.ts`             | Detail 404                   | Direct detail URL, 404 mock       | Trader not found                   |
+| E35 | `groups.spec.ts`             | Create group dialog          | Fill name+desc → Create           | Row appears in list                |
+| E36 | `groups.spec.ts`             | Edit group name              | Edit → rename → Save              | New name in list                   |
+| E37 | `groups.spec.ts`             | Delete with warning          | Delete → confirm text → confirm   | Membership text, row gone          |
+| E38 | `groups.spec.ts`             | Group+ROI combine            | Group + ROI/PnL → Search          | group_id + mins in body            |
+| E39 | `groups.spec.ts`             | Back restores search         | Search A → B → back               | Form A + refetch roi_min           |
+| E40 | `groups.spec.ts`             | Network fail + retry         | Abort → error → Retry             | Filters kept, rows recover         |
+| E41 | `groups.spec.ts`             | Stale rows inspectable       | Stale status mock → Search        | Stale text + data visible          |
+| E42 | `groups.spec.ts`             | Detail inline create         | Add → new group → Add 1           | Added 1                            |
+| E43 | `groups.spec.ts`             | Stale detail                 | Stale + partial mock              | Stale + Partial + data             |
+| E44 | `groups.spec.ts`             | Add/remove member flow       | 2 members → remove 1              | Count + table update               |
+| E45 | `groups.spec.ts`             | Groups 500 while authed      | 500 → error + Retry → 200         | No auth hint, Main in Group        |
+| E46 | `scanner-pagination.spec.ts` | Page click replaces          | Page 2 → page:2 in body           | Trader 21 only, ?page=2            |
+| E47 | `scanner-pagination.spec.ts` | Deep link ?page=3            | Goto ?page=3                      | page:3 sent, Page 3 current        |
+| E48 | `scanner-pagination.spec.ts` | Back/forward restores        | Page 2 → back → forward           | Trader 1 → 2 → 1 → 2               |
+| E49 | `scanner-pagination.spec.ts` | Beyond-total clamps          | Goto ?page=9 (2 pages)            | Falls to page 2, Page 2 of 2       |
+| E50 | `scanner-pagination.spec.ts` | Rapid 2→3 latest wins        | Click 2 then 3 (2 delayed)        | Trader 3 only                      |
+| E51 | `scanner-pagination.spec.ts` | 500 on page 2 + retry        | Page 2 fails → Retry              | Trader 2, page:2 kept, ?page=2     |
+| E52 | `scanner-pagination.spec.ts` | Invalid ?page= clamps        | Goto ?page=0                      | page:1 sent                        |
+| E53 | `scanner-pagination.spec.ts` | Axe on paginated list        | wcag2a+aa                         | No violations                      |
+| E54 | `scanner-pagination.spec.ts` | Keyboard pagination          | Focus Page 2 + Enter              | Trader 2 visible                   |
+| E55 | `scanner-pagination.spec.ts` | Narrow no overflow           | 640px, 10 pages                   | Pagination visible, no overflow    |
+| E56 | `trader-detail.spec.ts`      | Positions + activity         | Mock positions/activity → detail  | BTC row + Net PnL visible          |
+| E57 | `trader-detail.spec.ts`      | Empty positions/activity     | Mock [] → detail                  | No open positions + No activity    |
+| E58 | `trader-detail.spec.ts`      | Never-synced syncing M5      | data_status=syncing               | Syncing visible                    |
+| E59 | `trader-detail.spec.ts`      | Activity Load more           | has_more → Load more click        | ETH second page visible            |
+| E60 | `trader-detail.spec.ts`      | Positions 500 keeps overview | positions 500 → detail            | Heading + Open Positions visible   |
 
 ### Accessibility / Keyboard / Visual / Performance
 
@@ -552,3 +601,4 @@ reviewing diffs — never blindly.
 | 2026-10-06 | Scanner direction change (human-approved): header Group select and the sheet Group cluster are removed, so the earlier group-select entries above no longer describe the product. Entering the scanner always searches — URL params restore that search, an empty URL loads the default list (venue hyperliquid, period 30D, sort pnl desc), `?group_id=` is stripped and Reset re-runs the default search. Unit specs re-synced (scanner-header 10→6, filter-sheet 12→10, scanner page 18→16; unit total 231→223) and dead group i18n keys removed from en + vi.                                                                                                                                                                                                 | —      |
 | 2026-10-06 | Numbered pagination (CONTRACT.md §3): scanner cursor/Load-more replaced by numbered pages (20/page, `?page=` omitted when 1, clamp 0/abc→1, reset-to-1 on filter/sort/period, beyond-total falls to last page, current-page click no-op). `Meta` + `page/total/total_pages/offset` + `TraderSearchQuery.page` match BE swagger exactly; shared `components/shared/pagination.tsx` (funding + groups + scanner); copy `resultsPaged`/`pageOf` in en+vi. Tests: url-state 6→10, services 11→12, scanner 16→20, new pagination unit (5) + `scanner-pagination.spec.ts` (E46-E55); P1 reworked to 20 rows / Page 1 of 5. Visual `scanner-results*` baselines change (Load more gone, new count copy) — NOT regenerated, needs per-image approval. Unit total 224→238. | —      |
 | 2026-10-06 | Phase 5 review fixes: `errOutOfRange` copy made range-agnostic (en/vi); `matchesPreset` compares parsed numeric values so profit-factor presets (1.0/1.5/2.0) survive the URL round-trip; dead `traders.minPlaceholder`/`maxPlaceholder`/`search`/`reset` keys removed from en + vi; `visual.spec.ts` filter-sheet-open now mocks `/api/v1/traders/search` (baseline `scanner-sheet-open` refreshed). filter-sheet +1 (unit total 223→224).                                                                                                                                                                                                                                                                                                                       | —      |
+| 2026-10-07 | Trader Detail positions + activity (DETAIL-PLAN Part B): types/services/format/WS client (backoff 1s-30s, ping 25s, hidden suspend M4) + useTraderActivity, positions-section + activity-feed, 2-col layout, i18n en+vi incl positionsSyncing M5. Unit 238-263 (+25), E2E trader-detail.spec.ts REST-only E56-E60 (M3 WS via stubbed unit, M7 no WS e2e).                                                                                                                                                                                                                                                                                                                                                                                                         | --     |

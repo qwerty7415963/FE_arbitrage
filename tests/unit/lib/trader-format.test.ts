@@ -1,12 +1,16 @@
 import { describe, it, expect } from 'vitest';
 import {
+  activitySideTone,
   deriveWinRate,
   formatDateTimeUtc,
   formatDecimal,
   formatInteger,
+  formatNumber,
   formatPercent,
   formatRelativeTime,
+  formatSignedPct,
   formatSignedPercent,
+  formatSignedUsd,
   formatUsd,
   shortAddress,
 } from '@/lib/trader-format';
@@ -83,6 +87,46 @@ describe('formatDateTimeUtc', () => {
     expect(formatDateTimeUtc('2026-09-30T12:00:00Z')).toBe('2026-09-30 12:00:00 UTC');
     expect(formatDateTimeUtc(null)).toBeNull();
     expect(formatDateTimeUtc('garbage')).toBeNull();
+  });
+});
+
+describe('formatSignedUsd', () => {
+  it('signs grouped USD values', () => {
+    expect(formatSignedUsd(1234)).toBe('+$1,234');
+    expect(formatSignedUsd(-567)).toBe('-$567');
+    expect(formatSignedUsd(0)).toBe('+$0');
+  });
+
+  it('returns a dash for missing values', () => {
+    expect(formatSignedUsd(null)).toBe('—');
+    expect(formatSignedUsd(undefined)).toBe('—');
+    expect(formatSignedUsd(Number.NaN)).toBe('—');
+  });
+});
+
+describe('formatSignedPct', () => {
+  it('signs percentages', () => {
+    expect(formatSignedPct(12.345)).toBe('+12.35%');
+    expect(formatSignedPct(-5)).toBe('-5.00%');
+    expect(formatSignedPct(null)).toBe('—');
+  });
+});
+
+describe('formatNumber', () => {
+  it('groups sizes with configurable digits', () => {
+    expect(formatNumber(1234.56789)).toBe('1,234.5679');
+    expect(formatNumber(0.5, 2)).toBe('0.5');
+    expect(formatNumber(null)).toBe('—');
+    expect(formatNumber(Number.NaN)).toBe('—');
+  });
+});
+
+describe('activitySideTone', () => {
+  it('maps LONG/BUY to positive and SHORT/SELL to negative', () => {
+    expect(activitySideTone('LONG')).toBe('positive');
+    expect(activitySideTone('BUY')).toBe('positive');
+    expect(activitySideTone('SHORT')).toBe('negative');
+    expect(activitySideTone('SELL')).toBe('negative');
   });
 });
 

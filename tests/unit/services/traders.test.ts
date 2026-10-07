@@ -5,7 +5,9 @@ import {
   buildTraderSearchRequest,
   createTraderGroup,
   deleteTraderGroup,
+  fetchTraderActivity,
   fetchTraderDetail,
+  fetchTraderPositions,
   getTraderGroup,
   listGroupMembers,
   listTraderGroups,
@@ -110,6 +112,55 @@ describe('traders service', () => {
         '/api/v1/traders/0xabc?venue=hyperliquid&period=7D',
       );
       expect(detail).toEqual({ period: '7D' });
+    });
+  });
+
+  describe('fetchTraderPositions', () => {
+    it('GETs positions with default venue', async () => {
+      vi.mocked(apiClient.apiClient).mockResolvedValueOnce({
+        success: true,
+        data: { summary: null, positions: [], data_status: 'ready', as_of: null },
+      });
+      const snap = await fetchTraderPositions('0xabc');
+      expect(vi.mocked(apiClient.apiClient).mock.calls[0][0]).toBe(
+        '/api/v1/traders/0xabc/positions?venue=hyperliquid',
+      );
+      expect(snap.positions).toEqual([]);
+    });
+
+    it('throws when no data returned', async () => {
+      vi.mocked(apiClient.apiClient).mockResolvedValueOnce({ success: true });
+      await expect(fetchTraderPositions('0xabc')).rejects.toThrow('No data returned');
+    });
+  });
+
+  describe('fetchTraderActivity', () => {
+    it('GETs activity with default limit 20', async () => {
+      vi.mocked(apiClient.apiClient).mockResolvedValueOnce({
+        success: true,
+        data: { rows: [], next_cursor: null, has_more: false },
+      });
+      const page = await fetchTraderActivity('0xabc');
+      expect(vi.mocked(apiClient.apiClient).mock.calls[0][0]).toBe(
+        '/api/v1/traders/0xabc/activity?venue=hyperliquid&limit=20',
+      );
+      expect(page.rows).toEqual([]);
+    });
+
+    it('forwards limit and cursor params', async () => {
+      vi.mocked(apiClient.apiClient).mockResolvedValueOnce({
+        success: true,
+        data: { rows: [], next_cursor: 'c2', has_more: true },
+      });
+      const page = await fetchTraderActivity('0xabc', { limit: 5, cursor: 'c1' });
+      expect(vi.mocked(apiClient.apiClient).mock.calls[0][0]).toContain('limit=5');
+      expect(vi.mocked(apiClient.apiClient).mock.calls[0][0]).toContain('cursor=c1');
+      expect(page.has_more).toBe(true);
+    });
+
+    it('throws when no data returned', async () => {
+      vi.mocked(apiClient.apiClient).mockResolvedValueOnce({ success: true });
+      await expect(fetchTraderActivity('0xabc')).rejects.toThrow('No data returned');
     });
   });
 

@@ -4,7 +4,8 @@ import userEvent from '@testing-library/user-event';
 import { NextIntlClientProvider } from 'next-intl';
 import { ApiError } from '@/infrastructure/api-client';
 import DetailPage from '@/app/[locale]/(protected)/traders/[address]/page';
-import { fetchTraderDetail, listTraderGroups } from '@/services/traders';
+import { fetchTraderDetail, fetchTraderPositions, listTraderGroups } from '@/services/traders';
+import { useTraderActivity } from '@/hooks/use-trader-activity';
 import type { TraderDetail } from '@/types/trader';
 import enMessages from '@/messages/en.json';
 
@@ -21,9 +22,15 @@ vi.mock('next/navigation', () => ({
 
 vi.mock('@/services/traders', () => ({
   fetchTraderDetail: vi.fn(),
+  fetchTraderPositions: vi.fn(),
+  fetchTraderActivity: vi.fn(),
   listTraderGroups: vi.fn(),
   addGroupMembers: vi.fn(),
   createTraderGroup: vi.fn(),
+}));
+
+vi.mock('@/hooks/use-trader-activity', () => ({
+  useTraderActivity: vi.fn(),
 }));
 
 vi.mock('@/lib/stores/auth', () => ({
@@ -88,6 +95,22 @@ describe('TraderDetailPage', () => {
     nav.address = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
     vi.mocked(fetchTraderDetail).mockResolvedValue(detail);
     vi.mocked(listTraderGroups).mockResolvedValue([]);
+    vi.mocked(fetchTraderPositions).mockResolvedValue({
+      summary: null,
+      positions: [],
+      data_status: 'ready',
+      as_of: null,
+    });
+    vi.mocked(useTraderActivity).mockReturnValue({
+      trades: [],
+      liveFills: [],
+      isLoading: false,
+      error: null,
+      fetchNextPage: vi.fn(),
+      refetch: vi.fn(),
+      hasMore: false,
+      live: 'disconnected',
+    });
   });
 
   it('blocks invalid addresses without fetching', () => {
@@ -105,7 +128,7 @@ describe('TraderDetailPage', () => {
     expect(screen.getByText('70.00%')).toBeInTheDocument();
     expect(screen.getByText('80.00% · 24 of 30 won')).toBeInTheDocument();
     expect(screen.getByText('50.00% · 10 of 20 won')).toBeInTheDocument();
-    expect(screen.getByText(/Ready/)).toBeInTheDocument();
+    expect(screen.getAllByText(/Ready/).length).toBeGreaterThan(0);
     expect(fetchTraderDetail).toHaveBeenCalledWith(
       '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
       expect.objectContaining({ period: '30D' }),
