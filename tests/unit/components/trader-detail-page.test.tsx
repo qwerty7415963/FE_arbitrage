@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { NextIntlClientProvider } from 'next-intl';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ApiError } from '@/infrastructure/api-client';
 import DetailPage from '@/app/[locale]/(protected)/traders/[address]/page';
 import { fetchTraderDetail, fetchTraderPositions, listTraderGroups } from '@/services/traders';
@@ -17,7 +18,9 @@ const nav = vi.hoisted(() => ({
 
 vi.mock('next/navigation', () => ({
   useParams: () => ({ locale: 'en', address: nav.address }),
-  useRouter: () => ({ back: nav.back, push: nav.push }),
+  useRouter: () => ({ back: nav.back, push: nav.push, replace: vi.fn() }),
+  usePathname: () => `/en/traders/${nav.address}`,
+  useSearchParams: () => new URLSearchParams(),
 }));
 
 vi.mock('@/services/traders', () => ({
@@ -82,10 +85,13 @@ const detail: TraderDetail = {
 };
 
 function renderPage() {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
-    <NextIntlClientProvider locale="en" messages={enMessages}>
-      <DetailPage />
-    </NextIntlClientProvider>,
+    <QueryClientProvider client={client}>
+      <NextIntlClientProvider locale="en" messages={enMessages}>
+        <DetailPage />
+      </NextIntlClientProvider>
+    </QueryClientProvider>,
   );
 }
 

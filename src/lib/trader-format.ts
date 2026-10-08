@@ -91,6 +91,18 @@ export function formatNumber(value: number | null | undefined, digits = 4): stri
   });
 }
 
+export function formatDurationSec(value: number | null | undefined): string {
+  if (value === null || value === undefined || Number.isNaN(value) || value < 0) return NULL_GLYPH;
+  const totalSec = Math.floor(value);
+  const days = Math.floor(totalSec / 86400);
+  const hours = Math.floor((totalSec % 86400) / 3600);
+  const minutes = Math.floor((totalSec % 3600) / 60);
+  if (days > 0) return `${days}d ${hours}h`;
+  if (hours > 0) return `${hours}h ${minutes}m`;
+  if (minutes > 0) return `${minutes}m`;
+  return `${totalSec}s`;
+}
+
 export type ActivityTone = 'positive' | 'negative';
 
 export function activitySideTone(side: 'LONG' | 'SHORT' | 'BUY' | 'SELL' | string): ActivityTone {

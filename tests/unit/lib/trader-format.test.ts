@@ -4,6 +4,7 @@ import {
   deriveWinRate,
   formatDateTimeUtc,
   formatDecimal,
+  formatDurationSec,
   formatInteger,
   formatNumber,
   formatPercent,
@@ -137,5 +138,27 @@ describe('shortAddress', () => {
 
   it('passes short strings through', () => {
     expect(shortAddress('0x1234')).toBe('0x1234');
+  });
+});
+
+describe('formatDurationSec', () => {
+  it('renders days and hours for long trades', () => {
+    expect(formatDurationSec(216000)).toBe('2d 12h');
+  });
+
+  it('renders hours and minutes under a day', () => {
+    expect(formatDurationSec(5400)).toBe('1h 30m');
+  });
+
+  it('renders minutes and seconds for short spans', () => {
+    expect(formatDurationSec(90)).toBe('1m');
+    expect(formatDurationSec(45)).toBe('45s');
+  });
+
+  it('renders a dash for missing or negative values', () => {
+    expect(formatDurationSec(null)).toBe('—');
+    expect(formatDurationSec(undefined)).toBe('—');
+    expect(formatDurationSec(Number.NaN)).toBe('—');
+    expect(formatDurationSec(-5)).toBe('—');
   });
 });

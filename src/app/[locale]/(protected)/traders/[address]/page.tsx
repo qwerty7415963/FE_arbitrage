@@ -5,11 +5,11 @@ import { useParams, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { ApiError } from '@/infrastructure/api-client';
-import { fetchTraderDetail, fetchTraderPositions } from '@/services/traders';
+import { fetchTraderDetail } from '@/services/traders';
 import { useTraderActivity } from '@/hooks/use-trader-activity';
 import { readLastScan } from '@/lib/trader-url-state';
 import { isValidWalletAddress } from '@/lib/trader-validation';
-import { PositionsSection } from './_components/positions-section';
+import { WalletTabs } from './_components/wallet-tabs';
 import { ActivityFeed } from './_components/activity-feed';
 import {
   deriveWinRate,
@@ -30,7 +30,6 @@ import {
   TRADER_PERIODS,
   type DiscoverySource,
   type MemberInput,
-  type PositionSnapshot,
   type TraderDetail,
   type TraderPeriod,
 } from '@/types/trader';
@@ -84,10 +83,6 @@ function DetailContent() {
   const [reloadKey, setReloadKey] = useState(0);
   const requestIdRef = useRef(0);
   const addressValid = isValidWalletAddress(address);
-  const [positions, setPositions] = useState<PositionSnapshot | null>(null);
-  const [positionsLoading, setPositionsLoading] = useState(() => isValidWalletAddress(address));
-  const [positionsError, setPositionsError] = useState<unknown>(null);
-  const [positionsReloadKey, setPositionsReloadKey] = useState(0);
   const activity = useTraderActivity(addressValid ? address.toLowerCase() : '');
 
   useEffect(() => {
@@ -119,29 +114,6 @@ function DetailContent() {
       cancelled = true;
     };
   }, [address, period, reloadKey, addressValid]);
-
-  useEffect(() => {
-    if (!addressValid) return;
-    let cancelled = false;
-    async function fetchPositions() {
-      setPositionsLoading(true);
-      setPositionsError(null);
-      try {
-        const snap = await fetchTraderPositions(address.toLowerCase());
-        if (cancelled) return;
-        setPositions(snap);
-      } catch (err) {
-        if (cancelled) return;
-        setPositionsError(err);
-      } finally {
-        if (!cancelled) setPositionsLoading(false);
-      }
-    }
-    void fetchPositions();
-    return () => {
-      cancelled = true;
-    };
-  }, [address, addressValid, positionsReloadKey]);
 
   const registry = detail?.registry ?? null;
   const metrics = detail?.metrics ?? null;
@@ -309,12 +281,7 @@ function DetailContent() {
                 </div>
               </div>
 
-              <PositionsSection
-                snapshot={positions}
-                isLoading={positionsLoading}
-                error={positionsError}
-                onRetry={() => setPositionsReloadKey((k) => k + 1)}
-              />
+              <WalletTabs walletAddress={address.toLowerCase()} />
             </div>
             <div className="lg:col-span-1">
               <div className="lg:sticky lg:top-4 lg:max-h-[80vh] lg:overflow-y-auto">

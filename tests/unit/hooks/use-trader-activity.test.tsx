@@ -36,7 +36,10 @@ describe('useTraderActivity', () => {
             side: 'LONG',
             opened_at: '2026-10-06T08:00:00Z',
             closed_at: '2026-10-06T08:30:00Z',
+            duration_sec: 1800,
             volume: 30000,
+            entry_price: 60000,
+            exit_price: 62000,
             pnl: 1500,
             fees: 30,
             net_pnl: 1470,
@@ -45,8 +48,14 @@ describe('useTraderActivity', () => {
         ],
         next_cursor: 'c1',
         has_more: true,
+        counts: { win: 1, loss: 0, long: 1, short: 0, total: 1 },
       })
-      .mockResolvedValueOnce({ rows: [], next_cursor: null, has_more: false });
+      .mockResolvedValueOnce({
+        rows: [],
+        next_cursor: null,
+        has_more: false,
+        counts: { win: 1, loss: 0, long: 1, short: 0, total: 1 },
+      });
 
     const { result } = renderHook(
       () => useTraderActivity('0xABCDEF123456789012345678901234567890ABCD'),
@@ -71,6 +80,7 @@ describe('useTraderActivity', () => {
       rows: [],
       next_cursor: null,
       has_more: false,
+      counts: { win: 0, loss: 0, long: 0, short: 0, total: 0 },
     });
     const { result } = renderHook(
       () => useTraderActivity('0xABCDEF123456789012345678901234567890ABCD'),

@@ -1,14 +1,28 @@
 import { apiClient } from '@/infrastructure/api-client';
 import type { ApiResponse, Meta } from '@/types/api';
 import {
+  ACTIVITY_LIMIT_DEFAULT,
   DEFAULT_SORT_BY,
   DEFAULT_SORT_DIRECTION,
   DEFAULT_TRADER_PERIOD,
   DEFAULT_VENUE,
+  FILLS_LIMIT_DEFAULT,
+  ORDERS_LIMIT_DEFAULT,
   SEARCH_LIMIT_DEFAULT,
+  TRANSFERS_DAYS_DEFAULT,
+  TRANSFERS_LIMIT_DEFAULT,
   type ActivityPage,
+  type ActivityQuery,
+  type BalancesSnapshot,
+  type FillsPage,
+  type FillsQuery,
   type MemberInput,
+  type OrdersPage,
+  type OrdersQuery,
+  type PerformanceQuery,
+  type PerformanceSnapshot,
   type PeriodMetrics,
+  type PositionQuery,
   type PositionSnapshot,
   type RangeFilter,
   type TraderDetail,
@@ -16,6 +30,8 @@ import {
   type TraderMember,
   type TraderSearchQuery,
   type TraderSearchRequest,
+  type TransfersPage,
+  type TransfersQuery,
 } from '@/types/trader';
 
 const TRADERS_BASE = '/api/v1/traders';
@@ -99,15 +115,15 @@ export async function fetchTraderDetail(
   return res.data;
 }
 
-export const ACTIVITY_LIMIT_DEFAULT = 20;
-
 export async function fetchTraderPositions(
   walletAddress: string,
-  query: { venue?: string } = {},
+  query: PositionQuery = {},
   options: SearchOptions = {},
 ): Promise<PositionSnapshot> {
   const params = new URLSearchParams();
   params.set('venue', query.venue ?? DEFAULT_VENUE);
+  if (query.sort) params.set('sort', query.sort);
+  if (query.dir) params.set('dir', query.dir);
   const res = await apiClient<ApiResponse<PositionSnapshot>>(
     `${TRADERS_BASE}/${walletAddress}/positions?${params.toString()}`,
     { signal: options.signal },
@@ -118,15 +134,102 @@ export async function fetchTraderPositions(
 
 export async function fetchTraderActivity(
   walletAddress: string,
-  query: { venue?: string; limit?: number; cursor?: string } = {},
+  query: ActivityQuery = {},
   options: SearchOptions = {},
 ): Promise<ActivityPage> {
   const params = new URLSearchParams();
   params.set('venue', query.venue ?? DEFAULT_VENUE);
   params.set('limit', String(query.limit ?? ACTIVITY_LIMIT_DEFAULT));
   if (query.cursor) params.set('cursor', query.cursor);
+  if (query.sort) params.set('sort', query.sort);
+  if (query.dir) params.set('dir', query.dir);
+  if (query.result) params.set('result', query.result);
+  if (query.side) params.set('side', query.side);
   const res = await apiClient<ApiResponse<ActivityPage>>(
     `${TRADERS_BASE}/${walletAddress}/activity?${params.toString()}`,
+    { signal: options.signal },
+  );
+  if (!res.data) throw new Error('No data returned');
+  return res.data;
+}
+
+export async function fetchTraderBalances(
+  walletAddress: string,
+  query: { venue?: string } = {},
+  options: SearchOptions = {},
+): Promise<BalancesSnapshot> {
+  const params = new URLSearchParams();
+  params.set('venue', query.venue ?? DEFAULT_VENUE);
+  const res = await apiClient<ApiResponse<BalancesSnapshot>>(
+    `${TRADERS_BASE}/${walletAddress}/balances?${params.toString()}`,
+    { signal: options.signal },
+  );
+  if (!res.data) throw new Error('No data returned');
+  return res.data;
+}
+
+export async function fetchTraderFills(
+  walletAddress: string,
+  query: FillsQuery = {},
+  options: SearchOptions = {},
+): Promise<FillsPage> {
+  const params = new URLSearchParams();
+  params.set('venue', query.venue ?? DEFAULT_VENUE);
+  params.set('limit', String(query.limit ?? FILLS_LIMIT_DEFAULT));
+  if (query.cursor) params.set('cursor', query.cursor);
+  const res = await apiClient<ApiResponse<FillsPage>>(
+    `${TRADERS_BASE}/${walletAddress}/fills?${params.toString()}`,
+    { signal: options.signal },
+  );
+  if (!res.data) throw new Error('No data returned');
+  return res.data;
+}
+
+export async function fetchTraderOrders(
+  walletAddress: string,
+  query: OrdersQuery = {},
+  options: SearchOptions = {},
+): Promise<OrdersPage> {
+  const params = new URLSearchParams();
+  params.set('venue', query.venue ?? DEFAULT_VENUE);
+  params.set('status', query.status ?? 'open');
+  params.set('limit', String(query.limit ?? ORDERS_LIMIT_DEFAULT));
+  const res = await apiClient<ApiResponse<OrdersPage>>(
+    `${TRADERS_BASE}/${walletAddress}/orders?${params.toString()}`,
+    { signal: options.signal },
+  );
+  if (!res.data) throw new Error('No data returned');
+  return res.data;
+}
+
+export async function fetchTraderTransfers(
+  walletAddress: string,
+  query: TransfersQuery = {},
+  options: SearchOptions = {},
+): Promise<TransfersPage> {
+  const params = new URLSearchParams();
+  params.set('venue', query.venue ?? DEFAULT_VENUE);
+  params.set('days', String(query.days ?? TRANSFERS_DAYS_DEFAULT));
+  params.set('limit', String(query.limit ?? TRANSFERS_LIMIT_DEFAULT));
+  if (query.cursor) params.set('cursor', query.cursor);
+  const res = await apiClient<ApiResponse<TransfersPage>>(
+    `${TRADERS_BASE}/${walletAddress}/transfers?${params.toString()}`,
+    { signal: options.signal },
+  );
+  if (!res.data) throw new Error('No data returned');
+  return res.data;
+}
+
+export async function fetchTraderPerformance(
+  walletAddress: string,
+  query: PerformanceQuery = {},
+  options: SearchOptions = {},
+): Promise<PerformanceSnapshot> {
+  const params = new URLSearchParams();
+  params.set('venue', query.venue ?? DEFAULT_VENUE);
+  params.set('period', query.period ?? DEFAULT_TRADER_PERIOD);
+  const res = await apiClient<ApiResponse<PerformanceSnapshot>>(
+    `${TRADERS_BASE}/${walletAddress}/performance?${params.toString()}`,
     { signal: options.signal },
   );
   if (!res.data) throw new Error('No data returned');

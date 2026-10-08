@@ -74,4 +74,13 @@ describe('PositionsSection', () => {
     fireEvent.click(button);
     expect(onRetry).toHaveBeenCalledTimes(1);
   });
+
+  it('exposes sortable headers with aria-sort and reports the picked column', () => {
+    const onSortChange = vi.fn();
+    renderSection({ sort: 'coin', dir: 'asc', onSortChange });
+    const coinHeader = screen.getByRole('columnheader', { name: /Coin/ });
+    expect(coinHeader).toHaveAttribute('aria-sort', 'ascending');
+    fireEvent.click(screen.getByRole('button', { name: /uPnL/ }));
+    expect(onSortChange).toHaveBeenCalledWith('unrealized_pnl');
+  });
 });

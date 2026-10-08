@@ -18,7 +18,13 @@ import {
   formatSignedUsd,
   formatUsd,
 } from '@/lib/trader-format';
-import type { PositionDataStatus, PositionSnapshot } from '@/types/trader';
+import type {
+  PositionDataStatus,
+  PositionSnapshot,
+  PositionSortKey,
+  SortDirection,
+} from '@/types/trader';
+import { ArrowDownIcon, ArrowUpIcon, ArrowUpDownIcon } from 'lucide-react';
 
 const STATUS_LABEL_KEYS: Record<PositionDataStatus, string> = {
   ready: 'statusReady',
@@ -32,14 +38,73 @@ export interface PositionsSectionProps {
   isLoading: boolean;
   error: unknown;
   onRetry: () => void;
+  sort?: PositionSortKey;
+  dir?: SortDirection;
+  onSortChange?: (sort: PositionSortKey) => void;
 }
 
 function formatUsdOrDash(value: number | null): string {
   return formatUsd(value) ?? '—';
 }
 
-export function PositionsSection({ snapshot, isLoading, error, onRetry }: PositionsSectionProps) {
+function SortIndicator({ active, dir }: { active: boolean; dir: SortDirection }) {
+  if (!active) return <ArrowUpDownIcon className="h-3.5 w-3.5" aria-hidden />;
+  return dir === 'asc' ? (
+    <ArrowUpIcon className="h-3.5 w-3.5" aria-hidden />
+  ) : (
+    <ArrowDownIcon className="h-3.5 w-3.5" aria-hidden />
+  );
+}
+
+export function PositionsSection({
+  snapshot,
+  isLoading,
+  error,
+  onRetry,
+  sort,
+  dir = 'asc',
+  onSortChange,
+}: PositionsSectionProps) {
   const t = useTranslations('traders');
+
+  function sortableHead(
+    sortKey: PositionSortKey,
+    label: string,
+    align: 'left' | 'right' = 'right',
+  ) {
+    const active = sort === sortKey;
+    const content = (
+      <span
+        className={
+          align === 'right'
+            ? 'inline-flex w-full items-center justify-end gap-1'
+            : 'inline-flex items-center gap-1'
+        }
+      >
+        {label}
+        <SortIndicator active={active} dir={dir} />
+      </span>
+    );
+    return (
+      <TableHead
+        key={sortKey}
+        aria-sort={active ? (dir === 'asc' ? 'ascending' : 'descending') : 'none'}
+        className={align === 'right' ? 'text-right' : undefined}
+      >
+        {onSortChange ? (
+          <button
+            type="button"
+            onClick={() => onSortChange(sortKey)}
+            className="w-full hover:underline"
+          >
+            {content}
+          </button>
+        ) : (
+          content
+        )}
+      </TableHead>
+    );
+  }
 
   if (isLoading && !snapshot) {
     return (
@@ -117,15 +182,15 @@ export function PositionsSection({ snapshot, isLoading, error, onRetry }: Positi
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>{t('coin')}</TableHead>
+              {sortableHead('coin', t('coin'), 'left')}
               <TableHead>{t('side')}</TableHead>
-              <TableHead className="text-right">{t('size')}</TableHead>
-              <TableHead className="text-right">{t('entryPrice')}</TableHead>
-              <TableHead className="text-right">{t('markPrice')}</TableHead>
-              <TableHead className="text-right">{t('unrealizedPnl')}</TableHead>
-              <TableHead className="text-right">{t('roi')}</TableHead>
+              {sortableHead('size', t('size'))}
+              {sortableHead('entry_price', t('entryPrice'))}
+              {sortableHead('mark_price', t('markPrice'))}
+              {sortableHead('unrealized_pnl', t('unrealizedPnl'))}
+              {sortableHead('return_on_equity', t('roi'))}
               <TableHead className="text-right">{t('liquidationPrice')}</TableHead>
-              <TableHead className="text-right">{t('leverage')}</TableHead>
+              {sortableHead('leverage', t('leverage'))}
             </TableRow>
           </TableHeader>
           <TableBody>

@@ -6,8 +6,13 @@ import {
   createTraderGroup,
   deleteTraderGroup,
   fetchTraderActivity,
+  fetchTraderBalances,
   fetchTraderDetail,
+  fetchTraderFills,
+  fetchTraderOrders,
+  fetchTraderPerformance,
   fetchTraderPositions,
+  fetchTraderTransfers,
   getTraderGroup,
   listGroupMembers,
   listTraderGroups,
@@ -161,6 +166,160 @@ describe('traders service', () => {
     it('throws when no data returned', async () => {
       vi.mocked(apiClient.apiClient).mockResolvedValueOnce({ success: true });
       await expect(fetchTraderActivity('0xabc')).rejects.toThrow('No data returned');
+    });
+
+    it('forwards server-side sort, dir, result and side filters', async () => {
+      vi.mocked(apiClient.apiClient).mockResolvedValueOnce({
+        success: true,
+        data: {
+          rows: [],
+          next_cursor: null,
+          has_more: false,
+          counts: { win: 1, loss: 0, long: 1, short: 0, total: 1 },
+        },
+      });
+      const page = await fetchTraderActivity('0xabc', {
+        sort: 'net_pnl',
+        dir: 'asc',
+        result: 'win',
+        side: 'long',
+        limit: 5,
+      });
+      const url = vi.mocked(apiClient.apiClient).mock.calls[0][0] as string;
+      expect(url).toContain('sort=net_pnl');
+      expect(url).toContain('dir=asc');
+      expect(url).toContain('result=win');
+      expect(url).toContain('side=long');
+      expect(url).toContain('limit=5');
+      expect(page.counts).toEqual({ win: 1, loss: 0, long: 1, short: 0, total: 1 });
+    });
+  });
+
+  describe('fetchTraderPositions sort', () => {
+    it('forwards sort and dir params', async () => {
+      vi.mocked(apiClient.apiClient).mockResolvedValueOnce({
+        success: true,
+        data: { summary: null, positions: [], data_status: 'ready', as_of: null },
+      });
+      await fetchTraderPositions('0xabc', { sort: 'unrealized_pnl', dir: 'desc' });
+      const url = vi.mocked(apiClient.apiClient).mock.calls[0][0] as string;
+      expect(url).toContain('sort=unrealized_pnl');
+      expect(url).toContain('dir=desc');
+    });
+
+    it('omits sort params by default', async () => {
+      vi.mocked(apiClient.apiClient).mockResolvedValueOnce({
+        success: true,
+        data: { summary: null, positions: [], data_status: 'ready', as_of: null },
+      });
+      await fetchTraderPositions('0xabc');
+      expect(vi.mocked(apiClient.apiClient).mock.calls[0][0]).toBe(
+        '/api/v1/traders/0xabc/positions?venue=hyperliquid',
+      );
+    });
+  });
+
+  describe('wallet tabs endpoints (contract v1)', () => {
+    it('fetchTraderBalances GETs balances', async () => {
+      vi.mocked(apiClient.apiClient).mockResolvedValueOnce({
+        success: true,
+        data: { perp: null, spot: null, data_status: 'syncing' },
+      });
+      const snap = await fetchTraderBalances('0xabc');
+      expect(vi.mocked(apiClient.apiClient).mock.calls[0][0]).toBe(
+        '/api/v1/traders/0xabc/balances?venue=hyperliquid',
+      );
+      expect(snap.data_status).toBe('syncing');
+    });
+
+    it('fetchTraderBalances throws when no data returned', async () => {
+      vi.mocked(apiClient.apiClient).mockResolvedValueOnce({ success: true });
+      await expect(fetchTraderBalances('0xabc')).rejects.toThrow('No data returned');
+    });
+
+    it('fetchTraderFills defaults to limit 100 and forwards cursor', async () => {
+      vi.mocked(apiClient.apiClient)
+        .mockResolvedValueOnce({
+          success: true,
+          data: { rows: [], next_cursor: null, has_more: false },
+        })
+        .mockResolvedValueOnce({
+          success: true,
+          data: { rows: [], next_cursor: null, has_more: false },
+        });
+      await fetchTraderFills('0xabc');
+      expect(vi.mocked(apiClient.apiClient).mock.calls[0][0]).toContain('limit=100');
+      await fetchTraderFills('0xabc', { limit: 5, cursor: 't1' });
+      const url = vi.mocked(apiClient.apiClient).mock.calls[1][0] as string;
+      expect(url).toContain('limit=5');
+      expect(url).toContain('cursor=t1');
+    });
+
+    it('fetchTraderFills throws when no data returned', async () => {
+      vi.mocked(apiClient.apiClient).mockResolvedValueOnce({ success: true });
+      await expect(fetchTraderFills('0xabc')).rejects.toThrow('No data returned');
+    });
+
+    it('fetchTraderOrders defaults to open and maps historical status fields', async () => {
+      vi.mocked(apiClient.apiClient)
+        .mockResolvedValueOnce({ success: true, data: { status: 'open', rows: [] } })
+        .mockResolvedValueOnce({
+          success: true,
+          data: {
+            status: 'historical',
+            rows: [{ order_status: 'filled', status_timestamp: '2026-10-08T00:00:00Z' }],
+          },
+        });
+      const open = await fetchTraderOrders('0xabc');
+      expect(vi.mocked(apiClient.apiClient).mock.calls[0][0]).toContain('status=open');
+      expect(vi.mocked(apiClient.apiClient).mock.calls[0][0]).toContain('limit=200');
+      expect(open.rows).toEqual([]);
+      const historical = await fetchTraderOrders('0xabc', { status: 'historical' });
+      expect(vi.mocked(apiClient.apiClient).mock.calls[1][0]).toContain('status=historical');
+      expect(historical.rows[0].order_status).toBe('filled');
+    });
+
+    it('fetchTraderOrders throws when no data returned', async () => {
+      vi.mocked(apiClient.apiClient).mockResolvedValueOnce({ success: true });
+      await expect(fetchTraderOrders('0xabc')).rejects.toThrow('No data returned');
+    });
+
+    it('fetchTraderTransfers defaults to 30 days and forwards cursor', async () => {
+      vi.mocked(apiClient.apiClient).mockResolvedValueOnce({
+        success: true,
+        data: { rows: [], next_cursor: null, has_more: false },
+      });
+      await fetchTraderTransfers('0xabc');
+      const url = vi.mocked(apiClient.apiClient).mock.calls[0][0] as string;
+      expect(url).toContain('days=30');
+      expect(url).toContain('limit=200');
+    });
+
+    it('fetchTraderTransfers throws when no data returned', async () => {
+      vi.mocked(apiClient.apiClient).mockResolvedValueOnce({ success: true });
+      await expect(fetchTraderTransfers('0xabc')).rejects.toThrow('No data returned');
+    });
+
+    it('fetchTraderPerformance defaults to 30D and forwards period', async () => {
+      vi.mocked(apiClient.apiClient)
+        .mockResolvedValueOnce({
+          success: true,
+          data: { period: '30D', metrics: null, equity: [] },
+        })
+        .mockResolvedValueOnce({
+          success: true,
+          data: { period: '7D', metrics: null, equity: [] },
+        });
+      const monthly = await fetchTraderPerformance('0xabc');
+      expect(vi.mocked(apiClient.apiClient).mock.calls[0][0]).toContain('period=30D');
+      expect(monthly.period).toBe('30D');
+      await fetchTraderPerformance('0xabc', { period: '7D' });
+      expect(vi.mocked(apiClient.apiClient).mock.calls[1][0]).toContain('period=7D');
+    });
+
+    it('fetchTraderPerformance throws when no data returned', async () => {
+      vi.mocked(apiClient.apiClient).mockResolvedValueOnce({ success: true });
+      await expect(fetchTraderPerformance('0xabc')).rejects.toThrow('No data returned');
     });
   });
 

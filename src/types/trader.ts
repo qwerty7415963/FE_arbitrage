@@ -167,17 +167,54 @@ export interface ActivityTrade {
   side: PositionSide;
   opened_at: string;
   closed_at: string;
+  duration_sec: number;
   volume: number;
+  entry_price: number | null;
+  exit_price: number | null;
   pnl: number;
   fees: number;
   net_pnl: number;
   fills: number;
 }
 
+export interface ActivityCounts {
+  win: number;
+  loss: number;
+  long: number;
+  short: number;
+  total: number;
+}
+
+export type ActivitySortKey =
+  | 'closed_at'
+  | 'opened_at'
+  | 'market'
+  | 'volume'
+  | 'pnl'
+  | 'net_pnl'
+  | 'duration'
+  | 'entry_price'
+  | 'exit_price';
+
+export type ActivityResultFilter = 'all' | 'win' | 'loss';
+
+export type ActivitySideFilter = 'all' | 'long' | 'short';
+
 export interface ActivityPage {
   rows: ActivityTrade[];
   next_cursor: string | null;
   has_more: boolean;
+  counts: ActivityCounts;
+}
+
+export interface ActivityQuery {
+  venue?: string;
+  limit?: number;
+  cursor?: string;
+  sort?: ActivitySortKey;
+  dir?: SortDirection;
+  result?: ActivityResultFilter;
+  side?: ActivitySideFilter;
 }
 
 export interface ActivityFill {
@@ -254,3 +291,288 @@ export const DEFAULT_TRADER_SEARCH_QUERY: TraderSearchQuery = {
   limit: SCANNER_PAGE_SIZE,
   page: 1,
 };
+
+export type PositionSortKey =
+  | 'coin'
+  | 'size'
+  | 'entry_price'
+  | 'mark_price'
+  | 'position_value'
+  | 'unrealized_pnl'
+  | 'return_on_equity'
+  | 'leverage';
+
+export const POSITION_SORT_KEYS: PositionSortKey[] = [
+  'coin',
+  'size',
+  'entry_price',
+  'mark_price',
+  'position_value',
+  'unrealized_pnl',
+  'return_on_equity',
+  'leverage',
+];
+
+export const DEFAULT_POSITION_SORT: PositionSortKey = 'coin';
+
+export const DEFAULT_POSITION_DIR: SortDirection = 'asc';
+
+export interface PositionQuery {
+  venue?: string;
+  sort?: PositionSortKey;
+  dir?: SortDirection;
+}
+
+export const ACTIVITY_SORT_KEYS: ActivitySortKey[] = [
+  'closed_at',
+  'opened_at',
+  'market',
+  'volume',
+  'pnl',
+  'net_pnl',
+  'duration',
+  'entry_price',
+  'exit_price',
+];
+
+export const DEFAULT_ACTIVITY_SORT: ActivitySortKey = 'closed_at';
+
+export const DEFAULT_ACTIVITY_DIR: SortDirection = 'desc';
+
+export const ACTIVITY_LIMIT_DEFAULT = 20;
+
+export const ACTIVITY_LIMIT_MIN = 1;
+
+export const ACTIVITY_LIMIT_MAX = 100;
+
+export interface PerpBalances {
+  account_value: number | null;
+  total_ntl_pos: number | null;
+  total_margin_used: number | null;
+  withdrawable: number | null;
+  cross_account_value: number | null;
+  cross_total_ntl_pos: number | null;
+  cross_total_margin_used: number | null;
+  asset_positions_value: number | null;
+  as_of: string | null;
+}
+
+export interface SpotBalanceRow {
+  coin: string;
+  token: string | null;
+  total: number | null;
+  hold: number | null;
+  entry_ntl: number | null;
+}
+
+export interface SpotBalances {
+  balances: SpotBalanceRow[];
+  as_of: string | null;
+}
+
+export interface BalancesSnapshot {
+  perp: PerpBalances | null;
+  spot: SpotBalances | null;
+  data_status: PositionDataStatus;
+}
+
+export type FillSide = 'BUY' | 'SELL';
+
+export interface TraderFillRow {
+  coin: string;
+  side: FillSide;
+  dir: string;
+  size: number;
+  price: number;
+  closed_pnl: number;
+  fee: number;
+  fee_token: string;
+  time: string;
+  tid: number;
+  oid: number;
+  crossed: boolean;
+  start_position: string;
+}
+
+export interface FillsPage {
+  rows: TraderFillRow[];
+  next_cursor: string | null;
+  has_more: boolean;
+}
+
+export interface FillsQuery {
+  venue?: string;
+  limit?: number;
+  cursor?: string;
+}
+
+export const FILLS_LIMIT_DEFAULT = 100;
+
+export const FILLS_LIMIT_MIN = 1;
+
+export const FILLS_LIMIT_MAX = 200;
+
+export type OrderStatusFilter = 'open' | 'historical';
+
+export interface TraderOrderRow {
+  coin: string;
+  side: FillSide;
+  limit_px: number;
+  size: number;
+  orig_size: number;
+  oid: number;
+  timestamp: string;
+  reduce_only: boolean;
+  order_type: string;
+  trigger_condition: string;
+  trigger_px: number | null;
+  is_position_tpsl: boolean;
+  order_status: string | null;
+  status_timestamp: string | null;
+}
+
+export interface OrdersPage {
+  status: OrderStatusFilter;
+  rows: TraderOrderRow[];
+}
+
+export interface OrdersQuery {
+  venue?: string;
+  status?: OrderStatusFilter;
+  limit?: number;
+}
+
+export const ORDERS_LIMIT_DEFAULT = 200;
+
+export const ORDERS_LIMIT_MIN = 1;
+
+export const ORDERS_LIMIT_MAX = 2000;
+
+export type TransferType =
+  | 'deposit'
+  | 'withdraw'
+  | 'internalTransfer'
+  | 'subAccountTransfer'
+  | 'accountClassTransfer'
+  | 'spotTransfer'
+  | 'send'
+  | 'vaultDeposit'
+  | 'vaultWithdraw'
+  | 'vaultCreate'
+  | 'vaultDistribution'
+  | 'cStakingTransfer'
+  | 'other';
+
+export const TRANSFER_TYPES: TransferType[] = [
+  'deposit',
+  'withdraw',
+  'internalTransfer',
+  'subAccountTransfer',
+  'accountClassTransfer',
+  'spotTransfer',
+  'send',
+  'vaultDeposit',
+  'vaultWithdraw',
+  'vaultCreate',
+  'vaultDistribution',
+  'cStakingTransfer',
+  'other',
+];
+
+export interface TransferRow {
+  time: string;
+  hash: string;
+  type: TransferType;
+  usdc: number | null;
+  token: string | null;
+  amount: number | null;
+  usdc_value: number | null;
+  is_deposit: boolean | null;
+  source_dex: string | null;
+  destination_dex: string | null;
+  counterparty: string | null;
+}
+
+export interface TransfersPage {
+  rows: TransferRow[];
+  next_cursor: string | null;
+  has_more: boolean;
+}
+
+export interface TransfersQuery {
+  venue?: string;
+  days?: number;
+  limit?: number;
+  cursor?: string;
+}
+
+export const TRANSFERS_DAYS_DEFAULT = 30;
+
+export const TRANSFERS_DAYS_MIN = 1;
+
+export const TRANSFERS_DAYS_MAX = 180;
+
+export const TRANSFERS_LIMIT_DEFAULT = 200;
+
+export const TRANSFERS_LIMIT_MIN = 1;
+
+export const TRANSFERS_LIMIT_MAX = 500;
+
+export interface PerformanceMetrics {
+  roi: number | null;
+  pnl: number | null;
+  win_rate: number | null;
+  volume: number | null;
+  trade_count: number | null;
+  profit_factor: number | null;
+  max_drawdown_pct: number | null;
+  long_wins: number | null;
+  long_count: number | null;
+  short_wins: number | null;
+  short_count: number | null;
+  data_status: DataStatus;
+  is_partial: boolean;
+  metrics_as_of: string | null;
+}
+
+export interface EquityPoint {
+  date: string;
+  end_equity: number | null;
+  daily_return: number | null;
+}
+
+export interface PerformanceSnapshot {
+  period: TraderPeriod;
+  metrics: PerformanceMetrics | null;
+  equity: EquityPoint[];
+}
+
+export interface PerformanceQuery {
+  venue?: string;
+  period?: TraderPeriod;
+}
+
+export type WalletTabId =
+  | 'positions'
+  | 'balances'
+  | 'predictions'
+  | 'orders'
+  | 'fills'
+  | 'trades'
+  | 'swap'
+  | 'transfers'
+  | 'performance';
+
+export const WALLET_TABS: WalletTabId[] = [
+  'positions',
+  'balances',
+  'predictions',
+  'orders',
+  'fills',
+  'trades',
+  'swap',
+  'transfers',
+  'performance',
+];
+
+export const DEFAULT_WALLET_TAB: WalletTabId = 'positions';

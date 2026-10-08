@@ -36,37 +36,43 @@
 
 ### Coverage Summary
 
-| Module                                                | File                                                       | Tests   | Status |
-| ----------------------------------------------------- | ---------------------------------------------------------- | ------- | ------ |
-| `lib/token.ts`                                        | `tests/unit/lib/token.test.ts`                             | 14      | ✅     |
-| `stores/auth.ts` (wallet-only)                        | `tests/unit/stores/auth.test.ts`                           | 11      | ✅     |
-| `services/auth.ts`                                    | `tests/unit/services/auth.test.ts`                         | 8       | ✅     |
-| `services/funding-arbitrage.ts`                       | `tests/unit/services/funding-arbitrage.test.ts`            | 13      | ✅     |
-| `components/group-form.tsx`                           | `tests/unit/components/group-form.test.tsx`                | 7       | ✅     |
-| `components/group-detail-page.tsx`                    | `tests/unit/components/group-detail-page.test.tsx`         | 9       | ✅     |
-| `components/trader-table.tsx`                         | `tests/unit/components/trader-table.test.tsx`              | 10      | ✅     |
-| `traders/_components/scanner-header.tsx`              | `tests/unit/components/scanner-header.test.tsx`            | 6       | ✅     |
-| `traders/_components/filter-sheet.tsx`                | `tests/unit/components/filter-sheet.test.tsx`              | 11      | ✅     |
-| `traders/_components/filter-chips.tsx`                | `tests/unit/components/filter-chips.test.tsx`              | 6       | ✅     |
-| `components/add-to-trader-group-modal.tsx`            | `tests/unit/components/add-to-trader-group-modal.test.tsx` | 5       | ✅     |
-| `components/saved-searches.tsx`                       | `tests/unit/components/saved-searches.test.tsx`            | 3       | ✅     |
-| `app/[locale]/(protected)/traders/page.tsx`           | `tests/unit/components/trader-scanner-page.test.tsx`       | 20      | ✅     |
-| `app/[locale]/(protected)/traders/[address]/page.tsx` | `tests/unit/components/trader-detail-page.test.tsx`        | 8       | ✅     |
-| `components/copy-address.tsx`                         | `tests/unit/components/copy-address.test.tsx`              | 2       | ✅     |
-| `services/traders.ts`                                 | `tests/unit/services/traders.test.ts`                      | 17      | ✅     |
-| `lib/trader-saved-searches.ts`                        | `tests/unit/lib/trader-saved-searches.test.ts`             | 4       | ✅     |
-| `lib/trader-validation.ts`                            | `tests/unit/lib/trader-validation.test.ts`                 | 13      | ✅     |
-| `lib/trader-format.ts`                                | `tests/unit/lib/trader-format.test.ts`                     | 17      | ✅     |
-| `lib/trader-url-state.ts`                             | `tests/unit/lib/trader-url-state.test.ts`                  | 10      | ✅     |
-| `components/shared/pagination.tsx`                    | `tests/unit/components/pagination.test.tsx`                | 5       | ✅     |
-| `lib/trader-filter-draft.ts`                          | `tests/unit/lib/trader-filter-draft.test.ts`               | 9       | ✅     |
-| `components/funding-table.tsx`                        | `tests/unit/components/funding-table.test.tsx`             | 26      | ✅     |
-| `infrastructure/api-client.ts`                        | `tests/unit/infrastructure/api-client.test.ts`             | 14      | ✅     |
-| `lib/trader-activity-ws.ts`                           | `tests/unit/lib/trader-activity-ws.test.ts`                | 7       | ✅     |
-| `hooks/use-trader-activity.ts`                        | `tests/unit/hooks/use-trader-activity.test.tsx`            | 2       | ✅     |
-| `traders/[address]/_components/positions-section.tsx` | `tests/unit/components/positions-section.test.tsx`         | 3       | ✅     |
-| `traders/[address]/_components/activity-feed.tsx`     | `tests/unit/components/activity-feed.test.tsx`             | 3       | ✅     |
-| **Total**                                             |                                                            | **263** |        |
+| Module                                                                                    | File                                                       | Tests   | Status |
+| ----------------------------------------------------------------------------------------- | ---------------------------------------------------------- | ------- | ------ |
+| `lib/token.ts`                                                                            | `tests/unit/lib/token.test.ts`                             | 14      | ✅     |
+| `stores/auth.ts` (wallet-only)                                                            | `tests/unit/stores/auth.test.ts`                           | 11      | ✅     |
+| `services/auth.ts`                                                                        | `tests/unit/services/auth.test.ts`                         | 8       | ✅     |
+| `services/funding-arbitrage.ts`                                                           | `tests/unit/services/funding-arbitrage.test.ts`            | 13      | ✅     |
+| `components/group-form.tsx`                                                               | `tests/unit/components/group-form.test.tsx`                | 7       | ✅     |
+| `components/group-detail-page.tsx`                                                        | `tests/unit/components/group-detail-page.test.tsx`         | 9       | ✅     |
+| `components/trader-table.tsx`                                                             | `tests/unit/components/trader-table.test.tsx`              | 10      | ✅     |
+| `traders/_components/scanner-header.tsx`                                                  | `tests/unit/components/scanner-header.test.tsx`            | 6       | ✅     |
+| `traders/_components/filter-sheet.tsx`                                                    | `tests/unit/components/filter-sheet.test.tsx`              | 11      | ✅     |
+| `traders/_components/filter-chips.tsx`                                                    | `tests/unit/components/filter-chips.test.tsx`              | 6       | ✅     |
+| `components/add-to-trader-group-modal.tsx`                                                | `tests/unit/components/add-to-trader-group-modal.test.tsx` | 5       | ✅     |
+| `components/saved-searches.tsx`                                                           | `tests/unit/components/saved-searches.test.tsx`            | 3       | ✅     |
+| `app/[locale]/(protected)/traders/page.tsx`                                               | `tests/unit/components/trader-scanner-page.test.tsx`       | 20      | ✅     |
+| `app/[locale]/(protected)/traders/[address]/page.tsx`                                     | `tests/unit/components/trader-detail-page.test.tsx`        | 8       | ✅     |
+| `components/copy-address.tsx`                                                             | `tests/unit/components/copy-address.test.tsx`              | 2       | ✅     |
+| `services/traders.ts`                                                                     | `tests/unit/services/traders.test.ts`                      | 30      | ✅     |
+| `lib/trader-saved-searches.ts`                                                            | `tests/unit/lib/trader-saved-searches.test.ts`             | 4       | ✅     |
+| `lib/trader-validation.ts`                                                                | `tests/unit/lib/trader-validation.test.ts`                 | 13      | ✅     |
+| `lib/trader-format.ts`                                                                    | `tests/unit/lib/trader-format.test.ts`                     | 21      | ✅     |
+| `lib/trader-url-state.ts`                                                                 | `tests/unit/lib/trader-url-state.test.ts`                  | 10      | ✅     |
+| `components/shared/pagination.tsx`                                                        | `tests/unit/components/pagination.test.tsx`                | 5       | ✅     |
+| `lib/trader-filter-draft.ts`                                                              | `tests/unit/lib/trader-filter-draft.test.ts`               | 9       | ✅     |
+| `components/funding-table.tsx`                                                            | `tests/unit/components/funding-table.test.tsx`             | 26      | ✅     |
+| `infrastructure/api-client.ts`                                                            | `tests/unit/infrastructure/api-client.test.ts`             | 14      | ✅     |
+| `lib/trader-activity-ws.ts`                                                               | `tests/unit/lib/trader-activity-ws.test.ts`                | 7       | ✅     |
+| `hooks/use-trader-activity.ts`                                                            | `tests/unit/hooks/use-trader-activity.test.tsx`            | 2       | ✅     |
+| `traders/[address]/_components/positions-section.tsx`                                     | `tests/unit/components/positions-section.test.tsx`         | 4       | ✅     |
+| `traders/[address]/_components/activity-feed.tsx`                                         | `tests/unit/components/activity-feed.test.tsx`             | 3       | ✅     |
+| `lib/wallet-tab-state.ts`                                                                 | `tests/unit/lib/wallet-tab-state.test.ts`                  | 8       | ✅     |
+| `hooks/use-trader-trades.ts`                                                              | `tests/unit/hooks/use-trader-trades.test.tsx`              | 4       | ✅     |
+| `hooks/use-trader-{positions,balances,fills,orders,transfers,performance}.ts`             | `tests/unit/hooks/wallet-tab-hooks.test.tsx`               | 7       | ✅     |
+| `traders/[address]/_components/trades-section.tsx`                                        | `tests/unit/components/trades-section.test.tsx`            | 8       | ✅     |
+| `traders/[address]/_components/wallet-tabs.tsx`                                           | `tests/unit/components/wallet-tabs.test.tsx`               | 5       | ✅     |
+| `traders/[address]/_components/{balances,orders,fills,transfers,performance}-section.tsx` | `tests/unit/components/wallet-tab-sections.test.tsx`       | 10      | ✅     |
+| **Total**                                                                                 |                                                            | **325** |        |
 
 ### Test Details
 
@@ -118,26 +124,35 @@
 | getFundingArbitrage no data        | Empty response                |
 | getFundingArbitrage API error      | Network error                 |
 
-#### `services/traders.ts` (17 tests)
+#### `services/traders.ts` (30 tests)
 
-| Test                          | Description                    |
-| ----------------------------- | ------------------------------ |
-| buildSearchRequest maps       | snake_case, omits undefined    |
-| buildSearchRequest empty      | Empty body                     |
-| searchTraders POSTs defaults  | venue/period/sort/limit/page:1 |
-| searchTraders sends page      | page:2 in body                 |
-| searchTraders no data         | Empty response                 |
-| fetchTraderDetail GETs        | venue + period params          |
-| fetchTraderPositions GETs     | venue default, maps snapshot   |
-| fetchTraderPositions no data  | Empty response                 |
-| fetchTraderActivity default   | venue + limit=20               |
-| fetchTraderActivity paged     | limit + cursor forwarded       |
-| fetchTraderActivity no data   | Empty response                 |
-| getTraderGroup GETs           | GET trader-groups/{id}         |
-| getTraderGroup missing        | Empty response                 |
-| groups CRUD + members         | added/removed counts           |
-| members period param          | default 30D + custom           |
-| patch members reports updated | PATCH → {updated}              |
+| Test                          | Description                                 |
+| ----------------------------- | ------------------------------------------- |
+| buildSearchRequest maps       | snake_case, omits undefined                 |
+| buildSearchRequest empty      | Empty body                                  |
+| searchTraders POSTs defaults  | venue/period/sort/limit/page:1              |
+| searchTraders sends page      | page:2 in body                              |
+| searchTraders no data         | Empty response                              |
+| fetchTraderDetail GETs        | venue + period params                       |
+| fetchTraderPositions GETs     | venue default, maps snapshot                |
+| fetchTraderPositions no data  | Empty response                              |
+| fetchTraderActivity default   | venue + limit=20                            |
+| fetchTraderActivity paged     | limit + cursor forwarded                    |
+| fetchTraderActivity no data   | Empty response                              |
+| activity sort/filter          | sort/dir/result/side forwarded, counts kept |
+| positions sort forwards       | sort=unrealized_pnl + dir in URL            |
+| positions sort omitted        | bare `?venue=` URL by default               |
+| balances GETs                 | `/balances?venue=`, no-data throws          |
+| fills paged                   | limit=100 default, cursor forwarded         |
+| orders open/historical        | status + limit=200, historical keeps fields |
+| transfers paged               | days=30 + limit=200 defaults                |
+| performance period            | period=30D default, 7D forwarded            |
+| no-data throws ×5             | balances/fills/orders/transfers/performance |
+| getTraderGroup GETs           | GET trader-groups/{id}                      |
+| getTraderGroup missing        | Empty response                              |
+| groups CRUD + members         | added/removed counts                        |
+| members period param          | default 30D + custom                        |
+| patch members reports updated | PATCH → {updated}                           |
 
 #### `lib/trader-activity-ws.ts` (7 tests)
 
@@ -158,13 +173,15 @@
 | maps pages + cursor       | `next_cursor` → `fetchNextPage` |
 | starts empty disconnected | `liveFills=[]`, `hasMore=false` |
 
-#### `traders/[address]/_components/positions-section.tsx` (3 tests)
+#### `traders/[address]/_components/positions-section.tsx` (4 tests)
 
 | Test                    | Description                        |
 | ----------------------- | ---------------------------------- |
 | renders row + chips     | BTC LONG + account/notional/margin |
 | empty state             | `noOpenPositions` when `[]`        |
 | never-synced syncing M5 | `syncing` when `summary=null`      |
+| sortable headers        | aria-sort + `onSortChange` column  |
+| retry after error       | Button calls `onRetry`             |
 
 #### `traders/[address]/_components/activity-feed.tsx` (3 tests)
 
@@ -173,6 +190,78 @@
 | live + closed render   | LIVE badge, ETH fill + BTC trade   |
 | empty state            | `noActivity` when both lists empty |
 | load more when hasMore | Button calls `onLoadMore`          |
+
+#### `lib/wallet-tab-state.ts` (8 tests)
+
+| Test                     | Description                              |
+| ------------------------ | ---------------------------------------- |
+| nine tabs contract order | positions…performance, default positions |
+| accepts contract ids     | every `WALLET_TABS` id incl swap         |
+| rejects unknown          | funding/empty/null → false               |
+| parses ?tab=             | valid value kept                         |
+| fallback                 | missing/invalid → positions              |
+| sets ?tab=               | non-default tabs in URL                  |
+| omits default            | positions drops `?tab=`                  |
+| preserves siblings       | other params kept on switch              |
+
+#### `hooks/use-trader-trades.ts` (4 tests)
+
+| Test               | Description                           |
+| ------------------ | ------------------------------------- |
+| maps rows + counts | contract row, `counts` from response  |
+| forwards filters   | sort/dir/result/side/limit to service |
+| cursor pagination  | `next_cursor` → second page           |
+| idle when disabled | no fetch while tab inactive           |
+
+#### `hooks/wallet-tab-hooks.ts` (7 tests)
+
+| Test                         | Description                        |
+| ---------------------------- | ---------------------------------- |
+| positions sort/dir           | lowercased wallet + sort forwarded |
+| positions idle when disabled | no fetch while tab inactive        |
+| balances snapshot            | perp/spot `data_status` mapped     |
+| fills cursor paging          | ETH fixture row, `tid` cursor      |
+| orders status                | historical filter forwarded        |
+| transfers days               | days=7 forwarded                   |
+| performance period           | period=7D forwarded                |
+
+#### `traders/[address]/_components/trades-section.tsx` (8 tests)
+
+| Test               | Description                                 |
+| ------------------ | ------------------------------------------- |
+| contract columns   | ENTRY/EXIT/NOTIONAL/DURATION/FUNDING —/NET  |
+| chips + counts     | All/Win/Loss + All/Long/Short from response |
+| server-side sort   | header click → sort=net_pnl                 |
+| server-side filter | Win chip → result=win                       |
+| null entry/exit    | dashes, no fake prices                      |
+| empty state        | `noTrades` when `rows=[]`                   |
+| error retry        | Button calls `refetch`                      |
+| load more          | Button calls `fetchNextPage`                |
+
+#### `traders/[address]/_components/wallet-tabs.tsx` (5 tests)
+
+| Test              | Description                             |
+| ----------------- | --------------------------------------- |
+| nine tabs default | positions active, BTC row visible       |
+| writes ?tab=      | click Balances → `router.replace` URL   |
+| restores ?tab=    | `?tab=trades` opens the trades panel    |
+| placeholders      | predictions/swap coming-soon, no tables |
+| positions sort    | uPnL header → sort + dir to service     |
+
+#### `traders/[address]/_components/wallet-tab-sections.tsx` (10 tests)
+
+| Test                   | Description                     |
+| ---------------------- | ------------------------------- |
+| balances fixture       | perp cards + HYPE/USDC rows     |
+| balances empty + retry | `noBalances`, Retry → `refetch` |
+| orders open            | BUY row, no status columns      |
+| orders historical      | `filled` status columns shown   |
+| orders empty           | `noOrders`                      |
+| fills fixture          | ETH SELL + Close Long + fee     |
+| fills empty            | `noFills`                       |
+| transfers fixture      | subAccountTransfer + $50.00K    |
+| transfers empty        | `noTransfers`                   |
+| performance fixture    | metrics + equity 2026-10-01 row |
 
 #### `components/group-form.tsx` (7 tests)
 
@@ -451,6 +540,24 @@
 | E58 | `trader-detail.spec.ts`      | Never-synced syncing M5      | data_status=syncing               | Syncing visible                    |
 | E59 | `trader-detail.spec.ts`      | Activity Load more           | has_more → Load more click        | ETH second page visible            |
 | E60 | `trader-detail.spec.ts`      | Positions 500 keeps overview | positions 500 → detail            | Heading + Open Positions visible   |
+| E61 | `wallet-tabs.spec.ts`        | Nine tabs default            | Navigate detail (mock fixtures)   | 9 tabs, Positions active, BTC row  |
+| E62 | `wallet-tabs.spec.ts`        | Deep link ?tab=balances      | Goto ?tab=balances                | Balances active, HYPE visible      |
+| E63 | `wallet-tabs.spec.ts`        | Tab writes ?tab=             | Click Trades tab                  | URL /tab=trades/, tab selected     |
+| E64 | `wallet-tabs.spec.ts`        | Placeholders, no fake data   | predictions → swap tabs           | Coming-soon, zero tables           |
+| E65 | `wallet-tabs.spec.ts`        | Positions server sort        | Click uPnL header                 | sort=unrealized_pnl in request     |
+| E66 | `wallet-tabs.spec.ts`        | Positions empty/syncing      | summary=null, []                  | No open positions                  |
+| E67 | `wallet-tabs.spec.ts`        | Trades full table            | ?tab=trades                       | ENTRY/EXIT/NOTIONAL/DURATION/—/NET |
+| E68 | `wallet-tabs.spec.ts`        | Trades result filter         | Win chip → result=win             | BTC only, counts stable All (2)    |
+| E69 | `wallet-tabs.spec.ts`        | Trades side filter           | Short chip → side=short           | ETH only                           |
+| E70 | `wallet-tabs.spec.ts`        | Trades server sort           | Click Net PnL header              | sort=net_pnl in request            |
+| E71 | `wallet-tabs.spec.ts`        | Trades empty                 | rows=[]                           | No closed trades                   |
+| E72 | `wallet-tabs.spec.ts`        | Balances perp+spot           | ?tab=balances                     | Withdrawable + HYPE/USDC           |
+| E73 | `wallet-tabs.spec.ts`        | Fills shape                  | ?tab=fills                        | ETH SELL + Close Long              |
+| E74 | `wallet-tabs.spec.ts`        | Orders open vs historical    | open → Historical click           | No status → filled visible         |
+| E75 | `wallet-tabs.spec.ts`        | Transfers enum type          | ?tab=transfers                    | subAccountTransfer + $50.00K       |
+| E76 | `wallet-tabs.spec.ts`        | Performance + equity         | ?tab=performance                  | Equity curve + 2026-10-01 row      |
+| E77 | `wallet-tabs.spec.ts`        | Balances error + retry       | 500 ×4 → Retry                    | Error → Perp account recovers      |
+| E78 | `wallet-tabs.spec.ts`        | Vietnamese tabs              | /vi/ ?tab=trades                  | Giao dịch selected, BTC visible    |
 
 ### Accessibility / Keyboard / Visual / Performance
 
@@ -602,3 +709,4 @@ reviewing diffs — never blindly.
 | 2026-10-06 | Numbered pagination (CONTRACT.md §3): scanner cursor/Load-more replaced by numbered pages (20/page, `?page=` omitted when 1, clamp 0/abc→1, reset-to-1 on filter/sort/period, beyond-total falls to last page, current-page click no-op). `Meta` + `page/total/total_pages/offset` + `TraderSearchQuery.page` match BE swagger exactly; shared `components/shared/pagination.tsx` (funding + groups + scanner); copy `resultsPaged`/`pageOf` in en+vi. Tests: url-state 6→10, services 11→12, scanner 16→20, new pagination unit (5) + `scanner-pagination.spec.ts` (E46-E55); P1 reworked to 20 rows / Page 1 of 5. Visual `scanner-results*` baselines change (Load more gone, new count copy) — NOT regenerated, needs per-image approval. Unit total 224→238. | —      |
 | 2026-10-06 | Phase 5 review fixes: `errOutOfRange` copy made range-agnostic (en/vi); `matchesPreset` compares parsed numeric values so profit-factor presets (1.0/1.5/2.0) survive the URL round-trip; dead `traders.minPlaceholder`/`maxPlaceholder`/`search`/`reset` keys removed from en + vi; `visual.spec.ts` filter-sheet-open now mocks `/api/v1/traders/search` (baseline `scanner-sheet-open` refreshed). filter-sheet +1 (unit total 223→224).                                                                                                                                                                                                                                                                                                                       | —      |
 | 2026-10-07 | Trader Detail positions + activity (DETAIL-PLAN Part B): types/services/format/WS client (backoff 1s-30s, ping 25s, hidden suspend M4) + useTraderActivity, positions-section + activity-feed, 2-col layout, i18n en+vi incl positionsSyncing M5. Unit 238-263 (+25), E2E trader-detail.spec.ts REST-only E56-E60 (M3 WS via stubbed unit, M7 no WS e2e).                                                                                                                                                                                                                                                                                                                                                                                                         | --     |
+| 2026-10-08 | Wallet tabs contract v1 (FE §5): 9-tab shell with ?tab= URL state + en/vi, POSITIONS sortable header, TRADES full table (server sort + Win/Loss + Long/Short chips with counts, FUNDING —), BALANCES/ORDERS/FILLS/TRANSFERS/PERFORMANCE tables on shared format helpers, PREDICTIONS/SWAP coming-soon placeholders (no fake data). Types in trader.ts, services in traders.ts, hooks per tab. Unit 263→325 (+62), E2E wallet-tabs.spec.ts E61-E78 mocked from fixtures.                                                                                                                                                                                                                                                                                           | —      |
