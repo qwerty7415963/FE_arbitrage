@@ -21,7 +21,6 @@ import {
   formatUsd,
 } from '@/lib/trader-format';
 import { useTraderTrades } from '@/hooks/use-trader-trades';
-import { triggerTraderSync } from '@/services/traders';
 import {
   DEFAULT_ACTIVITY_DIR,
   DEFAULT_ACTIVITY_SORT,
@@ -46,24 +45,28 @@ function SortIndicator({ active, dir }: { active: boolean; dir: SortDirection })
   );
 }
 
+/**
+ * Live trades table (contract v1.2 §1.2): FUNDING is informational only,
+ * `net_pnl = pnl − fees` is unchanged and win/loss/counts stay on net.
+ */
 export function TradesSection({ walletAddress, enabled = true }: TradesSectionProps) {
   const t = useTranslations('traders');
   const [sort, setSort] = useState<ActivitySortKey>(DEFAULT_ACTIVITY_SORT);
   const [dir, setDir] = useState<SortDirection>(DEFAULT_ACTIVITY_DIR);
   const [result, setResult] = useState<ActivityResultFilter>('all');
   const [side, setSide] = useState<ActivitySideFilter>('all');
-  const [isSyncingNow, setIsSyncingNow] = useState(false);
 
   const {
     trades,
     counts,
-    dataStatus,
     isLoading,
     error,
     fetchNextPage,
     refetch,
     hasMore,
     isFetchingNextPage,
+    asOf,
+    partial,
   } = useTraderTrades(walletAddress, { sort, dir, result, side, enabled });
 
   function handleSort(next: ActivitySortKey) {
@@ -72,22 +75,6 @@ export function TradesSection({ walletAddress, enabled = true }: TradesSectionPr
     } else {
       setSort(next);
       setDir('desc');
-    }
-  }
-
-  // Manual "Sync now" fallback (contract v1.1 §4 F3): explicit user
-  // action, so it always POSTs (no once-guard) then refetches.
-  async function handleSyncNow() {
-    if (isSyncingNow) return;
-    setIsSyncingNow(true);
-    try {
-      await triggerTraderSync(walletAddress);
-      refetch();
-    } catch {
-      // The error banner below already covers failed refetches; a
-      // failed POST simply leaves the current view untouched.
-    } finally {
-      setIsSyncingNow(false);
     }
   }
 
@@ -135,27 +122,6 @@ export function TradesSection({ walletAddress, enabled = true }: TradesSectionPr
     );
   }
 
-  // Contract v1.1 §4 F3: syncing + empty ⇒ "syncing" skeleton; genuine
-  // empty ONLY when ready + empty; "Sync now" as manual fallback.
-  if (trades.length === 0 && dataStatus === 'syncing' && !isLoading) {
-    return (
-      <section aria-label={t('tabTrades')} className="flex flex-col items-start gap-2">
-        <div className="flex w-full flex-col gap-2" role="status" aria-label={t('tradesSyncing')}>
-          <div className="bg-muted h-8 w-48 animate-pulse rounded-md" />
-          <div className="bg-muted h-24 animate-pulse rounded-lg" />
-        </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => void handleSyncNow()}
-          disabled={isSyncingNow}
-        >
-          {t('syncNow')}
-        </Button>
-      </section>
-    );
-  }
-
   const resultChips: { value: ActivityResultFilter; label: string; count: number | null }[] = [
     { value: 'all', label: t('chipAll'), count: counts?.total ?? null },
     { value: 'win', label: t('chipWin'), count: counts?.win ?? null },
@@ -169,6 +135,12 @@ export function TradesSection({ walletAddress, enabled = true }: TradesSectionPr
 
   return (
     <section aria-label={t('tabTrades')} className="flex flex-col gap-3">
+      <p className="text-muted-foreground text-xs">
+        {t('statusReady')}
+        {asOf && ` · ${t('asOf', { time: formatRelativeTime(asOf) ?? '' })}`}
+        {partial && ` · ${t('partialData')}`}
+      </p>
+
       <div className="flex flex-wrap gap-2" role="group" aria-label={t('colStatus')}>
         <div className="flex gap-1" role="group" aria-label="result">
           {resultChips.map((chip) => (
@@ -201,17 +173,7 @@ export function TradesSection({ walletAddress, enabled = true }: TradesSectionPr
       </div>
 
       {trades.length === 0 ? (
-        <>
-          <p className="text-muted-foreground text-sm">{t('noTrades')}</p>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => void handleSyncNow()}
-            disabled={isSyncingNow}
-          >
-            {t('syncNow')}
-          </Button>
-        </>
+        <p className="text-muted-foreground text-sm">{t('noTrades')}</p>
       ) : (
         <div className="overflow-x-auto">
           <Table>
@@ -232,6 +194,7 @@ export function TradesSection({ walletAddress, enabled = true }: TradesSectionPr
                 const tone = activitySideTone(trade.side);
                 const entryPrice = trade.entry_price ?? null;
                 const exitPrice = trade.exit_price ?? null;
+                const funding = typeof trade.funding === 'number' ? trade.funding : null;
                 return (
                   <TableRow key={`${trade.market}-${trade.opened_at}-${trade.closed_at}`}>
                     <TableCell className="font-medium">{trade.market}</TableCell>
@@ -275,7 +238,9 @@ export function TradesSection({ walletAddress, enabled = true }: TradesSectionPr
                     <TableCell className="text-right tabular-nums">
                       {formatDurationSec(trade.duration_sec)}
                     </TableCell>
-                    <TableCell className="text-right tabular-nums">—</TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {funding === null ? '—' : formatSignedUsd(funding)}
+                    </TableCell>
                     <TableCell
                       className={cn(
                         'text-right tabular-nums',

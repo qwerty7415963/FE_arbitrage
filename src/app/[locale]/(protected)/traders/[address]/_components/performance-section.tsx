@@ -81,15 +81,7 @@ export function PerformanceSection({ walletAddress, enabled = true }: Performanc
 
       {metrics && (
         <p className="text-muted-foreground text-xs">
-          {t(
-            metrics.data_status === 'ready'
-              ? 'statusReady'
-              : metrics.data_status === 'stale'
-                ? 'statusStale'
-                : metrics.data_status === 'error'
-                  ? 'statusError'
-                  : 'statusSyncing',
-          )}
+          {t(metrics.data_status === 'error' ? 'statusError' : 'statusReady')}
           {metrics.metrics_as_of &&
             ` · ${t('metricsAsOf', { time: formatRelativeTime(metrics.metrics_as_of) ?? '' })}`}
           {metrics.is_partial && ` · ${t('partialData')}`}

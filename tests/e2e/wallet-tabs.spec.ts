@@ -86,6 +86,7 @@ const winTrade = {
   exit_price: 62000.0,
   pnl: 1500.0,
   fees: 30.0,
+  funding: -12.5,
   net_pnl: 1470.0,
   fills: 3,
 };
@@ -101,6 +102,7 @@ const lossTrade = {
   exit_price: 3100.0,
   pnl: -200.0,
   fees: 10.0,
+  funding: 0,
   net_pnl: -210.0,
   fills: 2,
 };
@@ -286,6 +288,9 @@ async function mockWalletTabs(page: Page, overrides: MockOverrides = {}) {
         next_cursor: null,
         has_more: false,
         counts: overrides.activityCounts ?? fullCounts,
+        data_status: 'ready',
+        as_of: '2026-10-08T00:00:00Z',
+        partial: false,
       });
     }
     if (url.pathname.endsWith('/balances')) {
@@ -403,16 +408,17 @@ test.describe('Wallet tabs (contract v1)', () => {
     expect(new URL(matched.url()).searchParams.get('dir')).toBe('asc');
   });
 
-  test('E66 positions empty state when never synced', async ({ page }) => {
+  test('E66 positions empty state with ready status (no syncing)', async ({ page }) => {
     await seedAuth(page);
     await mockWalletTabs(page, {
-      positions: { summary: null, positions: [], data_status: 'syncing', as_of: null },
+      positions: { summary: null, positions: [], data_status: 'ready', as_of: null },
     });
     await page.goto(`/en/traders/${WALLET}`);
     await expect(page.getByText('No open positions')).toBeVisible();
+    await expect(page.getByText('Syncing')).toHaveCount(0);
   });
 
-  test('E67 trades table shows entry, exit, notional, duration, funding dash and net pnl', async ({
+  test('E67 trades table shows entry, exit, notional, duration, funding value and net pnl', async ({
     page,
   }) => {
     await seedAuth(page);
@@ -424,6 +430,8 @@ test.describe('Wallet tabs (contract v1)', () => {
     await expect(panel.getByText('$62.00K')).toBeVisible();
     await expect(panel.getByText('$30.50K')).toBeVisible();
     await expect(panel.getByText('2d 12h')).toBeVisible();
+    // FUNDING is informational (−12.5); net 1470 = 1500 − 30 is unchanged.
+    await expect(panel.getByText('-$12.5')).toBeVisible();
     await expect(panel.getByText('+$1,470')).toBeVisible();
     await expect(panel.getByRole('button', { name: 'Win (1)' })).toBeVisible();
     await expect(panel.getByRole('button', { name: 'Long (1)' })).toBeVisible();

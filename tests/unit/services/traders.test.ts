@@ -18,7 +18,6 @@ import {
   listTraderGroups,
   removeGroupMembers,
   searchTraders,
-  triggerTraderSync,
   updateGroupMembers,
   updateTraderGroup,
 } from '@/services/traders';
@@ -144,7 +143,15 @@ describe('traders service', () => {
     it('GETs activity with default limit 20', async () => {
       vi.mocked(apiClient.apiClient).mockResolvedValueOnce({
         success: true,
-        data: { rows: [], next_cursor: null, has_more: false },
+        data: {
+          rows: [],
+          next_cursor: null,
+          has_more: false,
+          counts: { win: 0, loss: 0, long: 0, short: 0, total: 0 },
+          data_status: 'ready',
+          as_of: '2026-10-08T00:00:00Z',
+          partial: false,
+        },
       });
       const page = await fetchTraderActivity('0xabc');
       expect(vi.mocked(apiClient.apiClient).mock.calls[0][0]).toBe(
@@ -156,7 +163,15 @@ describe('traders service', () => {
     it('forwards limit and cursor params', async () => {
       vi.mocked(apiClient.apiClient).mockResolvedValueOnce({
         success: true,
-        data: { rows: [], next_cursor: 'c2', has_more: true },
+        data: {
+          rows: [],
+          next_cursor: 'c2',
+          has_more: true,
+          counts: { win: 0, loss: 0, long: 0, short: 0, total: 0 },
+          data_status: 'ready',
+          as_of: '2026-10-08T00:00:00Z',
+          partial: false,
+        },
       });
       const page = await fetchTraderActivity('0xabc', { limit: 5, cursor: 'c1' });
       expect(vi.mocked(apiClient.apiClient).mock.calls[0][0]).toContain('limit=5');
@@ -177,6 +192,9 @@ describe('traders service', () => {
           next_cursor: null,
           has_more: false,
           counts: { win: 1, loss: 0, long: 1, short: 0, total: 1 },
+          data_status: 'ready',
+          as_of: '2026-10-08T00:00:00Z',
+          partial: false,
         },
       });
       const page = await fetchTraderActivity('0xabc', {
@@ -224,13 +242,13 @@ describe('traders service', () => {
     it('fetchTraderBalances GETs balances', async () => {
       vi.mocked(apiClient.apiClient).mockResolvedValueOnce({
         success: true,
-        data: { perp: null, spot: null, data_status: 'syncing' },
+        data: { perp: null, spot: null, data_status: 'ready' },
       });
       const snap = await fetchTraderBalances('0xabc');
       expect(vi.mocked(apiClient.apiClient).mock.calls[0][0]).toBe(
         '/api/v1/traders/0xabc/balances?venue=hyperliquid',
       );
-      expect(snap.data_status).toBe('syncing');
+      expect(snap.data_status).toBe('ready');
     });
 
     it('fetchTraderBalances throws when no data returned', async () => {
@@ -321,33 +339,6 @@ describe('traders service', () => {
     it('fetchTraderPerformance throws when no data returned', async () => {
       vi.mocked(apiClient.apiClient).mockResolvedValueOnce({ success: true });
       await expect(fetchTraderPerformance('0xabc')).rejects.toThrow('No data returned');
-    });
-  });
-
-  describe('triggerTraderSync (contract v1.1 §1)', () => {
-    it('POSTs to /api/v1/traders/{wallet}/sync with default venue', async () => {
-      vi.mocked(apiClient.apiClient).mockResolvedValueOnce({
-        success: true,
-        data: { status: 'queued' },
-      });
-      const result = await triggerTraderSync('0xabc');
-      const [url, options] = vi.mocked(apiClient.apiClient).mock.calls[0] as [string, RequestInit];
-      expect(url).toBe('/api/v1/traders/0xabc/sync?venue=hyperliquid');
-      expect(options.method).toBe('POST');
-      expect(result).toEqual({ status: 'queued' });
-    });
-
-    it('maps in_flight and recent statuses without inventing fields', async () => {
-      vi.mocked(apiClient.apiClient)
-        .mockResolvedValueOnce({ success: true, data: { status: 'in_flight' } })
-        .mockResolvedValueOnce({ success: true, data: { status: 'recent' } });
-      expect(await triggerTraderSync('0xabc')).toEqual({ status: 'in_flight' });
-      expect(await triggerTraderSync('0xabc')).toEqual({ status: 'recent' });
-    });
-
-    it('throws when no data returned', async () => {
-      vi.mocked(apiClient.apiClient).mockResolvedValueOnce({ success: true });
-      await expect(triggerTraderSync('0xabc')).rejects.toThrow('No data returned');
     });
   });
 

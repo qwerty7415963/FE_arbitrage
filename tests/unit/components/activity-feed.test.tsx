@@ -16,6 +16,7 @@ const trades = [
     exit_price: 62000,
     pnl: 1500,
     fees: 30,
+    funding: -12.5,
     net_pnl: 1470,
     fills: 3,
   },
@@ -50,18 +51,48 @@ function renderFeed(props: Partial<React.ComponentProps<typeof ActivityFeed>> = 
   );
 }
 
-describe('ActivityFeed', () => {
+describe('ActivityFeed (contract v1.2)', () => {
   it('renders a live fill with LIVE badge and a closed trade', () => {
-    renderFeed({ trades, liveFills, live: 'connected' });
+    renderFeed({ trades, liveFills, live: 'connected', connection: 'LIVE' });
     expect(screen.getByText('Recent Activity')).toBeInTheDocument();
     expect(screen.getAllByText('LIVE').length).toBeGreaterThan(0);
     expect(screen.getByText('ETH')).toBeInTheDocument();
     expect(screen.getByText('BTC')).toBeInTheDocument();
   });
 
-  it('renders the empty state', () => {
-    renderFeed();
+  it('gates the LIVE badge on the backend connection state', () => {
+    const { unmount } = renderFeed({ trades, live: 'connected', connection: 'RECONNECTING' });
+    expect(screen.queryByText('LIVE')).not.toBeInTheDocument();
+    unmount();
+    renderFeed({ trades, live: 'connected', connection: 'ERROR' });
+    expect(screen.queryByText('LIVE')).not.toBeInTheDocument();
+  });
+
+  it('shows no LIVE badge while the transport is disconnected', () => {
+    renderFeed({ trades, live: 'disconnected', connection: 'LIVE' });
+    expect(screen.queryByText('LIVE')).not.toBeInTheDocument();
+  });
+
+  it('renders the genuine empty state with no Sync now button', () => {
+    renderFeed({ dataStatus: 'ready' });
     expect(screen.getByText('No recent activity')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Sync now' })).not.toBeInTheDocument();
+  });
+
+  it('shows as_of and partial markers', () => {
+    renderFeed({ trades, asOf: '2026-10-08T00:00:00Z', partial: true });
+    expect(screen.getByText(/As of/)).toBeInTheDocument();
+    expect(screen.getByText(/Partial data/)).toBeInTheDocument();
+  });
+
+  it('renders live funding events incrementally', () => {
+    renderFeed({
+      liveFundings: [{ coin: 'ETH', usdc: -3.44, time: '2026-10-08T00:00:00Z' }],
+      live: 'connected',
+      connection: 'LIVE',
+    });
+    expect(screen.getByText('ETH')).toBeInTheDocument();
+    expect(screen.getByText('-$3.44')).toBeInTheDocument();
   });
 
   it('shows load more when hasMore', () => {
@@ -81,37 +112,5 @@ describe('ActivityFeed', () => {
     fireEvent.click(button);
     expect(onRetry).toHaveBeenCalledTimes(1);
     expect(onLoadMore).not.toHaveBeenCalled();
-  });
-
-  it('shows a syncing skeleton (not a definitive empty) while syncing + empty', () => {
-    renderFeed({ dataStatus: 'syncing' });
-    expect(screen.getByRole('status', { name: 'Syncing activity...' })).toBeInTheDocument();
-    expect(screen.queryByText('No recent activity')).not.toBeInTheDocument();
-  });
-
-  it('shows the genuine empty state only when ready + empty', () => {
-    renderFeed({ dataStatus: 'ready' });
-    expect(screen.getByText('No recent activity')).toBeInTheDocument();
-    expect(screen.queryByRole('status', { name: 'Syncing activity...' })).not.toBeInTheDocument();
-  });
-
-  it('offers Sync now on the syncing skeleton as a manual fallback', () => {
-    const onSyncNow = vi.fn();
-    renderFeed({ dataStatus: 'syncing', onSyncNow });
-    const button = screen.getByRole('button', { name: 'Sync now' });
-    fireEvent.click(button);
-    expect(onSyncNow).toHaveBeenCalledTimes(1);
-  });
-
-  it('offers Sync now on the genuine empty state as a manual fallback', () => {
-    const onSyncNow = vi.fn();
-    renderFeed({ dataStatus: 'ready', onSyncNow });
-    expect(screen.getByText('No recent activity')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Sync now' })).toBeInTheDocument();
-  });
-
-  it('hides Sync now when no handler is wired', () => {
-    renderFeed({ dataStatus: 'syncing' });
-    expect(screen.queryByRole('button', { name: 'Sync now' })).not.toBeInTheDocument();
   });
 });

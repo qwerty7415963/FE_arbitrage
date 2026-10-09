@@ -1,16 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { NextIntlClientProvider } from 'next-intl';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ApiError } from '@/infrastructure/api-client';
 import DetailPage from '@/app/[locale]/(protected)/traders/[address]/page';
-import {
-  fetchTraderDetail,
-  fetchTraderPositions,
-  listTraderGroups,
-  triggerTraderSync,
-} from '@/services/traders';
+import { fetchTraderDetail, fetchTraderPositions, listTraderGroups } from '@/services/traders';
 import { useTraderActivity } from '@/hooks/use-trader-activity';
 import type { TraderDetail } from '@/types/trader';
 import enMessages from '@/messages/en.json';
@@ -32,7 +27,6 @@ vi.mock('@/services/traders', () => ({
   fetchTraderDetail: vi.fn(),
   fetchTraderPositions: vi.fn(),
   fetchTraderActivity: vi.fn(),
-  triggerTraderSync: vi.fn(),
   listTraderGroups: vi.fn(),
   addGroupMembers: vi.fn(),
   createTraderGroup: vi.fn(),
@@ -101,13 +95,12 @@ function renderPage() {
   );
 }
 
-describe('TraderDetailPage', () => {
+describe('TraderDetailPage (contract v1.2 live, no sync)', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
     nav.address = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
     vi.mocked(fetchTraderDetail).mockResolvedValue(detail);
     vi.mocked(listTraderGroups).mockResolvedValue([]);
-    vi.mocked(triggerTraderSync).mockResolvedValue({ status: 'queued' });
     vi.mocked(fetchTraderPositions).mockResolvedValue({
       summary: null,
       positions: [],
@@ -117,13 +110,17 @@ describe('TraderDetailPage', () => {
     vi.mocked(useTraderActivity).mockReturnValue({
       trades: [],
       liveFills: [],
+      liveFundings: [],
       isLoading: false,
       error: null,
       fetchNextPage: vi.fn(),
       refetch: vi.fn(),
       hasMore: false,
       live: 'disconnected',
+      connection: null,
       dataStatus: 'ready',
+      asOf: null,
+      partial: false,
     });
   });
 
@@ -167,14 +164,13 @@ describe('TraderDetailPage', () => {
     expect(screen.getAllByText('—').length).toBeGreaterThan(0);
   });
 
-  it('shows stale and partial states while keeping data visible', async () => {
+  it('shows partial markers while keeping data visible', async () => {
     vi.mocked(fetchTraderDetail).mockResolvedValue({
       ...detail,
-      metrics: { ...detail.metrics!, data_status: 'stale', is_partial: true },
+      metrics: { ...detail.metrics!, is_partial: true },
     });
     renderPage();
     await screen.findByRole('heading', { name: 'Smart Money' });
-    expect(screen.getByText(/Stale/)).toBeInTheDocument();
     expect(screen.getByText(/Partial data/)).toBeInTheDocument();
     expect(screen.getByText('+$5.00K')).toBeInTheDocument();
   });
@@ -211,22 +207,14 @@ describe('TraderDetailPage', () => {
     window.sessionStorage.clear();
   });
 
-  it('auto-triggers one priority sync when trades are empty', async () => {
+  it('never shows Sync now (sync machinery removed)', async () => {
     renderPage();
     await screen.findByRole('heading', { name: 'Smart Money' });
-    await waitFor(() =>
-      expect(triggerTraderSync).toHaveBeenCalledWith('0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'),
-    );
-    await waitFor(() => expect(triggerTraderSync).toHaveBeenCalledTimes(1));
+    expect(screen.queryByRole('button', { name: 'Sync now' })).not.toBeInTheDocument();
+    expect(screen.queryByText(/Syncing/)).not.toBeInTheDocument();
   });
 
-  it('auto-triggers when positions are not ready even with trades present', async () => {
-    vi.mocked(fetchTraderPositions).mockResolvedValue({
-      summary: null,
-      positions: [],
-      data_status: 'syncing',
-      as_of: null,
-    });
+  it('renders live activity rows with funding-aware trades', async () => {
     vi.mocked(useTraderActivity).mockReturnValue({
       trades: [
         {
@@ -240,94 +228,26 @@ describe('TraderDetailPage', () => {
           exit_price: 62000,
           pnl: 1500,
           fees: 30,
+          funding: -12.5,
           net_pnl: 1470,
           fills: 3,
         },
       ],
       liveFills: [],
+      liveFundings: [],
       isLoading: false,
       error: null,
       fetchNextPage: vi.fn(),
       refetch: vi.fn(),
       hasMore: false,
-      live: 'disconnected',
-      dataStatus: 'syncing',
-    });
-    renderPage();
-    await screen.findByRole('heading', { name: 'Smart Money' });
-    await waitFor(() => expect(triggerTraderSync).toHaveBeenCalledTimes(1));
-  });
-
-  it('does not auto-trigger when positions are ready and trades exist', async () => {
-    vi.mocked(useTraderActivity).mockReturnValue({
-      trades: [
-        {
-          market: 'BTC',
-          side: 'LONG',
-          opened_at: '2026-10-06T08:00:00Z',
-          closed_at: '2026-10-06T08:30:00Z',
-          duration_sec: 1800,
-          volume: 30000,
-          entry_price: 60000,
-          exit_price: 62000,
-          pnl: 1500,
-          fees: 30,
-          net_pnl: 1470,
-          fills: 3,
-        },
-      ],
-      liveFills: [],
-      isLoading: false,
-      error: null,
-      fetchNextPage: vi.fn(),
-      refetch: vi.fn(),
-      hasMore: false,
-      live: 'disconnected',
+      live: 'connected',
+      connection: 'LIVE',
       dataStatus: 'ready',
+      asOf: '2026-10-08T00:00:00Z',
+      partial: false,
     });
     renderPage();
     await screen.findByRole('heading', { name: 'Smart Money' });
-    // Let the sync effect settle after both signals load.
-    await waitFor(() => expect(fetchTraderPositions).toHaveBeenCalled());
-    await new Promise((resolve) => setTimeout(resolve, 50));
-    expect(triggerTraderSync).not.toHaveBeenCalled();
-  });
-
-  it('does not repeat the auto-trigger on period switch', async () => {
-    const user = userEvent.setup();
-    renderPage();
-    await screen.findByRole('heading', { name: 'Smart Money' });
-    await waitFor(() => expect(triggerTraderSync).toHaveBeenCalledTimes(1));
-    await user.click(screen.getByRole('button', { name: '7D' }));
-    await waitFor(() =>
-      expect(fetchTraderDetail).toHaveBeenLastCalledWith(
-        '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-        expect.objectContaining({ period: '7D' }),
-      ),
-    );
-    await new Promise((resolve) => setTimeout(resolve, 50));
-    expect(triggerTraderSync).toHaveBeenCalledTimes(1);
-  });
-
-  it('Sync now in Recent Activity posts and refetches', async () => {
-    const user = userEvent.setup();
-    const activityRefetch = vi.fn();
-    vi.mocked(useTraderActivity).mockReturnValue({
-      trades: [],
-      liveFills: [],
-      isLoading: false,
-      error: null,
-      fetchNextPage: vi.fn(),
-      refetch: activityRefetch,
-      hasMore: false,
-      live: 'disconnected',
-      dataStatus: 'ready',
-    });
-    renderPage();
-    await screen.findByRole('heading', { name: 'Smart Money' });
-    await waitFor(() => expect(triggerTraderSync).toHaveBeenCalledTimes(1));
-    await user.click(screen.getByRole('button', { name: 'Sync now' }));
-    await waitFor(() => expect(triggerTraderSync).toHaveBeenCalledTimes(2));
-    expect(activityRefetch).toHaveBeenCalled();
+    expect(screen.getByText('BTC')).toBeInTheDocument();
   });
 });

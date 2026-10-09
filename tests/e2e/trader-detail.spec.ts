@@ -1,5 +1,8 @@
 import { test, expect, type Page } from '@playwright/test';
 
+// Contract v1.2 fixtures (LIVE-FIXTURES.md). No invented fields.
+// data_status is ONLY ready|error; activity rows carry funding;
+// net_pnl = pnl − fees is unchanged.
 const WALLET = '0x1234567890abcdef1234567890abcdef12345678';
 
 const mockDetail = {
@@ -79,17 +82,25 @@ const mockActivityPage1 = {
     {
       market: 'BTC',
       side: 'LONG',
-      opened_at: '2026-10-06T08:00:00Z',
-      closed_at: '2026-10-06T08:30:00Z',
+      opened_at: '2026-10-01T00:00:00Z',
+      closed_at: '2026-10-03T12:00:00Z',
+      duration_sec: 216000,
       volume: 30000,
+      entry_price: 60000,
+      exit_price: 62000,
       pnl: 1500,
       fees: 30,
+      funding: -12.5,
       net_pnl: 1470,
       fills: 3,
     },
   ],
   next_cursor: 'c1',
   has_more: true,
+  counts: { win: 1, loss: 0, long: 1, short: 0, total: 1 },
+  data_status: 'ready',
+  as_of: '2026-10-08T00:00:00Z',
+  partial: false,
 };
 
 const mockActivityPage2 = {
@@ -99,15 +110,23 @@ const mockActivityPage2 = {
       side: 'SHORT',
       opened_at: '2026-10-05T08:00:00Z',
       closed_at: '2026-10-05T08:30:00Z',
+      duration_sec: 21600,
       volume: 10000,
+      entry_price: 3000,
+      exit_price: 3100,
       pnl: -200,
       fees: 10,
+      funding: 0,
       net_pnl: -210,
       fills: 2,
     },
   ],
   next_cursor: null,
   has_more: false,
+  counts: { win: 1, loss: 0, long: 1, short: 0, total: 1 },
+  data_status: 'ready',
+  as_of: '2026-10-08T00:00:00Z',
+  partial: false,
 };
 
 async function seedAuth(page: Page) {
@@ -180,7 +199,7 @@ async function mockTraderEndpoints(
   );
 }
 
-test.describe('Trader Detail positions + activity (REST)', () => {
+test.describe('Trader Detail positions + activity (live, contract v1.2)', () => {
   test('renders positions table and activity feed', async ({ page }) => {
     await seedAuth(page);
     await mockTraderEndpoints(page);
@@ -196,21 +215,39 @@ test.describe('Trader Detail positions + activity (REST)', () => {
     await seedAuth(page);
     await mockTraderEndpoints(page, {
       positions: { summary: null, positions: [], data_status: 'ready', as_of: null },
-      activityFirst: { rows: [], next_cursor: null, has_more: false },
+      activityFirst: {
+        rows: [],
+        next_cursor: null,
+        has_more: false,
+        counts: { win: 0, loss: 0, long: 0, short: 0, total: 0 },
+        data_status: 'ready',
+        as_of: '2026-10-08T00:00:00Z',
+        partial: false,
+      },
     });
     await page.goto(`/en/traders/${WALLET}`);
     await expect(page.getByText('No open positions')).toBeVisible();
     await expect(page.getByText('No recent activity')).toBeVisible();
   });
 
-  test('maps never-synced wallets to syncing status (M5)', async ({ page }) => {
+  test('shows Ready (never syncing) for live positions', async ({ page }) => {
     await seedAuth(page);
     await mockTraderEndpoints(page, {
-      positions: { summary: null, positions: [], data_status: 'syncing', as_of: null },
-      activityFirst: { rows: [], next_cursor: null, has_more: false },
+      positions: { summary: null, positions: [], data_status: 'ready', as_of: null },
+      activityFirst: {
+        rows: [],
+        next_cursor: null,
+        has_more: false,
+        counts: { win: 0, loss: 0, long: 0, short: 0, total: 0 },
+        data_status: 'ready',
+        as_of: '2026-10-08T00:00:00Z',
+        partial: false,
+      },
     });
     await page.goto(`/en/traders/${WALLET}`);
-    await expect(page.getByText('Syncing').first()).toBeVisible();
+    await expect(page.getByText('Ready').first()).toBeVisible();
+    await expect(page.getByText('Syncing')).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Sync now' })).toHaveCount(0);
   });
 
   test('loads the next activity page on Load more', async ({ page }) => {

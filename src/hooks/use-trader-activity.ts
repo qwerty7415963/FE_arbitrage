@@ -1,34 +1,50 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchTraderActivity } from '@/services/traders';
 import { connectTradeActivityWS, type ActivityWsStatus } from '@/lib/trader-activity-ws';
-import { getSyncPollInterval, normalizeActivityStatus } from '@/lib/trader-sync';
-import type { ActivityFill, ActivityTrade, DataStatus } from '@/types/trader';
+import type {
+  ActivityFill,
+  ActivityPage,
+  ActivityTrade,
+  LiveDataStatus,
+  WalletConnectionStatus,
+  WalletFundingEvent,
+} from '@/types/trader';
 
 export interface UseTraderActivityResult {
   trades: ActivityTrade[];
   liveFills: ActivityFill[];
+  liveFundings: WalletFundingEvent[];
   isLoading: boolean;
   error: unknown;
   fetchNextPage: () => void;
   refetch: () => void;
   hasMore: boolean;
   live: ActivityWsStatus;
-  /**
-   * Sync signal (contract v1.1 §2): `ready` when the payload predates
-   * the signal. Drives the syncing-skeleton vs genuine-empty UI.
-   */
-  dataStatus: DataStatus;
+  /** Backend reconnect state (`wallet.connection.updated`); null until first event. */
+  connection: WalletConnectionStatus | null;
+  /** Live signal (contract v1.2 §1.2): ready|error only. */
+  dataStatus: LiveDataStatus;
+  asOf: string | null;
+  partial: boolean;
 }
 
 const LIVE_FILLS_MAX = 50;
+const LIVE_FUNDINGS_MAX = 50;
 
+/**
+ * Live activity (contract v1.2 §1.2 + §2): REST `userFillsByTime` 30d +
+ * `wallet.*` incremental updates (no full refetch on WS events).
+ */
 export function useTraderActivity(walletAddress: string): UseTraderActivityResult {
   const wallet = walletAddress.toLowerCase();
   const [liveFills, setLiveFills] = useState<ActivityFill[]>([]);
+  const [liveFundings, setLiveFundings] = useState<WalletFundingEvent[]>([]);
   const [live, setLive] = useState<ActivityWsStatus>('disconnected');
+  const [connection, setConnection] = useState<WalletConnectionStatus | null>(null);
+  const queryClient = useQueryClient();
 
   const query = useInfiniteQuery({
     queryKey: ['trader-activity', wallet],
@@ -37,14 +53,6 @@ export function useTraderActivity(walletAddress: string): UseTraderActivityResul
     getNextPageParam: (last) => last?.next_cursor ?? undefined,
     initialPageParam: undefined as string | undefined,
     enabled: wallet.length > 0,
-    // Contract v1.1 §4 F2 (extended to activity per §8: the first view
-    // resolves WITHOUT manual refresh): poll while data_status is syncing.
-    refetchInterval: (polled) =>
-      getSyncPollInterval(
-        normalizeActivityStatus(polled.state.data?.pages[0]?.data_status),
-        polled.state.dataUpdateCount,
-        polled.state.status === 'error',
-      ),
   });
 
   useEffect(() => {
@@ -55,28 +63,39 @@ export function useTraderActivity(walletAddress: string): UseTraderActivityResul
         setLiveFills((prev) => [fill, ...prev].slice(0, LIVE_FILLS_MAX));
       },
       (status) => setLive(status),
+      {
+        onFunding: (funding) => {
+          setLiveFundings((prev) => [funding, ...prev].slice(0, LIVE_FUNDINGS_MAX));
+        },
+        onActivity: (trade) => {
+          queryClient.setQueryData<{ pages: ActivityPage[]; pageParams: unknown[] }>(
+            ['trader-activity', wallet],
+            (old) => {
+              if (!old) return old;
+              const pages = old.pages.slice();
+              if (pages.length === 0) return old;
+              pages[0] = { ...pages[0], rows: [trade, ...pages[0].rows] };
+              return { ...old, pages };
+            },
+          );
+        },
+        onConnection: (status) => setConnection(status),
+      },
     );
     return () => handle.close();
-  }, [wallet]);
+  }, [wallet, queryClient]);
 
-  useEffect(() => {
-    if (typeof document === 'undefined') return;
-    const onVisible = () => {
-      if (!document.hidden) {
-        void query.refetch();
-      }
-    };
-    document.addEventListener('visibilitychange', onVisible);
-    return () => document.removeEventListener('visibilitychange', onVisible);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [wallet]);
-
-  const trades = (query.data?.pages ?? []).flatMap((page) => page?.rows ?? []);
-  const dataStatus = normalizeActivityStatus(query.data?.pages[0]?.data_status);
+  const pages = query.data?.pages ?? [];
+  const trades = pages.flatMap((page) => page?.rows ?? []);
+  const first = pages[0];
+  const dataStatus: LiveDataStatus = first?.data_status ?? 'ready';
+  const asOf = first?.as_of ?? null;
+  const partial = first?.partial ?? false;
 
   return {
     trades,
     liveFills,
+    liveFundings,
     isLoading: query.isLoading,
     error: query.error,
     fetchNextPage: () => {
@@ -87,6 +106,9 @@ export function useTraderActivity(walletAddress: string): UseTraderActivityResul
     },
     hasMore: query.hasNextPage ?? false,
     live,
+    connection,
     dataStatus,
+    asOf,
+    partial,
   };
 }

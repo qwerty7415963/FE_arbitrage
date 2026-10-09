@@ -18,20 +18,13 @@ import {
   formatSignedUsd,
   formatUsd,
 } from '@/lib/trader-format';
-import type {
-  PositionDataStatus,
-  PositionSnapshot,
-  PositionSortKey,
-  SortDirection,
-} from '@/types/trader';
+import type { PositionSnapshot, PositionSortKey, SortDirection } from '@/types/trader';
 import { ArrowDownIcon, ArrowUpIcon, ArrowUpDownIcon } from 'lucide-react';
 
-const STATUS_LABEL_KEYS: Record<PositionDataStatus, string> = {
+const STATUS_LABEL_KEYS = {
   ready: 'statusReady',
-  syncing: 'positionsSyncing',
-  stale: 'positionsStale',
   error: 'positionsError',
-};
+} as const;
 
 export interface PositionsSectionProps {
   snapshot: PositionSnapshot | null;
@@ -138,7 +131,8 @@ export function PositionsSection({
 
   const positions = snapshot?.positions ?? [];
   const summary = snapshot?.summary ?? null;
-  const status: PositionDataStatus = snapshot?.data_status ?? 'syncing';
+  // Live detail (contract v1.2 §1.1): ready|error only, never syncing/stale.
+  const status: keyof typeof STATUS_LABEL_KEYS = snapshot?.data_status ?? 'ready';
   const asOf = snapshot?.as_of ?? summary?.as_of ?? null;
 
   return (

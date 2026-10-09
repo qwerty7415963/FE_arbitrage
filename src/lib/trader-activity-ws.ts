@@ -1,9 +1,25 @@
-import type { ActivityFill } from '@/types/trader';
+import type {
+  ActivityFill,
+  ActivityTrade,
+  PositionSnapshot,
+  WalletConnectionStatus,
+  WalletFundingEvent,
+  WalletOrderEvent,
+} from '@/types/trader';
+import { WALLET_CONNECTION_STATUSES as CONNECTION_STATUSES } from '@/types/trader';
 
 export type ActivityWsStatus = 'connected' | 'disconnected' | 'reconnecting';
 
 export interface ActivityWsHandle {
   close: () => void;
+}
+
+export interface WalletWsHandlers {
+  onFunding?: (funding: WalletFundingEvent) => void;
+  onOrder?: (order: WalletOrderEvent) => void;
+  onPosition?: (snapshot: PositionSnapshot) => void;
+  onActivity?: (trade: ActivityTrade) => void;
+  onConnection?: (status: WalletConnectionStatus) => void;
 }
 
 export const ACTIVITY_WS_PING_INTERVAL_MS = 25_000;
@@ -45,10 +61,74 @@ function isValidFill(data: unknown): data is ActivityFill {
   );
 }
 
+function isValidFunding(data: unknown): data is WalletFundingEvent {
+  if (typeof data !== 'object' || data === null) return false;
+  const d = data as Record<string, unknown>;
+  return typeof d.coin === 'string' && typeof d.usdc === 'number' && typeof d.time === 'string';
+}
+
+function isValidOrder(data: unknown): data is WalletOrderEvent {
+  if (typeof data !== 'object' || data === null) return false;
+  const d = data as Record<string, unknown>;
+  return typeof d.coin === 'string' && typeof d.oid === 'number' && typeof d.status === 'string';
+}
+
+function isValidConnection(data: unknown): data is { status: WalletConnectionStatus } {
+  if (typeof data !== 'object' || data === null) return false;
+  const d = data as Record<string, unknown>;
+  return (
+    typeof d.status === 'string' && (CONNECTION_STATUSES as readonly string[]).includes(d.status)
+  );
+}
+
+function isValidPositionSnapshot(data: unknown): data is PositionSnapshot {
+  if (typeof data !== 'object' || data === null) return false;
+  const d = data as Record<string, unknown>;
+  return (
+    Array.isArray(d.positions) &&
+    (d.data_status === 'ready' || d.data_status === 'error') &&
+    ('as_of' in d ? d.as_of === null || typeof d.as_of === 'string' : true)
+  );
+}
+
+function isValidActivityTrade(data: unknown): data is ActivityTrade {
+  if (typeof data !== 'object' || data === null) return false;
+  const d = data as Record<string, unknown>;
+  return (
+    typeof d.market === 'string' &&
+    (d.side === 'LONG' || d.side === 'SHORT') &&
+    typeof d.opened_at === 'string' &&
+    typeof d.closed_at === 'string' &&
+    typeof d.duration_sec === 'number' &&
+    typeof d.volume === 'number' &&
+    typeof d.pnl === 'number' &&
+    typeof d.fees === 'number' &&
+    typeof d.net_pnl === 'number' &&
+    typeof d.fills === 'number' &&
+    ('funding' in d ? typeof d.funding === 'number' : true)
+  );
+}
+
+function normalizeActivityTrade(data: ActivityTrade): ActivityTrade {
+  return {
+    ...data,
+    funding: typeof data.funding === 'number' ? data.funding : 0,
+  };
+}
+
+export { CONNECTION_STATUSES as WALLET_CONNECTION_STATUSES };
+
+/**
+ * Wallet live WS (contract v1.2 §2): same `GET /traders/ws?wallet=` transport,
+ * `wallet.*` envelope for incremental updates (no full refetch). Legacy
+ * `{type: activity|subscribed|ping|pong}` stays working during migration.
+ * Backoff + hidden-suspend + ping/pong behavior is unchanged.
+ */
 export function connectTradeActivityWS(
   walletAddress: string,
   onFill: (fill: ActivityFill) => void,
   onStatus?: (status: ActivityWsStatus) => void,
+  handlers: WalletWsHandlers = {},
 ): ActivityWsHandle {
   const wallet = walletAddress.toLowerCase();
   let closed = false;
@@ -72,13 +152,13 @@ export function connectTradeActivityWS(
     }
   }
 
-  function cleanupSocket(): void {
-    if (ws !== null) {
+  function cleanupSocket(socket: WebSocket | null): void {
+    if (socket !== null) {
       try {
-        ws.onopen = null;
-        ws.onmessage = null;
-        ws.onclose = null;
-        ws.onerror = null;
+        socket.onopen = null;
+        socket.onmessage = null;
+        socket.onclose = null;
+        socket.onerror = null;
       } catch {
         // ignore listener cleanup errors
       }
@@ -114,6 +194,39 @@ export function connectTradeActivityWS(
     }, delay);
   }
 
+  function routeMessage(msg: { type?: unknown; data?: unknown }): void {
+    if (msg.type === 'activity' && isValidFill(msg.data)) {
+      onFill(msg.data);
+      return;
+    }
+    if (msg.type === 'wallet.fill.created' && isValidFill(msg.data)) {
+      onFill(msg.data);
+      return;
+    }
+    if (msg.type === 'wallet.funding.created' && isValidFunding(msg.data)) {
+      handlers.onFunding?.(msg.data);
+      return;
+    }
+    if (msg.type === 'wallet.order.updated' && isValidOrder(msg.data)) {
+      handlers.onOrder?.(msg.data);
+      return;
+    }
+    if (msg.type === 'wallet.position.updated' && isValidPositionSnapshot(msg.data)) {
+      handlers.onPosition?.(msg.data);
+      return;
+    }
+    if (msg.type === 'wallet.activity.created' && isValidActivityTrade(msg.data)) {
+      handlers.onActivity?.(normalizeActivityTrade(msg.data));
+      return;
+    }
+    if (msg.type === 'wallet.connection.updated' && isValidConnection(msg.data)) {
+      handlers.onConnection?.(msg.data.status);
+      return;
+    }
+    // Legacy `{type: subscribed|ping|pong}` and `wallet.state.updated`
+    // stay working by being ignored (no crash, no refetch).
+  }
+
   function connect(): void {
     if (closed) return;
     if (isDocumentHidden()) {
@@ -143,13 +256,11 @@ export function connectTradeActivityWS(
       } catch {
         return;
       }
-      if (msg.type === 'activity' && isValidFill(msg.data)) {
-        onFill(msg.data);
-      }
+      routeMessage(msg);
     };
 
     const handleClose = () => {
-      cleanupSocket();
+      cleanupSocket(ws);
       if (heartbeatTimer !== null) {
         clearInterval(heartbeatTimer);
         heartbeatTimer = null;
@@ -174,7 +285,7 @@ export function connectTradeActivityWS(
       if (ws !== null) {
         const current = ws;
         ws = null;
-        cleanupSocket();
+        cleanupSocket(current);
         try {
           current.close();
         } catch {
@@ -204,7 +315,7 @@ export function connectTradeActivityWS(
       if (ws !== null) {
         const current = ws;
         ws = null;
-        cleanupSocket();
+        cleanupSocket(current);
         try {
           current.close();
         } catch {

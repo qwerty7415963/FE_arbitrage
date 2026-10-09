@@ -52,7 +52,8 @@ export function BalancesSection({ walletAddress, enabled = true }: BalancesSecti
 
   const perp = balances?.perp ?? null;
   const spot = balances?.spot ?? null;
-  const status = balances?.data_status ?? 'syncing';
+  // Live detail (contract v1.2): ready|error only, never syncing/stale.
+  const status = balances?.data_status ?? 'ready';
   const asOf = perp?.as_of ?? spot?.as_of ?? null;
 
   if (!perp && (spot?.balances.length ?? 0) === 0) {
@@ -66,16 +67,8 @@ export function BalancesSection({ walletAddress, enabled = true }: BalancesSecti
   return (
     <section aria-label={t('tabBalances')} className="flex flex-col gap-4">
       <p className="text-muted-foreground text-xs">
-        {t(
-          status === 'ready'
-            ? 'statusReady'
-            : status === 'stale'
-              ? 'statusStale'
-              : status === 'error'
-                ? 'statusError'
-                : 'statusSyncing',
-        )}
-        {asOf && ` · ${formatRelativeTime(asOf) ?? ''}`}
+        {t(status === 'error' ? 'statusError' : 'statusReady')}
+        {asOf && ` · ${t('asOf', { time: formatRelativeTime(asOf) ?? '' })}`}
       </p>
 
       {perp && (

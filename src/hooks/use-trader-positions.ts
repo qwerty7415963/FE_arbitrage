@@ -1,8 +1,9 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchTraderPositions } from '@/services/traders';
-import { getSyncPollInterval } from '@/lib/trader-sync';
+import { connectTradeActivityWS } from '@/lib/trader-activity-ws';
 import {
   DEFAULT_POSITION_DIR,
   DEFAULT_POSITION_SORT,
@@ -24,6 +25,12 @@ export interface UseTraderPositionsResult {
   refetch: () => void;
 }
 
+/**
+ * Live positions (contract v1.2 §1.1 + §2): REST `clearinghouseState`
+ * (short TTL, no WS stream for ticks). `wallet.position.updated` (sent on
+ * REST bootstrap/resync only) patches the cache incrementally — never a
+ * full refetch, never sync polling.
+ */
 export function useTraderPositions(
   walletAddress: string,
   options: TraderPositionsOptions = {},
@@ -32,21 +39,27 @@ export function useTraderPositions(
   const sort = options.sort ?? DEFAULT_POSITION_SORT;
   const dir = options.dir ?? DEFAULT_POSITION_DIR;
   const enabled = (options.enabled ?? true) && wallet.length > 0;
+  const queryClient = useQueryClient();
 
   const query = useQuery({
     queryKey: ['trader-positions', wallet, sort, dir],
     queryFn: () => fetchTraderPositions(wallet, { sort, dir }),
     enabled,
     staleTime: 15_000,
-    // Contract v1.1 §4 F2: poll while data_status !== 'ready' (12s,
-    // max ~8 attempts). Stops on ready/error/cap/unmount.
-    refetchInterval: (polled) =>
-      getSyncPollInterval(
-        polled.state.data?.data_status,
-        polled.state.dataUpdateCount,
-        polled.state.status === 'error',
-      ),
   });
+
+  useEffect(() => {
+    if (!wallet) return;
+    const handle = connectTradeActivityWS(wallet, () => {}, undefined, {
+      onPosition: (snapshot) => {
+        queryClient.setQueryData<PositionSnapshot>(
+          ['trader-positions', wallet, sort, dir],
+          snapshot,
+        );
+      },
+    });
+    return () => handle.close();
+  }, [wallet, sort, dir, queryClient]);
 
   return {
     snapshot: query.data ?? null,

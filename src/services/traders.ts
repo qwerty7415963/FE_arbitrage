@@ -30,8 +30,6 @@ import {
   type TraderMember,
   type TraderSearchQuery,
   type TraderSearchRequest,
-  type TraderSyncQuery,
-  type TraderSyncResult,
   type TransfersPage,
   type TransfersQuery,
 } from '@/types/trader';
@@ -233,26 +231,6 @@ export async function fetchTraderPerformance(
   const res = await apiClient<ApiResponse<PerformanceSnapshot>>(
     `${TRADERS_BASE}/${walletAddress}/performance?${params.toString()}`,
     { signal: options.signal },
-  );
-  if (!res.data) throw new Error('No data returned');
-  return res.data;
-}
-
-/**
- * Enqueue ONE priority full `SyncWallet` pass for the wallet
- * (contract v1.1 §1: `POST /api/v1/traders/{wallet}/sync` → 202
- * `{status: queued | in_flight | recent}`).
- */
-export async function triggerTraderSync(
-  walletAddress: string,
-  query: TraderSyncQuery = {},
-  options: SearchOptions = {},
-): Promise<TraderSyncResult> {
-  const params = new URLSearchParams();
-  params.set('venue', query.venue ?? DEFAULT_VENUE);
-  const res = await apiClient<ApiResponse<TraderSyncResult>>(
-    `${TRADERS_BASE}/${walletAddress}/sync?${params.toString()}`,
-    { method: 'POST', signal: options.signal },
   );
   if (!res.data) throw new Error('No data returned');
   return res.data;

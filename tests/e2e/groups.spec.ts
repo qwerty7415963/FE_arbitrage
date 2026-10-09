@@ -1012,7 +1012,7 @@ test.describe('Trader Detail', () => {
     await expect(page.locator('[data-slot="dialog-content"]').getByText('Added 1')).toBeVisible();
   });
 
-  test('stale detail stays inspectable', async ({ page }) => {
+  test('error detail stays inspectable (live: no stale state)', async ({ page }) => {
     await page.route('**/api/v1/traders/0x*', (route) =>
       route.fulfill({
         status: 200,
@@ -1021,14 +1021,14 @@ test.describe('Trader Detail', () => {
           success: true,
           data: {
             ...mockDetail,
-            metrics: { ...mockDetail.metrics, data_status: 'stale', is_partial: true },
+            metrics: { ...mockDetail.metrics, data_status: 'error', is_partial: true },
           },
         }),
       }),
     );
     await page.goto('/en/traders/0x1234567890abcdef1234567890abcdef12345678');
     await expect(page.getByRole('heading', { name: 'Smart Money' })).toBeVisible();
-    await expect(page.getByText(/Stale/)).toBeVisible();
+    await expect(page.getByText('Error')).toBeVisible();
     await expect(page.getByText(/Partial data/)).toBeVisible();
   });
 });

@@ -11,62 +11,60 @@ import {
   formatSignedUsd,
   formatUsd,
 } from '@/lib/trader-format';
-import type { ActivityFill, ActivityTrade, DataStatus } from '@/types/trader';
+import type {
+  ActivityFill,
+  ActivityTrade,
+  LiveDataStatus,
+  WalletConnectionStatus,
+} from '@/types/trader';
 import type { ActivityWsStatus } from '@/lib/trader-activity-ws';
+import type { WalletFundingEvent } from '@/types/trader';
 
 export interface ActivityFeedProps {
   trades: ActivityTrade[];
   liveFills: ActivityFill[];
+  liveFundings?: WalletFundingEvent[];
   isLoading: boolean;
   error: unknown;
   hasMore: boolean;
   onLoadMore: () => void;
   onRetry: () => void;
   live: ActivityWsStatus;
-  /**
-   * Sync signal (contract v1.1 §2). `syncing` + empty ⇒ "syncing"
-   * skeleton; genuine empty ONLY when `ready` + empty. Defaults to
-   * `ready` for pre-v1.1 payloads.
-   */
-  dataStatus?: DataStatus;
-  /** Manual "Sync now" fallback (contract v1.1 §4 F3): POST sync + refetch. */
-  onSyncNow?: () => void;
-  isSyncingNow?: boolean;
+  /** Backend reconnect state; null until the first `wallet.connection.updated`. */
+  connection?: WalletConnectionStatus | null;
+  /** Live signal (contract v1.2 §1.2): ready|error only. */
+  dataStatus?: LiveDataStatus;
+  asOf?: string | null;
+  partial?: boolean;
 }
 
-function SyncNowFallbackButton({
-  onSyncNow,
-  disabled,
-  label,
-}: {
-  onSyncNow: (() => void) | undefined;
-  disabled: boolean;
-  label: string;
-}) {
-  if (!onSyncNow) return null;
-  return (
-    <Button variant="outline" size="sm" onClick={onSyncNow} disabled={disabled}>
-      {label}
-    </Button>
-  );
+function isLiveBadge(live: ActivityWsStatus, connection: WalletConnectionStatus | null): boolean {
+  if (live !== 'connected') return false;
+  // Legacy transport without connection events stays working (badge on
+  // connected); once the backend sends states, gate strictly on LIVE.
+  if (connection === null) return true;
+  return connection === 'LIVE';
 }
 
 export function ActivityFeed({
   trades,
   liveFills,
+  liveFundings = [],
   isLoading,
   error,
   hasMore,
   onLoadMore,
   onRetry,
   live,
+  connection = null,
   dataStatus = 'ready',
-  onSyncNow,
-  isSyncingNow = false,
+  asOf = null,
+  partial = false,
 }: ActivityFeedProps) {
   const t = useTranslations('traders');
+  const showLive = isLiveBadge(live, connection);
 
-  if (isLoading && trades.length === 0 && liveFills.length === 0) {
+  if (isLoading && trades.length === 0 && liveFills.length === 0 && liveFundings.length === 0) {
     return (
       <section
         aria-label={t('recentActivity')}
@@ -81,7 +79,7 @@ export function ActivityFeed({
     );
   }
 
-  if (error && trades.length === 0 && liveFills.length === 0) {
+  if (error && trades.length === 0 && liveFills.length === 0 && liveFundings.length === 0) {
     return (
       <section
         aria-label={t('recentActivity')}
@@ -98,48 +96,27 @@ export function ActivityFeed({
     );
   }
 
-  const empty = trades.length === 0 && liveFills.length === 0;
-  const syncingEmpty = empty && dataStatus === 'syncing';
-  const syncNowLabel = t('syncNow');
-
-  // Contract v1.1 §4 F3: syncing + empty ⇒ "syncing" skeleton, never a
-  // definitive empty state.
-  if (syncingEmpty && !isLoading) {
-    return (
-      <section
-        aria-label={t('recentActivity')}
-        className="flex flex-col gap-2 rounded-lg border p-4"
-      >
-        <h2 className="text-sm font-semibold">{t('recentActivity')}</h2>
-        <div className="flex flex-col gap-2" role="status" aria-label={t('activitySyncing')}>
-          <div className="bg-muted h-10 animate-pulse rounded-md" />
-          <div className="bg-muted h-10 animate-pulse rounded-md" />
-        </div>
-        <SyncNowFallbackButton onSyncNow={onSyncNow} disabled={isSyncingNow} label={syncNowLabel} />
-      </section>
-    );
-  }
+  const empty = trades.length === 0 && liveFills.length === 0 && liveFundings.length === 0;
 
   return (
     <section aria-label={t('recentActivity')} className="flex flex-col gap-3 rounded-lg border p-4">
       <div className="flex items-center gap-2">
         <h2 className="text-sm font-semibold">{t('recentActivity')}</h2>
-        {live === 'connected' && (
+        {showLive && (
           <span className="bg-primary/10 text-primary rounded px-1.5 py-0.5 text-xs font-medium">
             {t('live')}
           </span>
         )}
       </div>
 
+      <p className="text-muted-foreground text-xs">
+        {t(dataStatus === 'error' ? 'statusError' : 'statusReady')}
+        {asOf && ` · ${t('asOf', { time: formatRelativeTime(asOf) ?? '' })}`}
+        {partial && ` · ${t('partialData')}`}
+      </p>
+
       {empty ? (
-        <>
-          <p className="text-muted-foreground text-sm">{t('noActivity')}</p>
-          <SyncNowFallbackButton
-            onSyncNow={onSyncNow}
-            disabled={isSyncingNow}
-            label={syncNowLabel}
-          />
-        </>
+        <p className="text-muted-foreground text-sm">{t('noActivity')}</p>
       ) : (
         <ul className="flex flex-col gap-2">
           {liveFills.map((fill, index) => {
@@ -173,6 +150,28 @@ export function ActivityFeed({
               </li>
             );
           })}
+          {liveFundings.map((funding, index) => (
+            <li
+              key={`funding-${funding.coin}-${funding.time}-${index}`}
+              className="flex flex-col gap-0.5 rounded-md border p-2 text-sm"
+            >
+              <span className="flex items-center gap-2">
+                <span className="bg-primary/10 text-primary rounded px-1 py-0.5 text-[11px] font-medium">
+                  {t('live')}
+                </span>
+                <span className="font-medium">{funding.coin}</span>
+                <span className="text-muted-foreground tabular-nums">
+                  {formatSignedUsd(funding.usdc)}
+                </span>
+              </span>
+              <span
+                className="text-muted-foreground text-xs"
+                title={formatDateTimeUtc(funding.time) ?? undefined}
+              >
+                {formatRelativeTime(funding.time) ?? funding.time} · {t('colFunding')}
+              </span>
+            </li>
+          ))}
           {trades.map((trade) => {
             const tone = activitySideTone(trade.side);
             return (

@@ -5,7 +5,14 @@ import {
   getReconnectDelayMs,
   ACTIVITY_WS_PING_INTERVAL_MS,
 } from '@/lib/trader-activity-ws';
-import type { ActivityFill } from '@/types/trader';
+import type {
+  ActivityFill,
+  PositionSnapshot,
+  WalletConnectionStatus,
+  WalletFundingEvent,
+  WalletOrderEvent,
+  ActivityTrade,
+} from '@/types/trader';
 
 class FakeWS {
   static instances: FakeWS[] = [];
@@ -47,6 +54,15 @@ class FakeWS {
   }
 }
 
+const fill = {
+  coin: 'ETH',
+  side: 'BUY',
+  size: 1.2,
+  price: 2309.1,
+  time: '2026-10-08T00:00:00Z',
+  tid: 1101266132350103,
+};
+
 describe('buildActivityWsUrl', () => {
   it('builds a ws url and lowercases the wallet', () => {
     expect(buildActivityWsUrl('0xABCDEF', { protocol: 'http:', host: 'example.com' })).toBe(
@@ -70,7 +86,7 @@ describe('getReconnectDelayMs', () => {
   });
 });
 
-describe('connectTradeActivityWS', () => {
+describe('connectTradeActivityWS (contract v1.2 §2 wallet.* envelope)', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     FakeWS.instances = [];
@@ -83,7 +99,7 @@ describe('connectTradeActivityWS', () => {
     vi.unstubAllGlobals();
   });
 
-  it('routes activity messages to onFill and reports connected', () => {
+  it('routes legacy activity messages to onFill and reports connected', () => {
     const fills: ActivityFill[] = [];
     const statuses: string[] = [];
     const handle = connectTradeActivityWS(
@@ -115,6 +131,135 @@ describe('connectTradeActivityWS', () => {
     expect(fills).toHaveLength(1);
 
     handle.close();
+  });
+
+  it('routes wallet.fill.created to onFill without refetch', () => {
+    const fills: ActivityFill[] = [];
+    const handle = connectTradeActivityWS('0xabc', (f) => fills.push(f));
+    FakeWS.instances[0].open();
+    FakeWS.instances[0].receive({ type: 'wallet.fill.created', data: fill });
+    expect(fills).toHaveLength(1);
+    expect(fills[0].tid).toBe(1101266132350103);
+    handle.close();
+  });
+
+  it('routes wallet.funding.created to onFunding', () => {
+    const fundings: WalletFundingEvent[] = [];
+    const handle = connectTradeActivityWS('0xabc', () => {}, undefined, {
+      onFunding: (f) => fundings.push(f),
+    });
+    FakeWS.instances[0].open();
+    FakeWS.instances[0].receive({
+      type: 'wallet.funding.created',
+      data: { coin: 'ETH', usdc: -3.44, time: '2026-10-08T00:00:00Z' },
+    });
+    expect(fundings).toHaveLength(1);
+    expect(fundings[0].usdc).toBe(-3.44);
+    handle.close();
+  });
+
+  it('routes wallet.order.updated to onOrder', () => {
+    const orders: WalletOrderEvent[] = [];
+    const handle = connectTradeActivityWS('0xabc', () => {}, undefined, {
+      onOrder: (o) => orders.push(o),
+    });
+    FakeWS.instances[0].open();
+    FakeWS.instances[0].receive({
+      type: 'wallet.order.updated',
+      data: { coin: 'BTC', oid: 91490942, status: 'open' },
+    });
+    expect(orders).toHaveLength(1);
+    expect(orders[0].oid).toBe(91490942);
+    handle.close();
+  });
+
+  it('routes wallet.position.updated to onPosition', () => {
+    const snapshots: PositionSnapshot[] = [];
+    const handle = connectTradeActivityWS('0xabc', () => {}, undefined, {
+      onPosition: (s) => snapshots.push(s),
+    });
+    FakeWS.instances[0].open();
+    FakeWS.instances[0].receive({
+      type: 'wallet.position.updated',
+      data: {
+        summary: null,
+        positions: [],
+        data_status: 'ready',
+        as_of: '2026-10-08T00:00:00Z',
+      },
+    });
+    expect(snapshots).toHaveLength(1);
+    handle.close();
+  });
+
+  it('routes wallet.activity.created to onActivity', () => {
+    const trades: ActivityTrade[] = [];
+    const handle = connectTradeActivityWS('0xabc', () => {}, undefined, {
+      onActivity: (t) => trades.push(t),
+    });
+    FakeWS.instances[0].open();
+    FakeWS.instances[0].receive({
+      type: 'wallet.activity.created',
+      data: {
+        market: 'BTC',
+        side: 'LONG',
+        opened_at: '2026-10-01T00:00:00Z',
+        closed_at: '2026-10-03T12:00:00Z',
+        duration_sec: 216000,
+        volume: 30500,
+        entry_price: 60000,
+        exit_price: 62000,
+        pnl: 1500,
+        fees: 30,
+        funding: -12.5,
+        net_pnl: 1470,
+        fills: 3,
+      },
+    });
+    expect(trades).toHaveLength(1);
+    expect(trades[0].funding).toBe(-12.5);
+    expect(trades[0].net_pnl).toBe(1470);
+    handle.close();
+  });
+
+  it.each([
+    'DISCONNECTED',
+    'RECONNECTING',
+    'RESYNCING',
+    'RECONCILING',
+    'LIVE',
+    'ERROR',
+  ] as WalletConnectionStatus[])('routes wallet.connection.updated %s', (status) => {
+    const states: WalletConnectionStatus[] = [];
+    const handle = connectTradeActivityWS('0xabc', () => {}, undefined, {
+      onConnection: (s) => states.push(s),
+    });
+    FakeWS.instances[0].open();
+    FakeWS.instances[0].receive({ type: 'wallet.connection.updated', data: { status } });
+    expect(states).toEqual([status]);
+    handle.close();
+  });
+
+  it('ignores malformed envelopes and legacy ping/pong without crashing', () => {
+    const fills: ActivityFill[] = [];
+    const handle = connectTradeActivityWS('0xabc', (f) => fills.push(f));
+    FakeWS.instances[0].open();
+    FakeWS.instances[0].receive({ type: 'wallet.fill.created', data: { coin: 'ETH' } });
+    FakeWS.instances[0].receive({ type: 'ping' });
+    FakeWS.instances[0].receive({ type: 'pong' });
+    FakeWS.instances[0].receive({ type: 'wallet.state.updated', data: {} });
+    FakeWS.instances[0].receive('not-json{{{');
+    expect(fills).toHaveLength(0);
+    handle.close();
+  });
+
+  it('ignores messages after close (listener cleanup)', () => {
+    const fills: ActivityFill[] = [];
+    const handle = connectTradeActivityWS('0xabc', (f) => fills.push(f));
+    FakeWS.instances[0].open();
+    handle.close();
+    FakeWS.instances[0].receive({ type: 'wallet.fill.created', data: fill });
+    expect(fills).toHaveLength(0);
   });
 
   it('sends ping every 25s while open', () => {

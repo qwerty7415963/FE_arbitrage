@@ -6,6 +6,13 @@ export type SortDirection = 'asc' | 'desc';
 
 export type DataStatus = 'ready' | 'syncing' | 'stale' | 'error';
 
+/**
+ * Live detail status (contract v1.2 §1): wallet detail tabs only ever
+ * report `ready` or `error`. Never `syncing`/`stale` in detail.
+ * `DataStatus` (4 values) stays for the scanner, which keeps its own sync.
+ */
+export type LiveDataStatus = 'ready' | 'error';
+
 export type DiscoverySource = 'leaderboard' | 'ws_trade' | 'both' | 'manual';
 
 export interface RangeFilter {
@@ -130,7 +137,8 @@ export interface TraderMember {
 
 export type PositionSide = 'LONG' | 'SHORT';
 
-export type PositionDataStatus = 'ready' | 'syncing' | 'stale' | 'error';
+/** Live detail positions status (contract v1.2 §1.1): ready|error only. */
+export type PositionDataStatus = LiveDataStatus;
 
 export interface OpenPosition {
   coin: string;
@@ -173,6 +181,12 @@ export interface ActivityTrade {
   exit_price: number | null;
   pnl: number;
   fees: number;
+  /**
+   * Signed funding attributed to this trade window (contract v1.2 §1.2).
+   * Negative = paid. Informational only; `net_pnl = pnl − fees` (unchanged),
+   * win/loss/counts still on `net_pnl`.
+   */
+  funding: number;
   net_pnl: number;
   fills: number;
 }
@@ -206,11 +220,13 @@ export interface ActivityPage {
   has_more: boolean;
   counts: ActivityCounts;
   /**
-   * Sync signal (contract v1.1 §2): derived from `trader_sync_state`.
-   * Optional for backward compatibility with pre-v1.1 payloads/mocks;
-   * consumers must treat a missing value as `ready`.
+   * Live signal (contract v1.2 §1.2): ready|error only, never
+   * syncing/stale. Required; `as_of` is fetch time (never null on
+   * success), `partial` is true when the venue truncated the window.
    */
-  data_status?: DataStatus;
+  data_status: LiveDataStatus;
+  as_of: string | null;
+  partial: boolean;
 }
 
 export interface ActivityQuery {
@@ -536,7 +552,7 @@ export interface PerformanceMetrics {
   long_count: number | null;
   short_wins: number | null;
   short_count: number | null;
-  data_status: DataStatus;
+  data_status: LiveDataStatus;
   is_partial: boolean;
   metrics_as_of: string | null;
 }
@@ -584,16 +600,54 @@ export const WALLET_TABS: WalletTabId[] = [
 export const DEFAULT_WALLET_TAB: WalletTabId = 'positions';
 
 /**
- * `POST /traders/{wallet}/sync` result (contract v1.1 §1):
- * - `recent`: a sync completed within the 10-min debounce window (no-op).
- * - `in_flight`: a sync for this wallet is already running (no-op).
- * - `queued`: enqueued for the priority lane.
+ * Realtime wallet envelopes (contract v1.2 §2 + fixtures §6).
+ * Shapes below are exactly the fixture shapes; no invented fields.
  */
-export type TraderSyncStatus = 'queued' | 'in_flight' | 'recent';
+export type WalletConnectionStatus =
+  'DISCONNECTED' | 'RECONNECTING' | 'RESYNCING' | 'RECONCILING' | 'LIVE' | 'ERROR';
 
-export interface TraderSyncResult {
-  status: TraderSyncStatus;
+export const WALLET_CONNECTION_STATUSES: WalletConnectionStatus[] = [
+  'DISCONNECTED',
+  'RECONNECTING',
+  'RESYNCING',
+  'RECONCILING',
+  'LIVE',
+  'ERROR',
+];
+
+export interface WalletFillEvent {
+  coin: string;
+  side: 'BUY' | 'SELL';
+  size: number;
+  price: number;
+  time: string;
+  tid: number;
 }
+
+export interface WalletFundingEvent {
+  coin: string;
+  usdc: number;
+  time: string;
+}
+
+export interface WalletOrderEvent {
+  coin: string;
+  oid: number;
+  status: string;
+}
+
+export interface WalletConnectionEvent {
+  status: WalletConnectionStatus;
+}
+
+export type WalletWsEventType =
+  | 'wallet.fill.created'
+  | 'wallet.funding.created'
+  | 'wallet.order.updated'
+  | 'wallet.position.updated'
+  | 'wallet.activity.created'
+  | 'wallet.state.updated'
+  | 'wallet.connection.updated';
 
 export interface TraderSyncQuery {
   venue?: string;

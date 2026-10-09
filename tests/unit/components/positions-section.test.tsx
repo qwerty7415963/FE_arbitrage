@@ -47,7 +47,7 @@ function renderSection(props: Partial<React.ComponentProps<typeof PositionsSecti
   );
 }
 
-describe('PositionsSection', () => {
+describe('PositionsSection (contract v1.2)', () => {
   it('renders a position row with summary chips', () => {
     renderSection();
     expect(screen.getByText('Open Positions')).toBeInTheDocument();
@@ -61,9 +61,16 @@ describe('PositionsSection', () => {
     expect(screen.getByText('No open positions')).toBeInTheDocument();
   });
 
-  it('maps never-synced wallets to the syncing status (M5)', () => {
-    renderSection({ snapshot: { ...snapshot, data_status: 'syncing', summary: null } });
-    expect(screen.getByText(/Syncing/)).toBeInTheDocument();
+  it('shows Ready with as_of and never a syncing state', () => {
+    renderSection();
+    expect(screen.getByText(/Ready/)).toBeInTheDocument();
+    expect(screen.queryByText(/Syncing/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Stale/)).not.toBeInTheDocument();
+  });
+
+  it('shows the error status for data_status error', () => {
+    renderSection({ snapshot: { ...snapshot, data_status: 'error' } });
+    expect(screen.getByText(/Error/)).toBeInTheDocument();
   });
 
   it('calls onRetry when retry is clicked after an error', () => {

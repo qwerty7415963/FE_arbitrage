@@ -26,6 +26,14 @@ vi.mock('@/services/traders', () => ({
   fetchTraderActivity: vi.fn(),
 }));
 
+vi.mock('@/lib/trader-activity-ws', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/trader-activity-ws')>();
+  return {
+    ...actual,
+    connectTradeActivityWS: vi.fn(() => ({ close: vi.fn() })),
+  };
+});
+
 const WALLET = '0xABCDEF123456789012345678901234567890ABCD';
 const WALLET_LOWER = WALLET.toLowerCase();
 
@@ -77,13 +85,13 @@ describe('wallet tab hooks', () => {
     vi.mocked(fetchTraderBalances).mockResolvedValue({
       perp: null,
       spot: null,
-      data_status: 'syncing',
+      data_status: 'ready',
     });
     const { result } = renderHook(() => useTraderBalances(WALLET), { wrapper });
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(vi.mocked(fetchTraderBalances).mock.calls[0][0]).toBe(WALLET_LOWER);
-    expect(result.current.balances?.data_status).toBe('syncing');
+    expect(result.current.balances?.data_status).toBe('ready');
   });
 
   it('useTraderFills pages through fills by cursor', async () => {
