@@ -11,7 +11,7 @@ import {
   formatSignedUsd,
   formatUsd,
 } from '@/lib/trader-format';
-import type { ActivityFill, ActivityTrade } from '@/types/trader';
+import type { ActivityFill, ActivityTrade, DataStatus } from '@/types/trader';
 import type { ActivityWsStatus } from '@/lib/trader-activity-ws';
 
 export interface ActivityFeedProps {
@@ -23,6 +23,32 @@ export interface ActivityFeedProps {
   onLoadMore: () => void;
   onRetry: () => void;
   live: ActivityWsStatus;
+  /**
+   * Sync signal (contract v1.1 §2). `syncing` + empty ⇒ "syncing"
+   * skeleton; genuine empty ONLY when `ready` + empty. Defaults to
+   * `ready` for pre-v1.1 payloads.
+   */
+  dataStatus?: DataStatus;
+  /** Manual "Sync now" fallback (contract v1.1 §4 F3): POST sync + refetch. */
+  onSyncNow?: () => void;
+  isSyncingNow?: boolean;
+}
+
+function SyncNowFallbackButton({
+  onSyncNow,
+  disabled,
+  label,
+}: {
+  onSyncNow: (() => void) | undefined;
+  disabled: boolean;
+  label: string;
+}) {
+  if (!onSyncNow) return null;
+  return (
+    <Button variant="outline" size="sm" onClick={onSyncNow} disabled={disabled}>
+      {label}
+    </Button>
+  );
 }
 
 export function ActivityFeed({
@@ -34,6 +60,9 @@ export function ActivityFeed({
   onLoadMore,
   onRetry,
   live,
+  dataStatus = 'ready',
+  onSyncNow,
+  isSyncingNow = false,
 }: ActivityFeedProps) {
   const t = useTranslations('traders');
 
@@ -70,6 +99,26 @@ export function ActivityFeed({
   }
 
   const empty = trades.length === 0 && liveFills.length === 0;
+  const syncingEmpty = empty && dataStatus === 'syncing';
+  const syncNowLabel = t('syncNow');
+
+  // Contract v1.1 §4 F3: syncing + empty ⇒ "syncing" skeleton, never a
+  // definitive empty state.
+  if (syncingEmpty && !isLoading) {
+    return (
+      <section
+        aria-label={t('recentActivity')}
+        className="flex flex-col gap-2 rounded-lg border p-4"
+      >
+        <h2 className="text-sm font-semibold">{t('recentActivity')}</h2>
+        <div className="flex flex-col gap-2" role="status" aria-label={t('activitySyncing')}>
+          <div className="bg-muted h-10 animate-pulse rounded-md" />
+          <div className="bg-muted h-10 animate-pulse rounded-md" />
+        </div>
+        <SyncNowFallbackButton onSyncNow={onSyncNow} disabled={isSyncingNow} label={syncNowLabel} />
+      </section>
+    );
+  }
 
   return (
     <section aria-label={t('recentActivity')} className="flex flex-col gap-3 rounded-lg border p-4">
@@ -83,7 +132,14 @@ export function ActivityFeed({
       </div>
 
       {empty ? (
-        <p className="text-muted-foreground text-sm">{t('noActivity')}</p>
+        <>
+          <p className="text-muted-foreground text-sm">{t('noActivity')}</p>
+          <SyncNowFallbackButton
+            onSyncNow={onSyncNow}
+            disabled={isSyncingNow}
+            label={syncNowLabel}
+          />
+        </>
       ) : (
         <ul className="flex flex-col gap-2">
           {liveFills.map((fill, index) => {

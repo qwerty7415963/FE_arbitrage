@@ -2,6 +2,7 @@
 
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { fetchTraderActivity } from '@/services/traders';
+import { getSyncPollInterval, normalizeActivityStatus } from '@/lib/trader-sync';
 import {
   ACTIVITY_LIMIT_DEFAULT,
   DEFAULT_ACTIVITY_DIR,
@@ -11,6 +12,7 @@ import {
   type ActivitySideFilter,
   type ActivitySortKey,
   type ActivityTrade,
+  type DataStatus,
   type SortDirection,
 } from '@/types/trader';
 
@@ -32,6 +34,11 @@ export interface UseTraderTradesResult {
   refetch: () => void;
   hasMore: boolean;
   isFetchingNextPage: boolean;
+  /**
+   * Sync signal (contract v1.1 §2): `ready` when the payload predates
+   * the signal. Drives the syncing-skeleton vs genuine-empty UI.
+   */
+  dataStatus: DataStatus;
 }
 
 const EMPTY_COUNTS: ActivityCounts = { win: 0, loss: 0, long: 0, short: 0, total: 0 };
@@ -56,11 +63,20 @@ export function useTraderTrades(
     initialPageParam: undefined as string | undefined,
     enabled,
     staleTime: 15_000,
+    // Contract v1.1 §4 F2 (extended to trades per §8: the first view
+    // resolves WITHOUT manual refresh): poll while data_status is syncing.
+    refetchInterval: (polled) =>
+      getSyncPollInterval(
+        normalizeActivityStatus(polled.state.data?.pages[0]?.data_status),
+        polled.state.dataUpdateCount,
+        polled.state.status === 'error',
+      ),
   });
 
   const pages = query.data?.pages ?? [];
   const trades = pages.flatMap((page) => page?.rows ?? []);
   const counts = pages.length > 0 ? (pages[0]?.counts ?? EMPTY_COUNTS) : null;
+  const dataStatus = normalizeActivityStatus(pages[0]?.data_status);
 
   return {
     trades,
@@ -75,5 +91,6 @@ export function useTraderTrades(
     },
     hasMore: query.hasNextPage ?? false,
     isFetchingNextPage: query.isFetchingNextPage,
+    dataStatus,
   };
 }

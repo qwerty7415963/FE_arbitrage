@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { fetchTraderPositions } from '@/services/traders';
+import { getSyncPollInterval } from '@/lib/trader-sync';
 import {
   DEFAULT_POSITION_DIR,
   DEFAULT_POSITION_SORT,
@@ -37,6 +38,14 @@ export function useTraderPositions(
     queryFn: () => fetchTraderPositions(wallet, { sort, dir }),
     enabled,
     staleTime: 15_000,
+    // Contract v1.1 §4 F2: poll while data_status !== 'ready' (12s,
+    // max ~8 attempts). Stops on ready/error/cap/unmount.
+    refetchInterval: (polled) =>
+      getSyncPollInterval(
+        polled.state.data?.data_status,
+        polled.state.dataUpdateCount,
+        polled.state.status === 'error',
+      ),
   });
 
   return {

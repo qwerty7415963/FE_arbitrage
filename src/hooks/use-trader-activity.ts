@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { fetchTraderActivity } from '@/services/traders';
 import { connectTradeActivityWS, type ActivityWsStatus } from '@/lib/trader-activity-ws';
-import type { ActivityFill, ActivityTrade } from '@/types/trader';
+import { getSyncPollInterval, normalizeActivityStatus } from '@/lib/trader-sync';
+import type { ActivityFill, ActivityTrade, DataStatus } from '@/types/trader';
 
 export interface UseTraderActivityResult {
   trades: ActivityTrade[];
@@ -15,6 +16,11 @@ export interface UseTraderActivityResult {
   refetch: () => void;
   hasMore: boolean;
   live: ActivityWsStatus;
+  /**
+   * Sync signal (contract v1.1 §2): `ready` when the payload predates
+   * the signal. Drives the syncing-skeleton vs genuine-empty UI.
+   */
+  dataStatus: DataStatus;
 }
 
 const LIVE_FILLS_MAX = 50;
@@ -31,6 +37,14 @@ export function useTraderActivity(walletAddress: string): UseTraderActivityResul
     getNextPageParam: (last) => last?.next_cursor ?? undefined,
     initialPageParam: undefined as string | undefined,
     enabled: wallet.length > 0,
+    // Contract v1.1 §4 F2 (extended to activity per §8: the first view
+    // resolves WITHOUT manual refresh): poll while data_status is syncing.
+    refetchInterval: (polled) =>
+      getSyncPollInterval(
+        normalizeActivityStatus(polled.state.data?.pages[0]?.data_status),
+        polled.state.dataUpdateCount,
+        polled.state.status === 'error',
+      ),
   });
 
   useEffect(() => {
@@ -58,6 +72,7 @@ export function useTraderActivity(walletAddress: string): UseTraderActivityResul
   }, [wallet]);
 
   const trades = (query.data?.pages ?? []).flatMap((page) => page?.rows ?? []);
+  const dataStatus = normalizeActivityStatus(query.data?.pages[0]?.data_status);
 
   return {
     trades,
@@ -72,5 +87,6 @@ export function useTraderActivity(walletAddress: string): UseTraderActivityResul
     },
     hasMore: query.hasNextPage ?? false,
     live,
+    dataStatus,
   };
 }

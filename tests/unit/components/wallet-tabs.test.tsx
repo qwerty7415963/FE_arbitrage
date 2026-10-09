@@ -164,6 +164,7 @@ describe('WalletTabs', () => {
     vi.mocked(useTraderTrades).mockReturnValue({
       trades: [],
       counts: { win: 0, loss: 0, long: 0, short: 0, total: 0 },
+      dataStatus: 'ready',
       isLoading: false,
       error: null,
       fetchNextPage: vi.fn(),

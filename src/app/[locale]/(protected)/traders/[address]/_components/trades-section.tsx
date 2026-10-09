@@ -21,6 +21,7 @@ import {
   formatUsd,
 } from '@/lib/trader-format';
 import { useTraderTrades } from '@/hooks/use-trader-trades';
+import { triggerTraderSync } from '@/services/traders';
 import {
   DEFAULT_ACTIVITY_DIR,
   DEFAULT_ACTIVITY_SORT,
@@ -51,9 +52,19 @@ export function TradesSection({ walletAddress, enabled = true }: TradesSectionPr
   const [dir, setDir] = useState<SortDirection>(DEFAULT_ACTIVITY_DIR);
   const [result, setResult] = useState<ActivityResultFilter>('all');
   const [side, setSide] = useState<ActivitySideFilter>('all');
+  const [isSyncingNow, setIsSyncingNow] = useState(false);
 
-  const { trades, counts, isLoading, error, fetchNextPage, refetch, hasMore, isFetchingNextPage } =
-    useTraderTrades(walletAddress, { sort, dir, result, side, enabled });
+  const {
+    trades,
+    counts,
+    dataStatus,
+    isLoading,
+    error,
+    fetchNextPage,
+    refetch,
+    hasMore,
+    isFetchingNextPage,
+  } = useTraderTrades(walletAddress, { sort, dir, result, side, enabled });
 
   function handleSort(next: ActivitySortKey) {
     if (next === sort) {
@@ -61,6 +72,22 @@ export function TradesSection({ walletAddress, enabled = true }: TradesSectionPr
     } else {
       setSort(next);
       setDir('desc');
+    }
+  }
+
+  // Manual "Sync now" fallback (contract v1.1 §4 F3): explicit user
+  // action, so it always POSTs (no once-guard) then refetches.
+  async function handleSyncNow() {
+    if (isSyncingNow) return;
+    setIsSyncingNow(true);
+    try {
+      await triggerTraderSync(walletAddress);
+      refetch();
+    } catch {
+      // The error banner below already covers failed refetches; a
+      // failed POST simply leaves the current view untouched.
+    } finally {
+      setIsSyncingNow(false);
     }
   }
 
@@ -103,6 +130,27 @@ export function TradesSection({ walletAddress, enabled = true }: TradesSectionPr
         </div>
         <Button variant="outline" size="sm" onClick={() => refetch()}>
           {t('retry')}
+        </Button>
+      </section>
+    );
+  }
+
+  // Contract v1.1 §4 F3: syncing + empty ⇒ "syncing" skeleton; genuine
+  // empty ONLY when ready + empty; "Sync now" as manual fallback.
+  if (trades.length === 0 && dataStatus === 'syncing' && !isLoading) {
+    return (
+      <section aria-label={t('tabTrades')} className="flex flex-col items-start gap-2">
+        <div className="flex w-full flex-col gap-2" role="status" aria-label={t('tradesSyncing')}>
+          <div className="bg-muted h-8 w-48 animate-pulse rounded-md" />
+          <div className="bg-muted h-24 animate-pulse rounded-lg" />
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => void handleSyncNow()}
+          disabled={isSyncingNow}
+        >
+          {t('syncNow')}
         </Button>
       </section>
     );
@@ -153,7 +201,17 @@ export function TradesSection({ walletAddress, enabled = true }: TradesSectionPr
       </div>
 
       {trades.length === 0 ? (
-        <p className="text-muted-foreground text-sm">{t('noTrades')}</p>
+        <>
+          <p className="text-muted-foreground text-sm">{t('noTrades')}</p>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => void handleSyncNow()}
+            disabled={isSyncingNow}
+          >
+            {t('syncNow')}
+          </Button>
+        </>
       ) : (
         <div className="overflow-x-auto">
           <Table>

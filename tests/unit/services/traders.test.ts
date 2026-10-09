@@ -18,6 +18,7 @@ import {
   listTraderGroups,
   removeGroupMembers,
   searchTraders,
+  triggerTraderSync,
   updateGroupMembers,
   updateTraderGroup,
 } from '@/services/traders';
@@ -320,6 +321,33 @@ describe('traders service', () => {
     it('fetchTraderPerformance throws when no data returned', async () => {
       vi.mocked(apiClient.apiClient).mockResolvedValueOnce({ success: true });
       await expect(fetchTraderPerformance('0xabc')).rejects.toThrow('No data returned');
+    });
+  });
+
+  describe('triggerTraderSync (contract v1.1 §1)', () => {
+    it('POSTs to /api/v1/traders/{wallet}/sync with default venue', async () => {
+      vi.mocked(apiClient.apiClient).mockResolvedValueOnce({
+        success: true,
+        data: { status: 'queued' },
+      });
+      const result = await triggerTraderSync('0xabc');
+      const [url, options] = vi.mocked(apiClient.apiClient).mock.calls[0] as [string, RequestInit];
+      expect(url).toBe('/api/v1/traders/0xabc/sync?venue=hyperliquid');
+      expect(options.method).toBe('POST');
+      expect(result).toEqual({ status: 'queued' });
+    });
+
+    it('maps in_flight and recent statuses without inventing fields', async () => {
+      vi.mocked(apiClient.apiClient)
+        .mockResolvedValueOnce({ success: true, data: { status: 'in_flight' } })
+        .mockResolvedValueOnce({ success: true, data: { status: 'recent' } });
+      expect(await triggerTraderSync('0xabc')).toEqual({ status: 'in_flight' });
+      expect(await triggerTraderSync('0xabc')).toEqual({ status: 'recent' });
+    });
+
+    it('throws when no data returned', async () => {
+      vi.mocked(apiClient.apiClient).mockResolvedValueOnce({ success: true });
+      await expect(triggerTraderSync('0xabc')).rejects.toThrow('No data returned');
     });
   });
 

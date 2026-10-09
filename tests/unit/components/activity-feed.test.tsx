@@ -82,4 +82,36 @@ describe('ActivityFeed', () => {
     expect(onRetry).toHaveBeenCalledTimes(1);
     expect(onLoadMore).not.toHaveBeenCalled();
   });
+
+  it('shows a syncing skeleton (not a definitive empty) while syncing + empty', () => {
+    renderFeed({ dataStatus: 'syncing' });
+    expect(screen.getByRole('status', { name: 'Syncing activity...' })).toBeInTheDocument();
+    expect(screen.queryByText('No recent activity')).not.toBeInTheDocument();
+  });
+
+  it('shows the genuine empty state only when ready + empty', () => {
+    renderFeed({ dataStatus: 'ready' });
+    expect(screen.getByText('No recent activity')).toBeInTheDocument();
+    expect(screen.queryByRole('status', { name: 'Syncing activity...' })).not.toBeInTheDocument();
+  });
+
+  it('offers Sync now on the syncing skeleton as a manual fallback', () => {
+    const onSyncNow = vi.fn();
+    renderFeed({ dataStatus: 'syncing', onSyncNow });
+    const button = screen.getByRole('button', { name: 'Sync now' });
+    fireEvent.click(button);
+    expect(onSyncNow).toHaveBeenCalledTimes(1);
+  });
+
+  it('offers Sync now on the genuine empty state as a manual fallback', () => {
+    const onSyncNow = vi.fn();
+    renderFeed({ dataStatus: 'ready', onSyncNow });
+    expect(screen.getByText('No recent activity')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Sync now' })).toBeInTheDocument();
+  });
+
+  it('hides Sync now when no handler is wired', () => {
+    renderFeed({ dataStatus: 'syncing' });
+    expect(screen.queryByRole('button', { name: 'Sync now' })).not.toBeInTheDocument();
+  });
 });

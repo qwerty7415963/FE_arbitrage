@@ -7,6 +7,9 @@ import { Button } from '@/components/ui/button';
 import { ApiError } from '@/infrastructure/api-client';
 import { fetchTraderDetail } from '@/services/traders';
 import { useTraderActivity } from '@/hooks/use-trader-activity';
+import { useTraderPositions } from '@/hooks/use-trader-positions';
+import { useTraderSyncOnView } from '@/hooks/use-trader-sync';
+import { shouldTriggerSync } from '@/lib/trader-sync';
 import { readLastScan } from '@/lib/trader-url-state';
 import { isValidWalletAddress } from '@/lib/trader-validation';
 import { WalletTabs } from './_components/wallet-tabs';
@@ -83,7 +86,14 @@ function DetailContent() {
   const [reloadKey, setReloadKey] = useState(0);
   const requestIdRef = useRef(0);
   const addressValid = isValidWalletAddress(address);
-  const activity = useTraderActivity(addressValid ? address.toLowerCase() : '');
+  const wallet = addressValid ? address.toLowerCase() : '';
+  const activity = useTraderActivity(wallet);
+  // Sync watcher (contract v1.1 §4 F1/F2): shares the react-query cache
+  // with the positions tab (same default sort/dir key), so no duplicate
+  // request while the tab is on its defaults.
+  const positionsWatch = useTraderPositions(wallet, { enabled: addressValid });
+  const syncView = useTraderSyncOnView(wallet);
+  const { ensureSync } = syncView;
 
   useEffect(() => {
     if (!addressValid) return;
@@ -114,6 +124,29 @@ function DetailContent() {
       cancelled = true;
     };
   }, [address, period, reloadKey, addressValid]);
+
+  // Contract v1.1 §4 F1: on detail mount, POST /sync exactly ONCE when
+  // positions data_status !== 'ready' OR trades are empty. The once-guard
+  // lives in useTraderSyncOnView, so re-runs of this effect are no-ops.
+  const positionsStatus = positionsWatch.snapshot?.data_status;
+  const positionsLoaded = !positionsWatch.isLoading && positionsWatch.snapshot !== null;
+  // Durable rows only: ephemeral liveFills (WS-capped) must not suppress the
+  // trigger when durable history is still empty.
+  const tradesEmpty = activity.trades.length === 0;
+  const tradesLoaded = !activity.isLoading;
+  useEffect(() => {
+    if (!addressValid) return;
+    if (shouldTriggerSync(positionsStatus, positionsLoaded, tradesEmpty, tradesLoaded)) {
+      void ensureSync();
+    }
+  }, [addressValid, positionsStatus, positionsLoaded, tradesEmpty, tradesLoaded, ensureSync]);
+
+  // Manual "Sync now" fallback for Recent Activity (contract v1.1 §4 F3).
+  async function handleActivitySyncNow(): Promise<void> {
+    await syncView.syncNow();
+    positionsWatch.refetch();
+    activity.refetch();
+  }
 
   const registry = detail?.registry ?? null;
   const metrics = detail?.metrics ?? null;
@@ -294,6 +327,9 @@ function DetailContent() {
                   onLoadMore={activity.fetchNextPage}
                   onRetry={activity.refetch}
                   live={activity.live}
+                  dataStatus={activity.dataStatus}
+                  onSyncNow={() => void handleActivitySyncNow()}
+                  isSyncingNow={syncView.isSyncing}
                 />
               </div>
             </div>

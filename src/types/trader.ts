@@ -205,6 +205,12 @@ export interface ActivityPage {
   next_cursor: string | null;
   has_more: boolean;
   counts: ActivityCounts;
+  /**
+   * Sync signal (contract v1.1 §2): derived from `trader_sync_state`.
+   * Optional for backward compatibility with pre-v1.1 payloads/mocks;
+   * consumers must treat a missing value as `ready`.
+   */
+  data_status?: DataStatus;
 }
 
 export interface ActivityQuery {
@@ -576,3 +582,19 @@ export const WALLET_TABS: WalletTabId[] = [
 ];
 
 export const DEFAULT_WALLET_TAB: WalletTabId = 'positions';
+
+/**
+ * `POST /traders/{wallet}/sync` result (contract v1.1 §1):
+ * - `recent`: a sync completed within the 10-min debounce window (no-op).
+ * - `in_flight`: a sync for this wallet is already running (no-op).
+ * - `queued`: enqueued for the priority lane.
+ */
+export type TraderSyncStatus = 'queued' | 'in_flight' | 'recent';
+
+export interface TraderSyncResult {
+  status: TraderSyncStatus;
+}
+
+export interface TraderSyncQuery {
+  venue?: string;
+}
