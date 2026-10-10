@@ -129,6 +129,20 @@ function isLastTradePreset(value: string): boolean {
   );
 }
 
+function matchesLastTradePreset(hours: number, value: string): boolean {
+  if (!value) return false;
+  const parsed = Date.parse(value);
+  if (Number.isNaN(parsed)) return false;
+  return Math.abs(Date.now() - hours * 3_600_000 - parsed) <= LAST_TRADE_PRESET_TOLERANCE_MS;
+}
+
+function isPresetActive(range: { min: string; max: string }, presetValue: string): boolean {
+  if (range.min === '' || range.max !== '') return false;
+  const min = Number(range.min);
+  if (Number.isNaN(min)) return false;
+  return min === Number(presetValue);
+}
+
 function deriveCustom(draft: FilterDraft): Record<string, boolean> {
   const next: Record<string, boolean> = {};
   for (const key of CUSTOM_METRICS) {
@@ -198,6 +212,7 @@ export function FilterSheet({
 
   function setPreset(key: RangeKey, min: string) {
     setLocal((prev) => ({ ...prev, ranges: { ...prev.ranges, [key]: { min, max: '' } } }));
+    setCustom((prev) => ({ ...prev, [key]: false }));
   }
 
   function toggleCustom(key: string) {
@@ -268,24 +283,28 @@ export function FilterSheet({
     return (
       <div className="flex flex-col gap-1">
         <span className="text-xs font-medium">{label}</span>
-        <div className="flex flex-wrap items-center gap-1">
-          {presets.map((preset) => (
-            <Button
-              key={preset}
-              type="button"
-              variant="outline"
-              size="xs"
-              disabled={disabled}
-              aria-label={`${label} ${preset}`}
-              onClick={() => setPreset(key, preset.replace('%', ''))}
-            >
-              {`\u2265${preset}`}
-            </Button>
-          ))}
+        <div className="flex flex-wrap items-center gap-1.5">
+          {presets.map((preset) => {
+            const active = !isCustom && isPresetActive(local.ranges[key], preset.replace('%', ''));
+            return (
+              <Button
+                key={preset}
+                type="button"
+                variant={active ? 'default' : 'outline'}
+                size="sm"
+                disabled={disabled}
+                aria-pressed={active}
+                aria-label={`${label} ${preset}`}
+                onClick={() => setPreset(key, preset.replace('%', ''))}
+              >
+                {`\u2265${preset}`}
+              </Button>
+            );
+          })}
           <Button
             type="button"
             variant={isCustom ? 'secondary' : 'ghost'}
-            size="xs"
+            size="sm"
             disabled={disabled}
             aria-pressed={isCustom}
             aria-label={`${label} ${t('filterSheet.custom')}`}
@@ -372,26 +391,36 @@ export function FilterSheet({
             {renderPair('tradeCount')}
             <div className="flex flex-col gap-1">
               <span className="text-xs font-medium">{t('filterSheet.lastTradeLabel')}</span>
-              <div className="flex flex-wrap items-center gap-1">
-                {LAST_TRADE_PRESETS.map((preset) => (
-                  <Button
-                    key={preset.key}
-                    type="button"
-                    variant="outline"
-                    size="xs"
-                    disabled={disabled}
-                    aria-label={`${t('filterSheet.lastTradeLabel')} ${t(`filterSheet.${preset.key}`)}`}
-                    onClick={() =>
-                      setLocal((prev) => ({ ...prev, lastTradeAfter: isoHoursAgo(preset.hours) }))
-                    }
-                  >
-                    {t(`filterSheet.${preset.key}`)}
-                  </Button>
-                ))}
+              <div className="flex flex-wrap items-center gap-1.5">
+                {LAST_TRADE_PRESETS.map((preset) => {
+                  const active =
+                    !custom.lastTradeAfter &&
+                    matchesLastTradePreset(preset.hours, local.lastTradeAfter);
+                  return (
+                    <Button
+                      key={preset.key}
+                      type="button"
+                      variant={active ? 'default' : 'outline'}
+                      size="sm"
+                      disabled={disabled}
+                      aria-pressed={active}
+                      aria-label={`${t('filterSheet.lastTradeLabel')} ${t(`filterSheet.${preset.key}`)}`}
+                      onClick={() => {
+                        setLocal((prev) => ({
+                          ...prev,
+                          lastTradeAfter: isoHoursAgo(preset.hours),
+                        }));
+                        setCustom((prev) => ({ ...prev, lastTradeAfter: false }));
+                      }}
+                    >
+                      {t(`filterSheet.${preset.key}`)}
+                    </Button>
+                  );
+                })}
                 <Button
                   type="button"
                   variant={custom.lastTradeAfter ? 'secondary' : 'ghost'}
-                  size="xs"
+                  size="sm"
                   disabled={disabled}
                   aria-pressed={custom.lastTradeAfter}
                   aria-label={`${t('filterSheet.lastTradeLabel')} ${t('filterSheet.custom')}`}

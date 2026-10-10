@@ -2,6 +2,7 @@
 
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { fetchTraderTransfers } from '@/services/traders';
+import { traderDataRefetchInterval } from '@/lib/trader-poll';
 import { TRANSFERS_DAYS_DEFAULT, TRANSFERS_LIMIT_DEFAULT, type TransferRow } from '@/types/trader';
 
 export interface TraderTransfersOptions {
@@ -36,7 +37,10 @@ export function useTraderTransfers(
     getNextPageParam: (last) => last?.next_cursor ?? undefined,
     initialPageParam: undefined as string | undefined,
     enabled,
+    // Fail fast to error UI; recovery is manual retry or 30s poll, not hidden retries.
+    retry: false,
     staleTime: 15_000,
+    refetchInterval: traderDataRefetchInterval,
   });
 
   const transfers = (query.data?.pages ?? []).flatMap((page) => page?.rows ?? []);

@@ -168,6 +168,66 @@ describe('FilterSheet', () => {
     await waitFor(() => expect(opener).toHaveFocus());
   });
 
+  it('lights up the active preset and marks it pressed', async () => {
+    const user = userEvent.setup();
+    render(<Harness initialOpen />);
+    const active = screen.getByRole('button', { name: 'Win rate 55%' });
+    const idle = screen.getByRole('button', { name: 'Win rate 50%' });
+    expect(active).toHaveAttribute('aria-pressed', 'false');
+    expect(idle).toHaveAttribute('aria-pressed', 'false');
+
+    await user.click(screen.getByRole('button', { name: 'Win rate 60%' }));
+    const lit = screen.getByRole('button', { name: 'Win rate 60%' });
+    expect(lit).toHaveAttribute('aria-pressed', 'true');
+    expect(lit.className).toMatch(/bg-primary/);
+    expect(screen.getByRole('button', { name: 'Win rate 55%' })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    );
+  });
+
+  it('reopens a committed preset already lit', () => {
+    const committed = defaultDraft();
+    committed.ranges.winRate = { min: '55', max: '' };
+    render(<Harness initialOpen committed={committed} />);
+    const lit = screen.getByRole('button', { name: 'Win rate 55%' });
+    expect(lit).toHaveAttribute('aria-pressed', 'true');
+    expect(lit.className).toMatch(/bg-primary/);
+  });
+
+  it('clicking a preset exits Custom mode', async () => {
+    const user = userEvent.setup();
+    render(<Harness initialOpen />);
+    await user.click(screen.getByRole('button', { name: 'Win rate Custom' }));
+    expect(screen.getByLabelText('Win rate from (%)')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Win rate 50%' }));
+    expect(screen.queryByLabelText('Win rate from (%)')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Win rate 50%' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+  });
+
+  it('lights up the active last-trade preset', async () => {
+    const user = userEvent.setup();
+    render(<Harness initialOpen />);
+    await user.click(screen.getByRole('button', { name: 'Last trade 7 days' }));
+    const lit = screen.getByRole('button', { name: 'Last trade 7 days' });
+    expect(lit).toHaveAttribute('aria-pressed', 'true');
+    expect(lit.className).toMatch(/bg-primary/);
+    expect(screen.getByRole('button', { name: 'Last trade 24 hours' })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    );
+  });
+
+  it('renders preset option buttons at sm size', () => {
+    render(<Harness initialOpen />);
+    for (const name of ['Win rate 50%', 'Profit factor 1.0', 'Last trade 24 hours']) {
+      expect(screen.getByRole('button', { name })).toHaveClass('h-7');
+    }
+  });
+
   it('commits the draft only on Apply', async () => {
     const user = userEvent.setup();
     const onApply = vi.fn();

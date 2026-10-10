@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchTraderActivity } from '@/services/traders';
 import { connectTradeActivityWS, type ActivityWsStatus } from '@/lib/trader-activity-ws';
+import { traderDataRefetchInterval } from '@/lib/trader-poll';
 import type {
   ActivityFill,
   ActivityPage,
@@ -36,7 +37,8 @@ const LIVE_FUNDINGS_MAX = 50;
 
 /**
  * Live activity (contract v1.2 §1.2 + §2): REST `userFillsByTime` 30d +
- * `wallet.*` incremental updates (no full refetch on WS events).
+ * `wallet.*` incremental updates. Mounted feed polls every 30s
+ * (`traderDataRefetchInterval`); error stops polling and needs a manual retry.
  */
 export function useTraderActivity(walletAddress: string): UseTraderActivityResult {
   const wallet = walletAddress.toLowerCase();
@@ -53,6 +55,9 @@ export function useTraderActivity(walletAddress: string): UseTraderActivityResul
     getNextPageParam: (last) => last?.next_cursor ?? undefined,
     initialPageParam: undefined as string | undefined,
     enabled: wallet.length > 0,
+    // Fail fast to error UI; recovery is manual retry or 30s poll, not hidden retries.
+    retry: false,
+    refetchInterval: traderDataRefetchInterval,
   });
 
   useEffect(() => {

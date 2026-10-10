@@ -1,12 +1,12 @@
 'use client';
 
-import { Suspense, useEffect, useRef, useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { ApiError } from '@/infrastructure/api-client';
-import { fetchTraderDetail } from '@/services/traders';
 import { useTraderActivity } from '@/hooks/use-trader-activity';
+import { useTraderDetail } from '@/hooks/use-trader-detail';
 import { readLastScan } from '@/lib/trader-url-state';
 import { isValidWalletAddress } from '@/lib/trader-validation';
 import { WalletTabs } from './_components/wallet-tabs';
@@ -30,7 +30,6 @@ import {
   TRADER_PERIODS,
   type DiscoverySource,
   type MemberInput,
-  type TraderDetail,
   type TraderPeriod,
 } from '@/types/trader';
 import { ArrowLeftIcon, PlusIcon } from 'lucide-react';
@@ -69,47 +68,26 @@ function DetailContent() {
   const address = params.address ?? '';
 
   const [period, setPeriod] = useState<TraderPeriod>(DEFAULT_TRADER_PERIOD);
-  const [detail, setDetail] = useState<TraderDetail | null>(null);
-  const [isLoading, setIsLoading] = useState(() => isValidWalletAddress(address));
-  const [error, setError] = useState<DetailError | null>(null);
   const [addOpen, setAddOpen] = useState(false);
-  const [reloadKey, setReloadKey] = useState(0);
-  const requestIdRef = useRef(0);
   const addressValid = isValidWalletAddress(address);
   const wallet = addressValid ? address.toLowerCase() : '';
   // Live detail (contract v1.2): every number is LIVE for the viewed wallet.
-  // No sync trigger, no polling-for-sync, no syncing states.
+  // No sync trigger, no polling-for-sync, no syncing states. Overview polls
+  // every 30s while mounted; error stops polling and needs a manual retry.
+  const {
+    detail,
+    isLoading,
+    error: detailError,
+    refetch: refetchDetail,
+  } = useTraderDetail(wallet, { period, enabled: addressValid });
   const activity = useTraderActivity(wallet);
 
-  useEffect(() => {
-    if (!addressValid) return;
-    let cancelled = false;
-    async function fetchDetail() {
-      const requestId = ++requestIdRef.current;
-      setIsLoading(true);
-      setError(null);
-      try {
-        const data = await fetchTraderDetail(address.toLowerCase(), { period });
-        if (cancelled || requestIdRef.current !== requestId) return;
-        setDetail(data);
-      } catch (err) {
-        if (cancelled || requestIdRef.current !== requestId) return;
-        if (err instanceof ApiError && err.status === 404) {
-          setError('traderNotFound');
-        } else {
-          setError('unknownError');
-        }
-      } finally {
-        if (!cancelled && requestIdRef.current === requestId) {
-          setIsLoading(false);
-        }
-      }
-    }
-    void fetchDetail();
-    return () => {
-      cancelled = true;
-    };
-  }, [address, period, reloadKey, addressValid]);
+  const error: DetailError | null =
+    detailError instanceof ApiError && detailError.status === 404
+      ? 'traderNotFound'
+      : detailError
+        ? 'unknownError'
+        : null;
 
   const registry = detail?.registry ?? null;
   const metrics = detail?.metrics ?? null;
@@ -175,7 +153,7 @@ function DetailContent() {
           <div className="bg-destructive/10 text-destructive rounded-md p-3 text-sm">
             {t(error)}
           </div>
-          <Button variant="outline" size="sm" onClick={() => setReloadKey((k) => k + 1)}>
+          <Button variant="outline" size="sm" onClick={() => refetchDetail()}>
             {t('retry')}
           </Button>
         </div>

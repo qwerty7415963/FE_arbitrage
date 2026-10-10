@@ -538,7 +538,7 @@ test.describe('Wallet tabs (contract v1)', () => {
 
   test('E77 balances error recovers on retry', async ({ page }) => {
     await seedAuth(page);
-    await mockWalletTabs(page, { failBalancesTimes: 4 });
+    await mockWalletTabs(page, { failBalancesTimes: 1 });
     await page.goto(`/en/traders/${WALLET}?tab=balances`);
     const panel = page.locator('#wallet-panel-balances');
     await expect(panel.getByRole('button', { name: 'Retry' })).toBeVisible({ timeout: 20000 });

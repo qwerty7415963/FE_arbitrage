@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { fetchTraderBalances } from '@/services/traders';
+import { traderDataRefetchInterval } from '@/lib/trader-poll';
 import type { BalancesSnapshot } from '@/types/trader';
 
 export interface UseTraderBalancesResult {
@@ -22,7 +23,10 @@ export function useTraderBalances(
     queryKey: ['trader-balances', wallet],
     queryFn: () => fetchTraderBalances(wallet),
     enabled,
+    // Fail fast to error UI; recovery is manual retry or 30s poll, not hidden retries.
+    retry: false,
     staleTime: 15_000,
+    refetchInterval: traderDataRefetchInterval,
   });
 
   return {

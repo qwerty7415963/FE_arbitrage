@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchTraderActivity } from '@/services/traders';
 import { connectTradeActivityWS, type ActivityWsStatus } from '@/lib/trader-activity-ws';
+import { traderDataRefetchInterval } from '@/lib/trader-poll';
 import {
   ACTIVITY_LIMIT_DEFAULT,
   DEFAULT_ACTIVITY_DIR,
@@ -51,7 +52,8 @@ const EMPTY_COUNTS: ActivityCounts = { win: 0, loss: 0, long: 0, short: 0, total
  * Live trades (contract v1.2 §1.2 + §2): same 30d fills → reconstruct source
  * as activity; `funding` is informational (`net_pnl = pnl − fees` unchanged).
  * WS `wallet.activity.created` prepends rows and `wallet.funding.created`
- * attributes funding incrementally — never a full refetch.
+ * attributes funding incrementally. Mounted tab polls every 30s
+ * (`traderDataRefetchInterval`); error stops polling and needs a manual retry.
  */
 export function useTraderTrades(
   walletAddress: string,
@@ -76,7 +78,10 @@ export function useTraderTrades(
     getNextPageParam: (last) => last?.next_cursor ?? undefined,
     initialPageParam: undefined as string | undefined,
     enabled,
+    // Fail fast to error UI; recovery is manual retry or 30s poll, not hidden retries.
+    retry: false,
     staleTime: 15_000,
+    refetchInterval: traderDataRefetchInterval,
   });
 
   useEffect(() => {

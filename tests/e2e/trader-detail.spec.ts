@@ -266,4 +266,73 @@ test.describe('Trader Detail positions + activity (live, contract v1.2)', () => 
     await expect(page.getByRole('heading', { name: 'Smart Money' })).toBeVisible();
     await expect(page.getByText('Open Positions')).toBeVisible();
   });
+
+  test('polls overview + positions every 30s, inactive tabs stay silent', async ({ page }) => {
+    test.setTimeout(90_000);
+    await seedAuth(page);
+    let detail = 0;
+    let positions = 0;
+    let balances = 0;
+    await page.route('**/api/v1/traders/**', (route) => {
+      const url = new URL(route.request().url());
+      if (url.pathname.endsWith('/positions')) {
+        positions += 1;
+        return route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ success: true, data: mockPositions }),
+        });
+      }
+      if (url.pathname.endsWith('/balances')) {
+        balances += 1;
+        return route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            success: true,
+            data: { perp: null, spot: null, data_status: 'ready' },
+          }),
+        });
+      }
+      if (url.pathname.endsWith('/activity')) {
+        const cursor = url.searchParams.get('cursor');
+        const data = cursor === 'c1' ? mockActivityPage2 : mockActivityPage1;
+        return route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ success: true, data }),
+        });
+      }
+      detail += 1;
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, data: mockDetail }),
+      });
+    });
+    await page.route('**/api/v1/trader-groups', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, data: [] }),
+      }),
+    );
+
+    await page.goto(`/en/traders/${WALLET}`);
+    await expect(page.getByRole('heading', { name: 'Smart Money' })).toBeVisible();
+    await expect(page.getByText('BTC').first()).toBeVisible();
+    expect(detail).toBeGreaterThanOrEqual(1);
+    expect(positions).toBeGreaterThanOrEqual(1);
+    expect(balances).toBe(0);
+
+    await page.waitForResponse((r) => r.url().includes('/positions'), { timeout: 35_000 });
+    expect(positions).toBeGreaterThanOrEqual(2);
+    expect(balances).toBe(0);
+    await page.waitForResponse(
+      (r) => r.url().includes('/api/v1/traders/') && !r.url().includes('/positions'),
+      { timeout: 35_000 },
+    );
+    expect(detail).toBeGreaterThanOrEqual(2);
+    expect(balances).toBe(0);
+  });
 });

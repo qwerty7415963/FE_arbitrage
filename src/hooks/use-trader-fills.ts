@@ -2,6 +2,7 @@
 
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { fetchTraderFills } from '@/services/traders';
+import { traderDataRefetchInterval } from '@/lib/trader-poll';
 import { FILLS_LIMIT_DEFAULT, type TraderFillRow } from '@/types/trader';
 
 export interface TraderFillsOptions {
@@ -34,7 +35,10 @@ export function useTraderFills(
     getNextPageParam: (last) => last?.next_cursor ?? undefined,
     initialPageParam: undefined as string | undefined,
     enabled,
+    // Fail fast to error UI; recovery is manual retry or 30s poll, not hidden retries.
+    retry: false,
     staleTime: 15_000,
+    refetchInterval: traderDataRefetchInterval,
   });
 
   const fills = (query.data?.pages ?? []).flatMap((page) => page?.rows ?? []);

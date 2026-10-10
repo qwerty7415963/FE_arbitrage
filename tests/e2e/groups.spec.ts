@@ -1028,7 +1028,8 @@ test.describe('Trader Detail', () => {
     );
     await page.goto('/en/traders/0x1234567890abcdef1234567890abcdef12345678');
     await expect(page.getByRole('heading', { name: 'Smart Money' })).toBeVisible();
-    await expect(page.getByText('Error')).toBeVisible();
+    await expect(page.getByText(/Stale/)).toHaveCount(0);
+    await expect(page.getByText('Error').first()).toBeVisible();
     await expect(page.getByText(/Partial data/)).toBeVisible();
   });
 });

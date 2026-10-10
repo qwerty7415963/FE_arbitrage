@@ -72,7 +72,8 @@
 | `traders/[address]/_components/trades-section.tsx` (live FUNDING + as_of)                 | `tests/unit/components/trades-section.test.tsx`            | 9       | ✅     |
 | `traders/[address]/_components/wallet-tabs.tsx`                                           | `tests/unit/components/wallet-tabs.test.tsx`               | 5       | ✅     |
 | `traders/[address]/_components/{balances,orders,fills,transfers,performance}-section.tsx` | `tests/unit/components/wallet-tab-sections.test.tsx`       | 10      | ✅     |
-| **Total**                                                                                 |                                                            | **348** |        |
+| `lib/trader-poll.ts` + 9 trader-data hooks (30s poll, error stop, unmount, inactive)      | `tests/unit/hooks/trader-polling.test.tsx`                 | 14      | ✅     |
+| **Total**                                                                                 |                                                            | **367** |        |
 
 ### Test Details
 
@@ -365,7 +366,7 @@
 | filters toggle       | aria-expanded + aria-controls, callback          |
 | result count         | resultText shown when provided                   |
 
-#### `traders/_components/filter-sheet.tsx` (11 tests)
+#### `traders/_components/filter-sheet.tsx` (16 tests)
 
 | Test                           | Description                                                |
 | ------------------------------ | ---------------------------------------------------------- |
@@ -380,6 +381,11 @@
 | Esc discards draft             | Reopen shows the last committed value                      |
 | focus returns to opener        | Focus restoration after close                              |
 | commits only on Apply          | onApply fires once on submit with the draft                |
+| active preset lights up        | Clicked preset renders default + aria-pressed=true         |
+| committed preset reopens lit   | Draft with min=55 reopens with 55% lit                     |
+| preset exits Custom mode       | Clicking preset hides custom inputs, lights preset         |
+| last-trade preset lights up    | 7 days click lights it, others stay outline                |
+| preset buttons sm size         | Option buttons render h-7                                  |
 
 #### `components/add-to-trader-group-modal.tsx` (5 tests)
 
@@ -590,6 +596,7 @@
 | E83 | `wallet-live.spec.ts` (v1.2) | L5 position patches, no refetch  | wallet.position.updated []        | No open positions, positions count unchanged |
 | E84 | `wallet-live.spec.ts` (v1.2) | L6 activity prepends, no refetch | wallet.activity.created SOL       | SOL visible, activity count unchanged        |
 | E85 | `wallet-live.spec.ts` (v1.2) | L7 Vietnamese asOf + funding     | /vi/ ?tab=trades                  | −$12.5 + Lúc visible, 0× POST /sync          |
+| E86 | `trader-detail.spec.ts`      | 30s poll, inactive silent        | Mock detail → wait 30s            | detail ≥2, positions ≥2, balances 0          |
 
 > Contract v1.2: `trader-sync.spec.ts` (E79–E82 v1.1) deleted with the sync
 > machinery. FakeWS in `wallet-live.spec.ts` delegates non-`/traders/ws`
@@ -749,3 +756,4 @@ reviewing diffs — never blindly.
 | 2026-10-08 | Wallet tabs contract v1 (FE §5): 9-tab shell with ?tab= URL state + en/vi, POSITIONS sortable header, TRADES full table (server sort + Win/Loss + Long/Short chips with counts, FUNDING —), BALANCES/ORDERS/FILLS/TRANSFERS/PERFORMANCE tables on shared format helpers, PREDICTIONS/SWAP coming-soon placeholders (no fake data). Types in trader.ts, services in traders.ts, hooks per tab. Unit 263→325 (+62), E2E wallet-tabs.spec.ts E61-E78 mocked from fixtures.                                                                                                                                                                                                                                                                                           | —      |
 | 2026-10-08 | Sync-on-view contract v1.1 (FE §4): POST /sync service + `useTraderSyncOnView` once-guard (F1), 12s/≤8-attempt polling on positions + activity/trades (F2), syncing skeleton vs genuine empty + Sync now fallback in TradesSection + ActivityFeed/Recent Activity (F3), en/vi keys `tradesSyncing`/`activitySyncing`/`syncNow` (F4). `ActivityPage.data_status?` additive (missing ⇒ ready). Unit 325→366 (+41: lib/trader-sync 14, use-trader-sync 5, polling 6, services +3, activity-feed +5, trades-section +3, detail +5), E2E trader-sync.spec.ts E79-E82 mocked per §5.                                                                                                                                                                                    | —      |
 | 2026-10-09 | Wallet live contract v1.2 (LIVE-CONTRACT.md frozen): sync machinery deleted (`useTraderSyncOnView`, polling, syncing skeletons, `trader-sync.spec.ts`, `POST /sync` service, sync unit 25 tests); `wallet.*` WS envelope adopted (fill/funding/order/position/activity/connection), FUNDING column + `as_of`/`partial` per tab, states loading/error/ready only. Unit 366→348 (ws 7→20, activity-hook 2→3, positions 4→6, activity-feed 9→8, trades-hook 4→5, trades-section 11→9, detail 13→10, services 33→30), E2E `wallet-live.spec.ts` L1–L7 = E79–E85. FakeWS delegates non-`/traders/ws` sockets to the real WebSocket so Next HMR never sees the stub.                                                                                                    | —      |
+| 2026-10-10 | Trader 30s polling (FE-only): `lib/trader-poll.ts` + `refetchInterval` on 9 hooks (positions/trades/activity/detail-overview/performance/balances/fills/orders/transfers), `staleTime` unchanged, `enabled:false` never timers, background pause + unmount cleanup via react-query defaults, error stops with manual retry. New `hooks/use-trader-detail.ts` replaces manual `useEffect` overview fetch. Unit 353→367 (+14 fake-timer polling), E2E `trader-detail.spec.ts` E86 (overview + positions ≥2 after 30s, balances 0 while inactive).                                                                                                                                                                                                                   | —      |

@@ -1,42 +1,47 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { fetchTraderPerformance } from '@/services/traders';
+import { fetchTraderDetail } from '@/services/traders';
 import { traderDataRefetchInterval } from '@/lib/trader-poll';
-import { DEFAULT_TRADER_PERIOD, type PerformanceSnapshot, type TraderPeriod } from '@/types/trader';
+import { DEFAULT_TRADER_PERIOD, type TraderDetail, type TraderPeriod } from '@/types/trader';
 
-export interface TraderPerformanceOptions {
+export interface TraderDetailOptions {
   period?: TraderPeriod;
   enabled?: boolean;
 }
 
-export interface UseTraderPerformanceResult {
-  performance: PerformanceSnapshot | null;
+export interface UseTraderDetailResult {
+  detail: TraderDetail | null;
   isLoading: boolean;
   error: unknown;
   refetch: () => void;
 }
 
-export function useTraderPerformance(
+/**
+ * Trader overview (detail header + metric cards). Mounted page polls every
+ * 30s (`traderDataRefetchInterval`); error stops polling and needs a manual
+ * retry via `refetch`. Background tabs pause automatically (react-query
+ * default); unmount clears the timer.
+ */
+export function useTraderDetail(
   walletAddress: string,
-  options: TraderPerformanceOptions = {},
-): UseTraderPerformanceResult {
+  options: TraderDetailOptions = {},
+): UseTraderDetailResult {
   const wallet = walletAddress.toLowerCase();
   const period = options.period ?? DEFAULT_TRADER_PERIOD;
   const enabled = (options.enabled ?? true) && wallet.length > 0;
 
   const query = useQuery({
-    queryKey: ['trader-performance', wallet, period],
-    queryFn: () => fetchTraderPerformance(wallet, { period }),
+    queryKey: ['trader-detail', wallet, period],
+    queryFn: () => fetchTraderDetail(wallet, { period }),
     enabled,
     // Fail fast to error UI; recovery is manual retry or 30s poll, not hidden retries.
     retry: false,
-    staleTime: 15_000,
     refetchInterval: traderDataRefetchInterval,
   });
 
   return {
-    performance: query.data ?? null,
+    detail: query.data ?? null,
     isLoading: query.isLoading,
     error: query.error,
     refetch: () => {
