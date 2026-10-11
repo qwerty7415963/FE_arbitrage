@@ -1,119 +1,107 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
-import { fetchTraderActivity } from '@/services/traders';
+import { useEffect, useMemo, useState } from 'react';
 import { connectTradeActivityWS, type ActivityWsStatus } from '@/lib/trader-activity-ws';
-import { traderDataRefetchInterval } from '@/lib/trader-poll';
 import type {
   ActivityFill,
-  ActivityPage,
   ActivityTrade,
-  LiveDataStatus,
+  LiveActivityItem,
   WalletConnectionStatus,
-  WalletFundingEvent,
+  WalletOrderEvent,
 } from '@/types/trader';
 
 export interface UseTraderActivityResult {
-  trades: ActivityTrade[];
-  liveFills: ActivityFill[];
-  liveFundings: WalletFundingEvent[];
-  isLoading: boolean;
-  error: unknown;
-  fetchNextPage: () => void;
-  refetch: () => void;
-  hasMore: boolean;
+  items: LiveActivityItem[];
   live: ActivityWsStatus;
   /** Backend reconnect state (`wallet.connection.updated`); null until first event. */
   connection: WalletConnectionStatus | null;
-  /** Live signal (contract v1.2 §1.2): ready|error only. */
-  dataStatus: LiveDataStatus;
-  asOf: string | null;
-  partial: boolean;
+  /** True while the WS transport is not connected (connecting-loading state). */
+  isLoading: boolean;
 }
 
-const LIVE_FILLS_MAX = 50;
-const LIVE_FUNDINGS_MAX = 50;
+export const LIVE_ACTIVITY_MAX = 50;
+
+function isCloseDir(dir: unknown): boolean {
+  return typeof dir === 'string' && dir.toLowerCase().startsWith('close');
+}
+
+function itemTimeMs(item: LiveActivityItem): number {
+  const parsed = Date.parse(item.time);
+  return Number.isNaN(parsed) ? 0 : parsed;
+}
 
 /**
- * Live activity (contract v1.2 §1.2 + §2): REST `userFillsByTime` 30d +
- * `wallet.*` incremental updates. Mounted feed polls every 30s
- * (`traderDataRefetchInterval`); error stops polling and needs a manual retry.
+ * Sidebar 3-event timeline (SIDEBAR-3EVENTS, frozen delta over contract v1.2).
+ * WS-only: no REST (`/activity` counter stays 0), no fundings, no durable
+ * prepend. Merges limit placements (`wallet.order.created`), open-direction
+ * fills (`wallet.fill.created` with dir not starting with Close), and
+ * completed-cycle closes (`wallet.activity.created`) into a single timeline
+ * sorted time DESC and capped at 50. WS connect/status/reconnect behavior is
+ * unchanged (live + connection surfaced for the LIVE badge).
  */
 export function useTraderActivity(walletAddress: string): UseTraderActivityResult {
   const wallet = walletAddress.toLowerCase();
-  const [liveFills, setLiveFills] = useState<ActivityFill[]>([]);
-  const [liveFundings, setLiveFundings] = useState<WalletFundingEvent[]>([]);
+  const [orders, setOrders] = useState<WalletOrderEvent[]>([]);
+  const [fills, setFills] = useState<ActivityFill[]>([]);
+  const [closes, setCloses] = useState<ActivityTrade[]>([]);
   const [live, setLive] = useState<ActivityWsStatus>('disconnected');
   const [connection, setConnection] = useState<WalletConnectionStatus | null>(null);
-  const queryClient = useQueryClient();
-
-  const query = useInfiniteQuery({
-    queryKey: ['trader-activity', wallet],
-    queryFn: ({ pageParam }: { pageParam: string | undefined }) =>
-      fetchTraderActivity(wallet, { cursor: pageParam }),
-    getNextPageParam: (last) => last?.next_cursor ?? undefined,
-    initialPageParam: undefined as string | undefined,
-    enabled: wallet.length > 0,
-    // Fail fast to error UI; recovery is manual retry or 30s poll, not hidden retries.
-    retry: false,
-    refetchInterval: traderDataRefetchInterval,
-  });
+  const [prevWallet, setPrevWallet] = useState(wallet);
+  if (prevWallet !== wallet) {
+    setPrevWallet(wallet);
+    setOrders([]);
+    setFills([]);
+    setCloses([]);
+  }
 
   useEffect(() => {
     if (!wallet) return;
     const handle = connectTradeActivityWS(
       wallet,
       (fill) => {
-        setLiveFills((prev) => [fill, ...prev].slice(0, LIVE_FILLS_MAX));
+        if (isCloseDir(fill.dir)) return;
+        setFills((prev) => [fill, ...prev].slice(0, LIVE_ACTIVITY_MAX));
       },
       (status) => setLive(status),
       {
-        onFunding: (funding) => {
-          setLiveFundings((prev) => [funding, ...prev].slice(0, LIVE_FUNDINGS_MAX));
+        onOrderCreated: (order) => {
+          setOrders((prev) => [order, ...prev].slice(0, LIVE_ACTIVITY_MAX));
         },
         onActivity: (trade) => {
-          queryClient.setQueryData<{ pages: ActivityPage[]; pageParams: unknown[] }>(
-            ['trader-activity', wallet],
-            (old) => {
-              if (!old) return old;
-              const pages = old.pages.slice();
-              if (pages.length === 0) return old;
-              pages[0] = { ...pages[0], rows: [trade, ...pages[0].rows] };
-              return { ...old, pages };
-            },
-          );
+          setCloses((prev) => [trade, ...prev].slice(0, LIVE_ACTIVITY_MAX));
         },
         onConnection: (status) => setConnection(status),
       },
     );
     return () => handle.close();
-  }, [wallet, queryClient]);
+  }, [wallet]);
 
-  const pages = query.data?.pages ?? [];
-  const trades = pages.flatMap((page) => page?.rows ?? []);
-  const first = pages[0];
-  const dataStatus: LiveDataStatus = first?.data_status ?? 'ready';
-  const asOf = first?.as_of ?? null;
-  const partial = first?.partial ?? false;
+  const items = useMemo<LiveActivityItem[]>(() => {
+    const merged: LiveActivityItem[] = [
+      ...orders.map((order): LiveActivityItem => ({
+        kind: 'limit',
+        time: order.timestamp ?? order.time ?? '',
+        order,
+      })),
+      ...fills.map((fill): LiveActivityItem => ({
+        kind: 'fill',
+        time: fill.time,
+        fill,
+      })),
+      ...closes.map((trade): LiveActivityItem => ({
+        kind: 'close',
+        time: trade.closed_at,
+        trade,
+      })),
+    ];
+    merged.sort((a, b) => itemTimeMs(b) - itemTimeMs(a));
+    return merged.slice(0, LIVE_ACTIVITY_MAX);
+  }, [orders, fills, closes]);
 
   return {
-    trades,
-    liveFills,
-    liveFundings,
-    isLoading: query.isLoading,
-    error: query.error,
-    fetchNextPage: () => {
-      void query.fetchNextPage();
-    },
-    refetch: () => {
-      void query.refetch();
-    },
-    hasMore: query.hasNextPage ?? false,
+    items,
     live,
     connection,
-    dataStatus,
-    asOf,
-    partial,
+    isLoading: live !== 'connected',
   };
 }

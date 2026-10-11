@@ -246,7 +246,40 @@ export interface ActivityFill {
   price: number;
   time: string;
   tid: number;
+  /**
+   * Fill direction (SIDEBAR-3EVENTS D1, additive over contract v1.2).
+   * `Open Long` / `Open Short` render as LONG/SHORT; `Buy`/`Sell` fall back
+   * to BUY/SELL; `Close*` fills are skipped by the sidebar (the completed
+   * cycle represents them).
+   */
+  dir: string;
 }
+
+/**
+ * Sidebar 3-event timeline (SIDEBAR-3EVENTS, frozen delta over v1.2).
+ * Single merged timeline, time DESC, cap 50. `limit` comes from
+ * `wallet.order.created`, `fill` from `wallet.fill.created` with an open
+ * direction, `close` from `wallet.activity.created`.
+ */
+export interface LiveLimitItem {
+  kind: 'limit';
+  time: string;
+  order: WalletOrderEvent;
+}
+
+export interface LiveFillItem {
+  kind: 'fill';
+  time: string;
+  fill: ActivityFill;
+}
+
+export interface LiveCloseItem {
+  kind: 'close';
+  time: string;
+  trade: ActivityTrade;
+}
+
+export type LiveActivityItem = LiveLimitItem | LiveFillItem | LiveCloseItem;
 
 export interface MemberInput {
   venue: string;
@@ -634,6 +667,18 @@ export interface WalletOrderEvent {
   coin: string;
   oid: number;
   status: string;
+  /**
+   * Limit placement fields (SIDEBAR-3EVENTS: `wallet.order.created`
+   * {coin, oid, status:"open", side, limit_px, size(orig), timestamp}).
+   * Optional to stay backward compatible with the minimal
+   * `wallet.order.updated` shape {coin, oid, status}.
+   */
+  side?: string;
+  limit_px?: number;
+  size?: number;
+  orig_size?: number;
+  timestamp?: string;
+  time?: string;
 }
 
 export interface WalletConnectionEvent {
@@ -644,6 +689,7 @@ export type WalletWsEventType =
   | 'wallet.fill.created'
   | 'wallet.funding.created'
   | 'wallet.order.updated'
+  | 'wallet.order.created'
   | 'wallet.position.updated'
   | 'wallet.activity.created'
   | 'wallet.state.updated'

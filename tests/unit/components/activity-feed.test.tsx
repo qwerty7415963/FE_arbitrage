@@ -1,116 +1,144 @@
-import { describe, it, expect, vi } from 'vitest';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { describe, it, expect } from 'vitest';
+import { render, screen } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 import { ActivityFeed } from '@/app/[locale]/(protected)/traders/[address]/_components/activity-feed';
+import type { LiveActivityItem } from '@/types/trader';
 import enMessages from '@/messages/en.json';
 
-const trades = [
-  {
-    market: 'BTC',
-    side: 'LONG' as const,
-    opened_at: '2026-10-06T08:00:00Z',
-    closed_at: '2026-10-06T08:30:00Z',
-    duration_sec: 1800,
-    volume: 30000,
-    entry_price: 60000,
-    exit_price: 62000,
-    pnl: 1500,
-    fees: 30,
-    funding: -12.5,
-    net_pnl: 1470,
-    fills: 3,
+const limitItem: LiveActivityItem = {
+  kind: 'limit',
+  time: '2026-10-08T00:02:00Z',
+  order: {
+    coin: 'BTC',
+    oid: 91490942,
+    status: 'open',
+    side: 'BUY',
+    limit_px: 60000,
+    size: 0.5,
+    timestamp: '2026-10-08T00:02:00Z',
   },
-];
+};
 
-const liveFills = [
-  {
+const fillItem: LiveActivityItem = {
+  kind: 'fill',
+  time: '2026-10-08T00:01:00Z',
+  fill: {
     coin: 'ETH',
-    side: 'BUY' as const,
-    size: 0.1,
-    price: 3000,
-    time: '2026-10-06T09:01:00Z',
-    tid: 12345,
+    side: 'BUY',
+    size: 1.2,
+    price: 2309.1,
+    time: '2026-10-08T00:01:00Z',
+    tid: 1101266132350103,
+    dir: 'Open Long',
   },
-];
+};
+
+const closeItem: LiveActivityItem = {
+  kind: 'close',
+  time: '2026-10-08T00:00:00Z',
+  trade: {
+    market: 'SOL',
+    side: 'SHORT',
+    opened_at: '2026-10-04T00:00:00Z',
+    closed_at: '2026-10-08T00:00:00Z',
+    duration_sec: 86400,
+    volume: 5000,
+    entry_price: 100,
+    exit_price: 90,
+    pnl: 200,
+    fees: 5,
+    funding: 1.5,
+    net_pnl: 195,
+    fills: 2,
+  },
+};
 
 function renderFeed(props: Partial<React.ComponentProps<typeof ActivityFeed>> = {}) {
   return render(
     <NextIntlClientProvider locale="en" messages={enMessages}>
-      <ActivityFeed
-        trades={[]}
-        liveFills={[]}
-        isLoading={false}
-        error={null}
-        hasMore={false}
-        onLoadMore={vi.fn()}
-        onRetry={vi.fn()}
-        live="disconnected"
-        {...props}
-      />
+      <ActivityFeed items={[]} live="disconnected" {...props} />
     </NextIntlClientProvider>,
   );
 }
 
-describe('ActivityFeed (contract v1.2)', () => {
-  it('renders a live fill with LIVE badge and a closed trade', () => {
-    renderFeed({ trades, liveFills, live: 'connected', connection: 'LIVE' });
+describe('ActivityFeed (SIDEBAR-3EVENTS)', () => {
+  it('shows loading skeletons while connecting with no items', () => {
+    renderFeed({ live: 'reconnecting' });
+    expect(screen.getByRole('status')).toBeInTheDocument();
+    expect(screen.queryByText('Waiting for live activity…')).not.toBeInTheDocument();
+  });
+
+  it('shows the waiting copy once connected with no items', () => {
+    renderFeed({ live: 'connected', connection: 'LIVE' });
+    expect(screen.getByText('Waiting for live activity…')).toBeInTheDocument();
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+  });
+
+  it('renders limit / fill / close rows with correct labels', () => {
+    renderFeed({ items: [limitItem, fillItem, closeItem], live: 'connected', connection: 'LIVE' });
     expect(screen.getByText('Recent Activity')).toBeInTheDocument();
-    expect(screen.getAllByText('LIVE').length).toBeGreaterThan(0);
-    expect(screen.getByText('ETH')).toBeInTheDocument();
+    // limit: LIMIT + side + coin + size + @price
+    expect(screen.getByText('LIMIT')).toBeInTheDocument();
     expect(screen.getByText('BTC')).toBeInTheDocument();
+    // fill: Open Long → LONG (not BUY)
+    expect(screen.getByText('LONG')).toBeInTheDocument();
+    expect(screen.getByText('ETH')).toBeInTheDocument();
+    // close: CLOSED + side + coin + net
+    expect(screen.getByText('CLOSED')).toBeInTheDocument();
+    expect(screen.getByText('SOL')).toBeInTheDocument();
+    expect(screen.getByText('+$195')).toBeInTheDocument();
+  });
+
+  it('falls back to BUY/SELL for spot fills', () => {
+    renderFeed({
+      items: [
+        {
+          kind: 'fill',
+          time: '2026-10-08T00:01:00Z',
+          fill: {
+            coin: 'ETH',
+            side: 'SELL',
+            size: 0.25,
+            price: 3000,
+            time: '2026-10-08T00:01:00Z',
+            tid: 7,
+            dir: 'Sell',
+          },
+        },
+      ],
+      live: 'connected',
+      connection: 'LIVE',
+    });
+    expect(screen.getByText('SELL')).toBeInTheDocument();
+    expect(screen.queryByText('SHORT')).not.toBeInTheDocument();
   });
 
   it('gates the LIVE badge on the backend connection state', () => {
-    const { unmount } = renderFeed({ trades, live: 'connected', connection: 'RECONNECTING' });
+    const { unmount } = renderFeed({
+      items: [fillItem],
+      live: 'connected',
+      connection: 'RECONNECTING',
+    });
     expect(screen.queryByText('LIVE')).not.toBeInTheDocument();
     unmount();
-    renderFeed({ trades, live: 'connected', connection: 'ERROR' });
+    renderFeed({ items: [fillItem], live: 'connected', connection: 'ERROR' });
     expect(screen.queryByText('LIVE')).not.toBeInTheDocument();
   });
 
   it('shows no LIVE badge while the transport is disconnected', () => {
-    renderFeed({ trades, live: 'disconnected', connection: 'LIVE' });
+    renderFeed({ items: [fillItem], live: 'disconnected', connection: 'LIVE' });
     expect(screen.queryByText('LIVE')).not.toBeInTheDocument();
   });
 
-  it('renders the genuine empty state with no Sync now button', () => {
-    renderFeed({ dataStatus: 'ready' });
-    expect(screen.getByText('No recent activity')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Sync now' })).not.toBeInTheDocument();
+  it('shows LIVE once connected without connection events (legacy)', () => {
+    renderFeed({ items: [fillItem], live: 'connected', connection: null });
+    expect(screen.getByText('LIVE')).toBeInTheDocument();
   });
 
-  it('shows as_of and partial markers', () => {
-    renderFeed({ trades, asOf: '2026-10-08T00:00:00Z', partial: true });
-    expect(screen.getByText(/As of/)).toBeInTheDocument();
-    expect(screen.getByText(/Partial data/)).toBeInTheDocument();
-  });
-
-  it('renders live funding events incrementally', () => {
-    renderFeed({
-      liveFundings: [{ coin: 'ETH', usdc: -3.44, time: '2026-10-08T00:00:00Z' }],
-      live: 'connected',
-      connection: 'LIVE',
-    });
-    expect(screen.getByText('ETH')).toBeInTheDocument();
-    expect(screen.getByText('-$3.44')).toBeInTheDocument();
-  });
-
-  it('shows load more when hasMore', () => {
-    const onLoadMore = vi.fn();
-    renderFeed({ trades, hasMore: true, onLoadMore });
-    const button = screen.getByRole('button', { name: 'Load more' });
-    expect(button).toBeInTheDocument();
-    fireEvent.click(button);
-    expect(onLoadMore).toHaveBeenCalledTimes(1);
-  });
-
-  it('retries the initial page via onRetry (not onLoadMore)', () => {
-    const onLoadMore = vi.fn();
-    const onRetry = vi.fn();
-    renderFeed({ error: new Error('boom'), onLoadMore, onRetry });
-    const button = screen.getByRole('button', { name: 'Retry' });
-    fireEvent.click(button);
-    expect(onRetry).toHaveBeenCalledTimes(1);
-    expect(onLoadMore).not.toHaveBeenCalled();
+  it('has no Load more or Retry buttons (WS-only sidebar)', () => {
+    renderFeed({ items: [fillItem], live: 'connected', connection: 'LIVE' });
+    expect(screen.queryByRole('button', { name: 'Load more' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
 });

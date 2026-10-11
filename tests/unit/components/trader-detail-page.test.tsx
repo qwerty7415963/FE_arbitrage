@@ -108,19 +108,10 @@ describe('TraderDetailPage (contract v1.2 live, no sync)', () => {
       as_of: null,
     });
     vi.mocked(useTraderActivity).mockReturnValue({
-      trades: [],
-      liveFills: [],
-      liveFundings: [],
-      isLoading: false,
-      error: null,
-      fetchNextPage: vi.fn(),
-      refetch: vi.fn(),
-      hasMore: false,
+      items: [],
       live: 'disconnected',
       connection: null,
-      dataStatus: 'ready',
-      asOf: null,
-      partial: false,
+      isLoading: true,
     });
   });
 
@@ -214,37 +205,32 @@ describe('TraderDetailPage (contract v1.2 live, no sync)', () => {
     expect(screen.queryByText(/Syncing/)).not.toBeInTheDocument();
   });
 
-  it('renders live activity rows with funding-aware trades', async () => {
+  it('renders sidebar 3-event rows (limit/fill/close)', async () => {
     vi.mocked(useTraderActivity).mockReturnValue({
-      trades: [
+      items: [
         {
-          market: 'BTC',
-          side: 'LONG',
-          opened_at: '2026-10-06T08:00:00Z',
-          closed_at: '2026-10-06T08:30:00Z',
-          duration_sec: 1800,
-          volume: 30000,
-          entry_price: 60000,
-          exit_price: 62000,
-          pnl: 1500,
-          fees: 30,
-          funding: -12.5,
-          net_pnl: 1470,
-          fills: 3,
+          kind: 'close',
+          time: '2026-10-06T08:30:00Z',
+          trade: {
+            market: 'BTC',
+            side: 'LONG',
+            opened_at: '2026-10-06T08:00:00Z',
+            closed_at: '2026-10-06T08:30:00Z',
+            duration_sec: 1800,
+            volume: 30000,
+            entry_price: 60000,
+            exit_price: 62000,
+            pnl: 1500,
+            fees: 30,
+            funding: -12.5,
+            net_pnl: 1470,
+            fills: 3,
+          },
         },
       ],
-      liveFills: [],
-      liveFundings: [],
-      isLoading: false,
-      error: null,
-      fetchNextPage: vi.fn(),
-      refetch: vi.fn(),
-      hasMore: false,
       live: 'connected',
       connection: 'LIVE',
-      dataStatus: 'ready',
-      asOf: '2026-10-08T00:00:00Z',
-      partial: false,
+      isLoading: false,
     });
     renderPage();
     await screen.findByRole('heading', { name: 'Smart Money' });

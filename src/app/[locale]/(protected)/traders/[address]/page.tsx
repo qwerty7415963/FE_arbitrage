@@ -260,19 +260,9 @@ function DetailContent() {
             <div className="lg:col-span-1">
               <div className="lg:sticky lg:top-4 lg:max-h-[80vh] lg:overflow-y-auto">
                 <ActivityFeed
-                  trades={activity.trades}
-                  liveFills={activity.liveFills}
-                  liveFundings={activity.liveFundings}
-                  isLoading={activity.isLoading}
-                  error={activity.error}
-                  hasMore={activity.hasMore}
-                  onLoadMore={activity.fetchNextPage}
-                  onRetry={activity.refetch}
+                  items={activity.items}
                   live={activity.live}
                   connection={activity.connection}
-                  dataStatus={activity.dataStatus}
-                  asOf={activity.asOf}
-                  partial={activity.partial}
                 />
               </div>
             </div>

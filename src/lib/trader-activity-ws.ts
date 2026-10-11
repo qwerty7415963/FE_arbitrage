@@ -17,6 +17,8 @@ export interface ActivityWsHandle {
 export interface WalletWsHandlers {
   onFunding?: (funding: WalletFundingEvent) => void;
   onOrder?: (order: WalletOrderEvent) => void;
+  /** Limit placements (SIDEBAR-3EVENTS D2): first-seen oid via `wallet.order.created`. */
+  onOrderCreated?: (order: WalletOrderEvent) => void;
   onPosition?: (snapshot: PositionSnapshot) => void;
   onActivity?: (trade: ActivityTrade) => void;
   onConnection?: (status: WalletConnectionStatus) => void;
@@ -209,6 +211,10 @@ export function connectTradeActivityWS(
     }
     if (msg.type === 'wallet.order.updated' && isValidOrder(msg.data)) {
       handlers.onOrder?.(msg.data);
+      return;
+    }
+    if (msg.type === 'wallet.order.created' && isValidOrder(msg.data)) {
+      handlers.onOrderCreated?.(msg.data);
       return;
     }
     if (msg.type === 'wallet.position.updated' && isValidPositionSnapshot(msg.data)) {

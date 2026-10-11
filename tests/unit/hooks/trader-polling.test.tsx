@@ -140,11 +140,14 @@ describe('trader-data polling (30s, FE-only)', () => {
     await vi.waitFor(() => expect(fetchTraderActivity).toHaveBeenCalledTimes(2));
   });
 
-  it('useTraderActivity refetches after 30s', async () => {
+  it('useTraderActivity never fetches (WS-only sidebar, SIDEBAR-3EVENTS)', async () => {
+    const { connectTradeActivityWS } = await import('@/lib/trader-activity-ws');
+    vi.mocked(connectTradeActivityWS).mockClear();
+    vi.mocked(fetchTraderActivity).mockClear();
     renderHook(() => useTraderActivity(WALLET), { wrapper: createWrapper() });
-    await vi.waitFor(() => expect(fetchTraderActivity).toHaveBeenCalledTimes(1));
-    await vi.advanceTimersByTimeAsync(30_000);
-    await vi.waitFor(() => expect(fetchTraderActivity).toHaveBeenCalledTimes(2));
+    await vi.waitFor(() => expect(connectTradeActivityWS).toHaveBeenCalledTimes(1));
+    await vi.advanceTimersByTimeAsync(60_000);
+    expect(vi.mocked(fetchTraderActivity)).not.toHaveBeenCalled();
   });
 
   it('useTraderDetail (overview) refetches after 30s', async () => {

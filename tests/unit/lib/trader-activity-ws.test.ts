@@ -61,6 +61,7 @@ const fill = {
   price: 2309.1,
   time: '2026-10-08T00:00:00Z',
   tid: 1101266132350103,
+  dir: 'Open Long',
 };
 
 describe('buildActivityWsUrl', () => {
@@ -170,6 +171,38 @@ describe('connectTradeActivityWS (contract v1.2 §2 wallet.* envelope)', () => {
     });
     expect(orders).toHaveLength(1);
     expect(orders[0].oid).toBe(91490942);
+    handle.close();
+  });
+
+  it('routes wallet.order.created to onOrderCreated (placements only)', () => {
+    const created: WalletOrderEvent[] = [];
+    const updated: WalletOrderEvent[] = [];
+    const handle = connectTradeActivityWS('0xabc', () => {}, undefined, {
+      onOrder: (o) => updated.push(o),
+      onOrderCreated: (o) => created.push(o),
+    });
+    FakeWS.instances[0].open();
+    FakeWS.instances[0].receive({
+      type: 'wallet.order.created',
+      data: {
+        coin: 'BTC',
+        oid: 91490942,
+        status: 'open',
+        side: 'BUY',
+        limit_px: 60000,
+        size: 0.5,
+        timestamp: '2026-10-08T00:02:00Z',
+      },
+    });
+    expect(created).toHaveLength(1);
+    expect(created[0].oid).toBe(91490942);
+    expect(updated).toHaveLength(0);
+    FakeWS.instances[0].receive({
+      type: 'wallet.order.updated',
+      data: { coin: 'BTC', oid: 91490942, status: 'filled' },
+    });
+    expect(updated).toHaveLength(1);
+    expect(created).toHaveLength(1);
     handle.close();
   });
 
