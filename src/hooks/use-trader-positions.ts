@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchTraderPositions } from '@/services/traders';
 import { connectTradeActivityWS } from '@/lib/trader-activity-ws';
 import { traderDataRefetchInterval } from '@/lib/trader-poll';
+import { shouldRetryTraderQuery, traderRetryDelay } from '@/lib/trader-retry';
 import {
   DEFAULT_POSITION_DIR,
   DEFAULT_POSITION_SORT,
@@ -47,8 +48,9 @@ export function useTraderPositions(
     queryKey: ['trader-positions', wallet, sort, dir],
     queryFn: () => fetchTraderPositions(wallet, { sort, dir }),
     enabled,
-    // Fail fast to error UI; recovery is manual retry or 30s poll, not hidden retries.
-    retry: false,
+    // Selective retry on transient failures (429/408/5xx, max 2); otherwise fail fast to error UI with manual retry.
+    retry: shouldRetryTraderQuery,
+    retryDelay: traderRetryDelay,
     staleTime: 15_000,
     refetchInterval: traderDataRefetchInterval,
   });

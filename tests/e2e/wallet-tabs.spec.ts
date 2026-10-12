@@ -367,7 +367,7 @@ test.describe('Wallet tabs (contract v1)', () => {
       'true',
     );
     await expect(page.getByText('Perp account')).toBeVisible();
-    await expect(page.getByText('HYPE')).toBeVisible();
+    await expect(page.locator('#wallet-panel-balances').getByText('HYPE')).toBeVisible();
   });
 
   test('E63 clicking a tab writes ?tab= to the URL', async ({ page }) => {
@@ -538,7 +538,9 @@ test.describe('Wallet tabs (contract v1)', () => {
 
   test('E77 balances error recovers on retry', async ({ page }) => {
     await seedAuth(page);
-    await mockWalletTabs(page, { failBalancesTimes: 1 });
+    // 3 consecutive 500s exhaust selective retry (initial + 2 backoff retries),
+    // so the error UI + manual Retry appear; the manual refetch then recovers.
+    await mockWalletTabs(page, { failBalancesTimes: 3 });
     await page.goto(`/en/traders/${WALLET}?tab=balances`);
     const panel = page.locator('#wallet-panel-balances');
     await expect(panel.getByRole('button', { name: 'Retry' })).toBeVisible({ timeout: 20000 });

@@ -1,11 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { NextIntlClientProvider } from 'next-intl';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ApiError } from '@/infrastructure/api-client';
 import DetailPage from '@/app/[locale]/(protected)/traders/[address]/page';
-import { fetchTraderDetail, fetchTraderPositions, listTraderGroups } from '@/services/traders';
+import {
+  fetchTraderDetail,
+  fetchTraderPositions,
+  fetchTraderPerformance,
+  listTraderGroups,
+} from '@/services/traders';
 import { useTraderActivity } from '@/hooks/use-trader-activity';
 import type { TraderDetail } from '@/types/trader';
 import enMessages from '@/messages/en.json';
@@ -26,6 +31,7 @@ vi.mock('next/navigation', () => ({
 vi.mock('@/services/traders', () => ({
   fetchTraderDetail: vi.fn(),
   fetchTraderPositions: vi.fn(),
+  fetchTraderPerformance: vi.fn(),
   fetchTraderActivity: vi.fn(),
   listTraderGroups: vi.fn(),
   addGroupMembers: vi.fn(),
@@ -107,6 +113,11 @@ describe('TraderDetailPage (contract v1.2 live, no sync)', () => {
       data_status: 'ready',
       as_of: null,
     });
+    vi.mocked(fetchTraderPerformance).mockResolvedValue({
+      period: '30D',
+      metrics: null,
+      equity: [],
+    });
     vi.mocked(useTraderActivity).mockReturnValue({
       items: [],
       live: 'disconnected',
@@ -122,15 +133,21 @@ describe('TraderDetailPage (contract v1.2 live, no sync)', () => {
     expect(fetchTraderDetail).not.toHaveBeenCalled();
   });
 
-  it('renders header, cards, tabs and long/short stats', async () => {
+  it('renders identity, stat cards and tabs', async () => {
     renderPage();
     expect(await screen.findByRole('heading', { name: 'Smart Money' })).toBeInTheDocument();
+    expect(screen.getByText('Wallet Detail')).toBeInTheDocument();
     expect(screen.getByText('+25.00%')).toBeInTheDocument();
-    expect(screen.getByText('+$5.00K')).toBeInTheDocument();
     expect(screen.getByText('70.00%')).toBeInTheDocument();
-    expect(screen.getByText('80.00% · 24 of 30 won')).toBeInTheDocument();
-    expect(screen.getByText('50.00% · 10 of 20 won')).toBeInTheDocument();
-    expect(screen.getAllByText(/Ready/).length).toBeGreaterThan(0);
+    expect(screen.getByText('$100.00K')).toBeInTheDocument();
+    expect(screen.getAllByText('Leaderboard').length).toBeGreaterThan(0);
+    expect(screen.getByRole('group', { name: 'Period' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '7D' })).toBeInTheDocument();
+    expect(screen.queryByText('Equity curve')).not.toBeInTheDocument();
+    expect(screen.queryByText('Top Positions')).not.toBeInTheDocument();
+    const card = screen.getByRole('region', { name: 'Smart Money' });
+    expect(within(card).getByText(/Ready/)).toBeInTheDocument();
+    expect(within(card).getByText(/Metrics as of/)).toBeInTheDocument();
     expect(fetchTraderDetail).toHaveBeenCalledWith(
       '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
       expect.objectContaining({ period: '30D' }),
@@ -141,7 +158,7 @@ describe('TraderDetailPage (contract v1.2 live, no sync)', () => {
     const user = userEvent.setup();
     renderPage();
     await screen.findByRole('heading', { name: 'Smart Money' });
-    await user.click(screen.getByRole('button', { name: '7D' }));
+    await user.click(await screen.findByRole('button', { name: '7D' }));
     expect(fetchTraderDetail).toHaveBeenLastCalledWith(
       '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
       expect.objectContaining({ period: '7D' }),
@@ -162,8 +179,9 @@ describe('TraderDetailPage (contract v1.2 live, no sync)', () => {
     });
     renderPage();
     await screen.findByRole('heading', { name: 'Smart Money' });
-    expect(screen.getByText(/Partial data/)).toBeInTheDocument();
-    expect(screen.getByText('+$5.00K')).toBeInTheDocument();
+    const card = screen.getByRole('region', { name: 'Smart Money' });
+    expect(within(card).getByText(/Partial data/)).toBeInTheDocument();
+    expect(screen.getByText('+25.00%')).toBeInTheDocument();
   });
 
   it('shows not found on 404 with retry recovery', async () => {

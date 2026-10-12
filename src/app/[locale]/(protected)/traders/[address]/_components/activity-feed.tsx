@@ -12,6 +12,7 @@ import {
 } from '@/lib/trader-format';
 import type { ActivityFill, LiveActivityItem, WalletConnectionStatus } from '@/types/trader';
 import type { ActivityWsStatus } from '@/lib/trader-activity-ws';
+import { ArrowDownUpIcon, CheckIcon, PlusIcon } from 'lucide-react';
 
 export interface ActivityFeedProps {
   items: LiveActivityItem[];
@@ -42,6 +43,12 @@ function fillToneSide(fill: ActivityFill): string {
   return fill.side;
 }
 
+function notionalUsd(size: unknown, price: unknown): string | null {
+  if (typeof size !== 'number' || typeof price !== 'number') return null;
+  if (!Number.isFinite(size) || !Number.isFinite(price)) return null;
+  return formatUsd(size * price);
+}
+
 export function ActivityFeed({ items, live, connection = null }: ActivityFeedProps) {
   const t = useTranslations('traders');
   const showLive = isLiveBadge(live, connection);
@@ -51,7 +58,7 @@ export function ActivityFeed({ items, live, connection = null }: ActivityFeedPro
     return (
       <section
         aria-label={t('recentActivity')}
-        className="flex flex-col gap-2 rounded-lg border p-4"
+        className="bg-card flex flex-col gap-2 rounded-xl border p-4 shadow-sm"
       >
         <h2 className="text-sm font-semibold">{t('recentActivity')}</h2>
         <div className="flex flex-col gap-2" role="status" aria-label={t('loading')}>
@@ -63,11 +70,14 @@ export function ActivityFeed({ items, live, connection = null }: ActivityFeedPro
   }
 
   return (
-    <section aria-label={t('recentActivity')} className="flex flex-col gap-3 rounded-lg border p-4">
+    <section
+      aria-label={t('recentActivity')}
+      className="bg-card flex flex-col gap-3 rounded-xl border p-4 shadow-sm"
+    >
       <div className="flex items-center gap-2">
         <h2 className="text-sm font-semibold">{t('recentActivity')}</h2>
         {showLive && (
-          <span className="bg-primary/10 text-primary rounded px-1.5 py-0.5 text-xs font-medium">
+          <span className="bg-primary/10 text-primary rounded-full px-2 py-0.5 text-xs font-medium">
             {t('live')}
           </span>
         )}
@@ -84,24 +94,34 @@ export function ActivityFeed({ items, live, connection = null }: ActivityFeedPro
               const price = order.limit_px ?? null;
               const time = order.timestamp ?? order.time ?? item.time;
               const side = typeof order.side === 'string' ? order.side.toUpperCase() : null;
+              const notional = notionalUsd(size, price);
               return (
                 <li
                   key={`limit-${order.coin}-${order.oid}-${item.time}-${index}`}
-                  className="flex flex-col gap-0.5 rounded-md border p-2 text-sm"
+                  className="flex items-start gap-2.5 rounded-lg border px-2.5 py-2 text-sm"
                 >
-                  <span className="flex items-center gap-2">
-                    <span className="bg-primary/10 text-primary rounded px-1 py-0.5 text-[11px] font-medium">
-                      {t('limit')}
-                    </span>
-                    {side && <span className="font-medium">{side}</span>}
-                    <span className="font-medium">{order.coin}</span>
-                  </span>
                   <span
-                    className="text-muted-foreground text-xs"
-                    title={formatDateTimeUtc(time) ?? undefined}
+                    aria-hidden
+                    className="bg-primary/10 text-primary mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md"
                   >
-                    {formatRelativeTime(time) ?? time} · {formatNumber(size)} @{' '}
-                    {formatUsd(price) ?? '—'}
+                    <PlusIcon className="h-3.5 w-3.5" />
+                  </span>
+                  <span className="flex min-w-0 flex-col gap-0.5">
+                    <span className="flex flex-wrap items-center gap-1.5">
+                      <span className="font-semibold">{t('limit')}</span>
+                      {side && <span className="font-medium">{side}</span>}
+                      <span className="font-medium">{order.coin}</span>
+                    </span>
+                    <span
+                      className="text-muted-foreground text-xs"
+                      title={formatDateTimeUtc(time) ?? undefined}
+                    >
+                      {formatRelativeTime(time) ?? time} · {formatNumber(size)} @{' '}
+                      {formatUsd(price) ?? '—'}
+                    </span>
+                    {notional !== null && (
+                      <span className="text-muted-foreground text-xs">approx {notional}</span>
+                    )}
                   </span>
                 </li>
               );
@@ -110,28 +130,45 @@ export function ActivityFeed({ items, live, connection = null }: ActivityFeedPro
               const fill = item.fill;
               const labelKey = fillLabelKey(fill);
               const tone = activitySideTone(fillToneSide(fill));
+              const notional = notionalUsd(fill.size, fill.price);
               return (
                 <li
                   key={`fill-${fill.coin}-${fill.side}-${fill.tid}-${fill.time}-${index}`}
-                  className="flex flex-col gap-0.5 rounded-md border p-2 text-sm"
+                  className="flex items-start gap-2.5 rounded-lg border px-2.5 py-2 text-sm"
                 >
-                  <span className="flex items-center gap-2">
-                    <span
-                      className={cn(
-                        'font-medium',
-                        tone === 'positive' ? 'text-primary' : 'text-destructive',
-                      )}
-                    >
-                      {t(labelKey)}
-                    </span>
-                    <span className="font-medium">{fill.coin}</span>
-                  </span>
                   <span
-                    className="text-muted-foreground text-xs"
-                    title={formatDateTimeUtc(fill.time) ?? undefined}
+                    aria-hidden
+                    className={cn(
+                      'mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md',
+                      tone === 'positive'
+                        ? 'bg-primary/10 text-primary'
+                        : 'bg-destructive/10 text-destructive',
+                    )}
                   >
-                    {formatRelativeTime(fill.time) ?? fill.time} · {formatNumber(fill.size)} @{' '}
-                    {formatUsd(fill.price) ?? '—'}
+                    <ArrowDownUpIcon className="h-3.5 w-3.5" />
+                  </span>
+                  <span className="flex min-w-0 flex-col gap-0.5">
+                    <span className="flex flex-wrap items-center gap-1.5">
+                      <span
+                        className={cn(
+                          'font-semibold',
+                          tone === 'positive' ? 'text-primary' : 'text-destructive',
+                        )}
+                      >
+                        {t(labelKey)}
+                      </span>
+                      <span className="font-medium">{fill.coin}</span>
+                    </span>
+                    <span
+                      className="text-muted-foreground text-xs"
+                      title={formatDateTimeUtc(fill.time) ?? undefined}
+                    >
+                      {formatRelativeTime(fill.time) ?? fill.time} · {formatNumber(fill.size)} @{' '}
+                      {formatUsd(fill.price) ?? '—'}
+                    </span>
+                    {notional !== null && (
+                      <span className="text-muted-foreground text-xs">approx {notional}</span>
+                    )}
                   </span>
                 </li>
               );
@@ -141,40 +178,46 @@ export function ActivityFeed({ items, live, connection = null }: ActivityFeedPro
             return (
               <li
                 key={`close-${trade.market}-${trade.opened_at}-${trade.closed_at}-${index}`}
-                className="flex flex-col gap-0.5 rounded-md border p-2 text-sm"
+                className="flex items-start gap-2.5 rounded-lg border px-2.5 py-2 text-sm"
               >
-                <span className="flex items-center gap-2">
-                  <span className="bg-primary/10 text-primary rounded px-1 py-0.5 text-[11px] font-medium">
-                    {t('closed')}
-                  </span>
-                  <span
-                    className={cn(
-                      'font-medium',
-                      tone === 'positive' ? 'text-primary' : 'text-destructive',
-                    )}
-                  >
-                    {t(trade.side === 'LONG' ? 'long' : 'short')}
-                  </span>
-                  <span className="font-medium">{trade.market}</span>
-                  <span
-                    className={cn(
-                      'tabular-nums',
-                      trade.net_pnl > 0
-                        ? 'text-primary'
-                        : trade.net_pnl < 0
-                          ? 'text-destructive'
-                          : undefined,
-                    )}
-                  >
-                    {formatSignedUsd(trade.net_pnl)}
-                  </span>
-                </span>
                 <span
-                  className="text-muted-foreground text-xs"
-                  title={formatDateTimeUtc(trade.closed_at) ?? undefined}
+                  aria-hidden
+                  className="bg-primary/10 text-primary mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md"
                 >
-                  {formatRelativeTime(trade.closed_at) ?? trade.closed_at} ·{' '}
-                  {formatNumber(trade.volume)} · {t('netPnl')}: {formatSignedUsd(trade.net_pnl)}
+                  <CheckIcon className="h-3.5 w-3.5" />
+                </span>
+                <span className="flex min-w-0 flex-col gap-0.5">
+                  <span className="flex flex-wrap items-center gap-1.5">
+                    <span className="font-semibold">{t('closed')}</span>
+                    <span
+                      className={cn(
+                        'font-medium',
+                        tone === 'positive' ? 'text-primary' : 'text-destructive',
+                      )}
+                    >
+                      {t(trade.side === 'LONG' ? 'long' : 'short')}
+                    </span>
+                    <span className="font-medium">{trade.market}</span>
+                    <span
+                      className={cn(
+                        'tabular-nums',
+                        trade.net_pnl > 0
+                          ? 'text-primary'
+                          : trade.net_pnl < 0
+                            ? 'text-destructive'
+                            : undefined,
+                      )}
+                    >
+                      {formatSignedUsd(trade.net_pnl)}
+                    </span>
+                  </span>
+                  <span
+                    className="text-muted-foreground text-xs"
+                    title={formatDateTimeUtc(trade.closed_at) ?? undefined}
+                  >
+                    {formatRelativeTime(trade.closed_at) ?? trade.closed_at} ·{' '}
+                    {formatNumber(trade.volume)} · {t('netPnl')}: {formatSignedUsd(trade.net_pnl)}
+                  </span>
                 </span>
               </li>
             );

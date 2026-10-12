@@ -60,8 +60,12 @@ export function WalletTabs({ walletAddress }: WalletTabsProps) {
   }
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex flex-wrap gap-1" role="tablist" aria-label={t('walletTabs')}>
+    <div id="wallet-tabs" className="flex scroll-mt-4 flex-col gap-3">
+      <div
+        className="bg-card flex flex-wrap gap-1 rounded-xl border p-1.5 shadow-sm"
+        role="tablist"
+        aria-label={t('walletTabs')}
+      >
         {WALLET_TABS.map((tabId) => {
           const active = tab === tabId;
           return (
@@ -74,10 +78,10 @@ export function WalletTabs({ walletAddress }: WalletTabsProps) {
               id={`wallet-tab-${tabId}`}
               onClick={() => setTab(tabId)}
               className={cn(
-                'rounded-md border px-3 py-1.5 text-sm font-medium',
+                'rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
                 active
-                  ? 'bg-primary text-primary-foreground border-transparent'
-                  : 'border-input bg-background hover:bg-muted',
+                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  : 'text-muted-foreground hover:bg-muted hover:text-foreground',
               )}
             >
               {t(TAB_LABEL_KEYS[tabId])}

@@ -141,4 +141,77 @@ describe('ActivityFeed (SIDEBAR-3EVENTS)', () => {
     expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
+
+  it('shows approx notional when size and price are present', () => {
+    renderFeed({ items: [limitItem, fillItem], live: 'connected', connection: 'LIVE' });
+    expect(screen.getByText('approx $30.00K')).toBeInTheDocument();
+    expect(screen.getByText('approx $2.77K')).toBeInTheDocument();
+  });
+
+  it('hides notional when size is missing', () => {
+    renderFeed({
+      items: [
+        {
+          kind: 'limit',
+          time: '2026-10-08T00:02:00Z',
+          order: {
+            coin: 'BTC',
+            oid: 91490942,
+            status: 'open',
+            side: 'BUY',
+            limit_px: 60000,
+            timestamp: '2026-10-08T00:02:00Z',
+          },
+        },
+      ],
+      live: 'connected',
+      connection: 'LIVE',
+    });
+    expect(screen.queryByText(/approx /)).not.toBeInTheDocument();
+  });
+
+  it('hides notional when price is missing', () => {
+    renderFeed({
+      items: [
+        {
+          kind: 'limit',
+          time: '2026-10-08T00:02:00Z',
+          order: {
+            coin: 'BTC',
+            oid: 91490942,
+            status: 'open',
+            side: 'BUY',
+            size: 0.5,
+            timestamp: '2026-10-08T00:02:00Z',
+          },
+        },
+      ],
+      live: 'connected',
+      connection: 'LIVE',
+    });
+    expect(screen.queryByText(/approx /)).not.toBeInTheDocument();
+  });
+
+  it('shows zero notional as approx $0.00', () => {
+    renderFeed({
+      items: [
+        {
+          kind: 'limit',
+          time: '2026-10-08T00:02:00Z',
+          order: {
+            coin: 'BTC',
+            oid: 91490942,
+            status: 'open',
+            side: 'BUY',
+            limit_px: 60000,
+            size: 0,
+            timestamp: '2026-10-08T00:02:00Z',
+          },
+        },
+      ],
+      live: 'connected',
+      connection: 'LIVE',
+    });
+    expect(screen.getByText('approx $0.00')).toBeInTheDocument();
+  });
 });

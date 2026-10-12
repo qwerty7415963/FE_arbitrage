@@ -7,51 +7,23 @@ import { Button } from '@/components/ui/button';
 import { ApiError } from '@/infrastructure/api-client';
 import { useTraderActivity } from '@/hooks/use-trader-activity';
 import { useTraderDetail } from '@/hooks/use-trader-detail';
+import { useTraderPositions } from '@/hooks/use-trader-positions';
 import { readLastScan } from '@/lib/trader-url-state';
 import { isValidWalletAddress } from '@/lib/trader-validation';
 import { WalletTabs } from './_components/wallet-tabs';
 import { ActivityFeed } from './_components/activity-feed';
-import {
-  deriveWinRate,
-  formatDateTimeUtc,
-  formatDecimal,
-  formatInteger,
-  formatPercent,
-  formatRelativeTime,
-  formatSignedPercent,
-  formatUsd,
-  shortAddress,
-} from '@/lib/trader-format';
-import { CopyAddress } from '@/components/shared/traders/copy-address';
-import { NULL_DISPLAY } from '@/components/shared/traders/trader-table';
+import { WalletIdentityCard } from './_components/wallet-identity-card';
+import { WalletStatCards } from './_components/wallet-stat-cards';
 import { AddToTraderGroupModal } from '@/components/shared/traders/add-to-trader-group-modal';
 import {
   DEFAULT_TRADER_PERIOD,
   TRADER_PERIODS,
-  type DiscoverySource,
   type MemberInput,
   type TraderPeriod,
 } from '@/types/trader';
-import { ArrowLeftIcon, PlusIcon } from 'lucide-react';
+import { ArrowLeftIcon } from 'lucide-react';
 
 type DetailError = 'traderNotFound' | 'unknownError';
-
-const SOURCE_LABEL_KEYS: Record<DiscoverySource, string> = {
-  leaderboard: 'sourceLeaderboard',
-  ws_trade: 'sourceWsTrade',
-  both: 'sourceBoth',
-  manual: 'sourceManual',
-};
-
-function MetricCard({ label, value, sub }: { label: string; value: string; sub?: string }) {
-  return (
-    <div className="flex flex-col gap-1 rounded-lg border p-3">
-      <span className="text-muted-foreground text-xs">{label}</span>
-      <span className="text-xl font-semibold">{value}</span>
-      {sub && <span className="text-muted-foreground text-xs">{sub}</span>}
-    </div>
-  );
-}
 
 export default function TraderDetailPage() {
   return (
@@ -80,6 +52,9 @@ function DetailContent() {
     error: detailError,
     refetch: refetchDetail,
   } = useTraderDetail(wallet, { period, enabled: addressValid });
+  // Always-on panel queries (same hooks/endpoints as the lazy tab queries,
+  // no new fetching logic): default positions sort + page-local period.
+  const panelPositions = useTraderPositions(wallet, { enabled: addressValid });
   const activity = useTraderActivity(wallet);
 
   const error: DetailError | null =
@@ -91,8 +66,9 @@ function DetailContent() {
 
   const registry = detail?.registry ?? null;
   const metrics = detail?.metrics ?? null;
-  const longWr = deriveWinRate(metrics?.long_wins, metrics?.long_count);
-  const shortWr = deriveWinRate(metrics?.short_wins, metrics?.short_count);
+  const positionsSnapshot = panelPositions.snapshot;
+  const lastUpdated =
+    positionsSnapshot?.as_of ?? positionsSnapshot?.summary?.as_of ?? metrics?.metrics_as_of ?? null;
 
   function handleBack(): void {
     const lastScan = readLastScan();
@@ -108,18 +84,22 @@ function DetailContent() {
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 lg:p-6">
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <nav aria-label="breadcrumb" className="flex flex-wrap items-center gap-1.5 text-sm">
         <Button variant="ghost" size="sm" onClick={handleBack}>
           <ArrowLeftIcon className="mr-1 h-4 w-4" />
           {t('backToScanner')}
         </Button>
-        {registry && (
-          <Button size="sm" onClick={() => setAddOpen(true)}>
-            <PlusIcon className="mr-2 h-4 w-4" />
-            {t('addToGroup')}
-          </Button>
-        )}
-      </div>
+        <span aria-hidden className="text-muted-foreground">
+          /
+        </span>
+        <span className="text-muted-foreground">{t('title')}</span>
+        <span aria-hidden className="text-muted-foreground">
+          /
+        </span>
+        <span className="font-medium" aria-current="page">
+          {t('walletDetail')}
+        </span>
+      </nav>
 
       <div className="flex flex-wrap items-end gap-2" role="group" aria-label={t('period')}>
         {TRADER_PERIODS.map((p) => (
@@ -161,99 +141,21 @@ function DetailContent() {
         registry && (
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
             <div className="flex flex-col gap-4 lg:col-span-2">
-              <div className="flex flex-col gap-2 rounded-lg border p-4">
-                <h1 className="text-xl font-bold">
-                  {registry.display_name ?? shortAddress(registry.wallet_address)}
-                </h1>
-                <CopyAddress address={registry.wallet_address} short={false} />
-                <dl className="grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
-                  <div>
-                    <dt className="text-muted-foreground text-xs">{t('firstSeen')}</dt>
-                    <dd>{formatDateTimeUtc(registry.first_seen_at) ?? NULL_DISPLAY}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-muted-foreground text-xs">{t('lastSeen')}</dt>
-                    <dd>{formatDateTimeUtc(registry.last_seen_at) ?? NULL_DISPLAY}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-muted-foreground text-xs">{t('colLastTrade')}</dt>
-                    <dd title={formatDateTimeUtc(registry.last_trade_at) ?? undefined}>
-                      {formatRelativeTime(registry.last_trade_at) ?? NULL_DISPLAY}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-muted-foreground text-xs">{t('discoverySource')}</dt>
-                    <dd>{t(SOURCE_LABEL_KEYS[registry.discovery_source])}</dd>
-                  </div>
-                </dl>
-              </div>
+              <WalletIdentityCard
+                registry={registry}
+                lastUpdated={lastUpdated}
+                metrics={metrics}
+                onAdd={() => setAddOpen(true)}
+              />
 
-              {metrics && (
-                <p className="text-muted-foreground text-xs">
-                  {t(metrics.data_status === 'error' ? 'statusError' : 'statusReady')}
-                  {metrics.metrics_as_of &&
-                    ` · ${t('metricsAsOf', { time: formatRelativeTime(metrics.metrics_as_of) ?? '' })}`}
-                  {metrics.is_partial && ` · ${t('partialData')}`}
-                </p>
-              )}
-
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                <MetricCard label="ROI" value={formatSignedPercent(metrics?.roi) ?? NULL_DISPLAY} />
-                <MetricCard
-                  label={t('pnl')}
-                  value={
-                    metrics?.pnl === null || metrics?.pnl === undefined
-                      ? NULL_DISPLAY
-                      : `${metrics.pnl > 0 ? '+' : ''}${formatUsd(metrics.pnl)}`
-                  }
-                />
-                <MetricCard
-                  label={t('winRate')}
-                  value={formatPercent(metrics?.win_rate) ?? NULL_DISPLAY}
-                />
-                <MetricCard
-                  label={t('volume')}
-                  value={formatUsd(metrics?.volume) ?? NULL_DISPLAY}
-                />
-                <MetricCard
-                  label={t('tradeCount')}
-                  value={formatInteger(metrics?.trade_count) ?? NULL_DISPLAY}
-                />
-                <MetricCard
-                  label={t('profitFactor')}
-                  value={formatDecimal(metrics?.profit_factor) ?? NULL_DISPLAY}
-                />
-                <MetricCard
-                  label={t('maxDrawdown')}
-                  value={formatDecimal(metrics?.max_drawdown_pct) ?? NULL_DISPLAY}
-                />
-              </div>
-
-              <div className="flex flex-col gap-2 rounded-lg border p-4">
-                <h2 className="text-sm font-semibold">{t('longShortStats')}</h2>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="flex flex-col gap-1 text-sm">
-                    <span className="text-muted-foreground text-xs">{t('longPositions')}</span>
-                    <span>
-                      {formatPercent(longWr) ?? NULL_DISPLAY} ·{' '}
-                      {t('countWins', {
-                        wins: metrics?.long_wins ?? 0,
-                        count: metrics?.long_count ?? 0,
-                      })}
-                    </span>
-                  </div>
-                  <div className="flex flex-col gap-1 text-sm">
-                    <span className="text-muted-foreground text-xs">{t('shortPositions')}</span>
-                    <span>
-                      {formatPercent(shortWr) ?? NULL_DISPLAY} ·{' '}
-                      {t('countWins', {
-                        wins: metrics?.short_wins ?? 0,
-                        count: metrics?.short_count ?? 0,
-                      })}
-                    </span>
-                  </div>
-                </div>
-              </div>
+              <WalletStatCards
+                summary={positionsSnapshot?.summary ?? null}
+                positions={positionsSnapshot?.positions ?? []}
+                metrics={metrics}
+                isLoading={panelPositions.isLoading && !positionsSnapshot}
+                error={!positionsSnapshot ? panelPositions.error : null}
+                onRetry={() => panelPositions.refetch()}
+              />
 
               <WalletTabs walletAddress={address.toLowerCase()} />
             </div>

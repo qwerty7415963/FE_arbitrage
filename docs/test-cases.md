@@ -51,7 +51,7 @@
 | `components/add-to-trader-group-modal.tsx`                                                | `tests/unit/components/add-to-trader-group-modal.test.tsx` | 5       | ✅     |
 | `components/saved-searches.tsx`                                                           | `tests/unit/components/saved-searches.test.tsx`            | 3       | ✅     |
 | `app/[locale]/(protected)/traders/page.tsx`                                               | `tests/unit/components/trader-scanner-page.test.tsx`       | 20      | ✅     |
-| `app/[locale]/(protected)/traders/[address]/page.tsx`                                     | `tests/unit/components/trader-detail-page.test.tsx`        | 10      | ✅     |
+| `app/[locale]/(protected)/traders/[address]/page.tsx` (reskin, live — no sync)            | `tests/unit/components/trader-detail-page.test.tsx`        | 10      | ✅     |
 | `components/copy-address.tsx`                                                             | `tests/unit/components/copy-address.test.tsx`              | 2       | ✅     |
 | `services/traders.ts` (live, no POST /sync)                                               | `tests/unit/services/traders.test.ts`                      | 30      | ✅     |
 | `lib/trader-saved-searches.ts`                                                            | `tests/unit/lib/trader-saved-searches.test.ts`             | 4       | ✅     |
@@ -65,7 +65,7 @@
 | `lib/trader-activity-ws.ts` (v1.2 wallet.* + SIDEBAR-3EVENTS order.created)               | `tests/unit/lib/trader-activity-ws.test.ts`                | 21      | ✅     |
 | `hooks/use-trader-activity.ts` (SIDEBAR-3EVENTS WS-only merge/sort/cap)                   | `tests/unit/hooks/use-trader-activity.test.tsx`            | 5       | ✅     |
 | `traders/[address]/_components/positions-section.tsx` (live, ready\|error)                | `tests/unit/components/positions-section.test.tsx`         | 6       | ✅     |
-| `traders/[address]/_components/activity-feed.tsx` (SIDEBAR-3EVENTS 3 renderers)           | `tests/unit/components/activity-feed.test.tsx`             | 8       | ✅     |
+| `traders/[address]/_components/activity-feed.tsx` (SIDEBAR-3EVENTS 3 renderers)           | `tests/unit/components/activity-feed.test.tsx`             | 12      | ✅     |
 | `lib/wallet-tab-state.ts`                                                                 | `tests/unit/lib/wallet-tab-state.test.ts`                  | 8       | ✅     |
 | `hooks/use-trader-trades.ts` (live, funding informational + WS patch)                     | `tests/unit/hooks/use-trader-trades.test.tsx`              | 5       | ✅     |
 | `hooks/use-trader-{positions,balances,fills,orders,transfers,performance}.ts`             | `tests/unit/hooks/wallet-tab-hooks.test.tsx`               | 7       | ✅     |
@@ -73,7 +73,10 @@
 | `traders/[address]/_components/wallet-tabs.tsx`                                           | `tests/unit/components/wallet-tabs.test.tsx`               | 5       | ✅     |
 | `traders/[address]/_components/{balances,orders,fills,transfers,performance}-section.tsx` | `tests/unit/components/wallet-tab-sections.test.tsx`       | 10      | ✅     |
 | `lib/trader-poll.ts` + 8 REST hooks + WS-only activity (30s poll, error stop)             | `tests/unit/hooks/trader-polling.test.tsx`                 | 14      | ✅     |
-| **Total**                                                                                 |                                                            | **370** |        |
+| `lib/trader-retry.ts` (selective retry 429/408/5xx, max 2, backoff 1s→5s cap)             | `tests/unit/lib/trader-retry.test.ts`                      | 14      | ✅     |
+| `traders/[address]/_components/wallet-identity-card.tsx` (reskin)                         | `tests/unit/components/wallet-identity-card.test.tsx`      | 9       | ✅     |
+| `traders/[address]/_components/wallet-stat-cards.tsx` (reskin)                            | `tests/unit/components/wallet-stat-cards.test.tsx`         | 5       | ✅     |
+| **Total**                                                                                 |                                                            | **402** |        |
 
 ### Test Details
 
@@ -197,7 +200,7 @@
 | retry after error            | Button calls `onRetry`             |
 | sortable headers             | aria-sort + `onSortChange` column  |
 
-#### `traders/[address]/_components/activity-feed.tsx` (8 tests, SIDEBAR-3EVENTS)
+#### `traders/[address]/_components/activity-feed.tsx` (12 tests, SIDEBAR-3EVENTS)
 
 | Test                         | Description                                     |
 | ---------------------------- | ----------------------------------------------- |
@@ -209,6 +212,10 @@
 | no badge while disconnected  | transport down → no badge even with LIVE state  |
 | legacy connected badge       | `connected` + null connection → LIVE            |
 | no Load more/Retry (WS-only) | zero buttons, dead props removed                |
+| notional both present        | limit $30.00K + fill $2.77K `approx` lines      |
+| notional hides without size  | missing size → no `approx` line                 |
+| notional hides without price | missing price → no `approx` line                |
+| notional zero shows $0.00    | size 0 → `approx $0.00`                         |
 
 #### `lib/wallet-tab-state.ts` (8 tests)
 
@@ -283,6 +290,21 @@
 | transfers fixture      | subAccountTransfer + $50.00K    |
 | transfers empty        | `noTransfers`                   |
 | performance fixture    | metrics + equity 2026-10-01 row |
+
+#### `lib/trader-retry.ts` (14 tests)
+
+| Test                       | Description                             |
+| -------------------------- | --------------------------------------- |
+| retries 429 rate limit     | `shouldRetryTraderQuery(0, 429)` → true |
+| retries 500 server error   | `shouldRetryTraderQuery(0, 500)` → true |
+| retries 503 unavailable    | `shouldRetryTraderQuery(0, 503)` → true |
+| retries 408 timeout        | `shouldRetryTraderQuery(0, 408)` → true |
+| never retries 400/401/403  | client errors → false                   |
+| never retries 404/422/499  | not-found/validation/abort → false      |
+| never retries non-ApiError | plain `Error` → false                   |
+| stops after max retries    | `failureCount` 2 and 3 → false          |
+| backs off 1000 then 2000   | `traderRetryDelay(0/1)` → 1000/2000     |
+| caps at 5000               | `traderRetryDelay(3/10)` → 5000         |
 
 > Contract v1.2 (live): sync machinery deleted — `src/lib/trader-sync.ts`,
 > `src/hooks/use-trader-sync.ts`, sync polling specs and `POST /sync` service
@@ -435,20 +457,44 @@
 | prev/next disabled at bounds | First/last page edge states         |
 | disabled while loading       | All buttons disabled                |
 
-#### `traders/[address]/page.tsx` trader detail (10 tests, live — no sync)
+#### `traders/[address]/page.tsx` trader detail (10 tests, reskin — live, no sync)
 
-| Test                        | Description                           |
-| --------------------------- | ------------------------------------- |
-| invalid address blocks      | No API call                           |
-| header, cards, long/short   | ROI/PnL/WR, counts, Ready status      |
-| period switch refetches     | period=7D in request                  |
-| null metrics → dashes       | Cards degrade gracefully              |
-| partial keeps data          | Partial marker + rows still visible   |
-| 404 → retry recovers        | Trader not found → rows               |
-| back + add-to-group modal   | router.back, dialog opens             |
-| stored scan → push on back  | Deterministic return, no history race |
-| never Sync now              | No Sync button, no `Syncing` text     |
-| live activity funding-aware | BTC row from `wallet.*` activity      |
+| Test                        | Description                                            |
+| --------------------------- | ------------------------------------------------------ |
+| invalid address blocks      | No API call                                            |
+| identity, cards, tabs       | ROI/WR/Volume cards, Leaderboard, Ready in card        |
+| period switch refetches     | Page 7D drives shared period, detail refetch period=7D |
+| null metrics → dashes       | Cards degrade gracefully                               |
+| partial keeps data          | Partial marker in card + rows still visible            |
+| 404 → retry recovers        | Trader not found → rows                                |
+| back + add-to-group modal   | router.back, overflow button opens dialog              |
+| stored scan → push on back  | Deterministic return, no history race                  |
+| never Sync now              | No Sync button, no `Syncing` text                      |
+| live activity funding-aware | BTC row from `wallet.*` activity                       |
+
+#### `traders/[address]/_components/wallet-identity-card.tsx` (9 tests, reskin)
+
+| Test                      | Description                                          |
+| ------------------------- | ---------------------------------------------------- |
+| badges + grid             | Initial avatar, full address, venue, trophy + Source |
+| overflow opens modal      | `Add to group` button calls `onAdd`                  |
+| null fields → dashes      | Null seen/trade dates + null lastUpdated             |
+| relative last-updated     | `Last updated just now` from positions as_of         |
+| no trophy off-leaderboard | `manual` source hides badge, shows Manual            |
+| ready status line         | Ready + Metrics as of, no Partial                    |
+| error status line         | Error + Metrics as of                                |
+| partial marker            | Partial marker kept with status line                 |
+| null hides status         | Null metrics hides status line                       |
+
+#### `traders/[address]/_components/wallet-stat-cards.tsx` (5 tests, reskin)
+
+| Test                     | Description                                      |
+| ------------------------ | ------------------------------------------------ |
+| account row derived      | Available = account − margin, uPnL summed        |
+| metrics row, no invented | ROI/WR/Volume/Trades/PF/DD, no deltas/sparklines |
+| nulls → dashes           | Null summary/positions/metrics                   |
+| loading skeleton         | `role=status`                                    |
+| error retry              | Button calls `onRetry`                           |
 
 #### `components/copy-address.tsx` (2 tests)
 
@@ -590,7 +636,7 @@
 | E74 | `wallet-tabs.spec.ts`        | Orders open vs historical        | open → Historical click           | No status → filled visible                                             |
 | E75 | `wallet-tabs.spec.ts`        | Transfers enum type              | ?tab=transfers                    | subAccountTransfer + $50.00K                                           |
 | E76 | `wallet-tabs.spec.ts`        | Performance + equity             | ?tab=performance                  | Equity curve + 2026-10-01 row                                          |
-| E77 | `wallet-tabs.spec.ts`        | Balances error + retry           | 500 ×4 → Retry                    | Error → Perp account recovers                                          |
+| E77 | `wallet-tabs.spec.ts`        | Balances error + retry           | 500 ×3 → Retry                    | Error → Perp account recovers                                          |
 | E78 | `wallet-tabs.spec.ts`        | Vietnamese tabs                  | /vi/ ?tab=trades                  | Giao dịch selected, BTC visible                                        |
 | E79 | `wallet-live.spec.ts` (v1.2) | L1 FUNDING + as_of, no /sync     | ?tab=trades live fixtures         | −$12.5, +$1,470, As of, 0× POST /sync                                  |
 | E80 | `wallet-live.spec.ts` (v1.2) | L2 fill prepends, no refetch     | wallet.fill.created ETH BUY       | ETH + $2.31K live, activity count unchanged                            |
@@ -762,3 +808,7 @@ reviewing diffs — never blindly.
 | 2026-10-09 | Wallet live contract v1.2 (LIVE-CONTRACT.md frozen): sync machinery deleted (`useTraderSyncOnView`, polling, syncing skeletons, `trader-sync.spec.ts`, `POST /sync` service, sync unit 25 tests); `wallet.*` WS envelope adopted (fill/funding/order/position/activity/connection), FUNDING column + `as_of`/`partial` per tab, states loading/error/ready only. Unit 366→348 (ws 7→20, activity-hook 2→3, positions 4→6, activity-feed 9→8, trades-hook 4→5, trades-section 11→9, detail 13→10, services 33→30), E2E `wallet-live.spec.ts` L1–L7 = E79–E85. FakeWS delegates non-`/traders/ws` sockets to the real WebSocket so Next HMR never sees the stub.                                                                                                    | —      |
 | 2026-10-10 | Trader 30s polling (FE-only): `lib/trader-poll.ts` + `refetchInterval` on 9 hooks (positions/trades/activity/detail-overview/performance/balances/fills/orders/transfers), `staleTime` unchanged, `enabled:false` never timers, background pause + unmount cleanup via react-query defaults, error stops with manual retry. New `hooks/use-trader-detail.ts` replaces manual `useEffect` overview fetch. Unit 353→367 (+14 fake-timer polling), E2E `trader-detail.spec.ts` E86 (overview + positions ≥2 after 30s, balances 0 while inactive).                                                                                                                                                                                                                   | —      |
 | 2026-10-10 | Sidebar 3-event (SIDEBAR-3EVENTS frozen delta over v1.2): `ActivityFill.dir`, `LiveActivityItem` union, `wallet.order.created` route, WS-only `useTraderActivity` (limit/open-fill/close merge DESC cap 50, Close skipped, no REST/fundings), 3-renderer `ActivityFeed` (LIMIT/LONG-SHORT-BUY-SELL/CLOSED, connecting-loading, waiting-empty, LIVE badge kept, Load more/retry/dead props removed), `page.tsx` props + en/vi `activityWaiting`/`limit`/`closed`. Unit 367→370 (ws 20→21, activity-hook 3→5, feed 8→8 rewritten, polling 14 kept WS-only), E2E `trader-detail.spec.ts` E56/E57/E59 rewritten + E87 (3 rows, /activity 0, funding ignored, Close skipped). Trades tab untouched.                                                                    | —      |
+| 2026-10-11 | Selective retry for trader detail tabs (FE-only): `lib/trader-retry.ts` (`TRADER_QUERY_MAX_RETRIES=2`, retry 429/408/5xx only, never 499/other 4xx/non-ApiError, backoff 1s→5s cap) wired as `retry`/`retryDelay` on 8 REST hooks (detail/positions/balances/fills/orders/trades/transfers/performance), `traderDataRefetchInterval`/`staleTime`/`enabled` untouched, `use-trader-activity.ts` untouched. Unit 370→384 (+14 trader-retry), `trader-polling.test.tsx` 14 kept (final error state unchanged). E2E `trader-detail.spec.ts` untouched (Playwright auto-wait covers ~3s mocked-500 retry lag).                                                                                                                                                         | —      |
+| 2026-10-11 | Wallet reskin (UI-only, no functional change): identity-card, stat-cards (no deltas/sparklines), positions-panel (top5 + View all), equity-chart (hand SVG, shared period); breadcrumb row; 9 tabs kept style-only; feed rows restyled; positions+performance always-on; Long/Short block removed per mock; i18n +7; no new deps. Unit 384->406 (+22). E2E: detail 7/7, E62 scoped, E77 fail x3, L4 red pre-existing, visual baselines need approval.                                                                                                                                                                                                                                                                                                             | —      |
+| 2026-10-11 | Drop equity-chart + sidebar notional: page chart deleted, page-level period group restored, equityPnl removed en/vi; PerformanceSection kept; notional approx USD on limit/fill rows. Unit 406->405.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | —      |
+| 2026-10-12 | Drop Top Positions panel + relocate metrics status into identity card: page drops PositionsPanel import/usage (always-on positions hook kept), WalletIdentityCard gains optional metrics prop rendering Ready/Error + Metrics as of + Partial marker, topPositions/viewAll/totalPnl removed en/vi, positions-panel spec deleted, identity-card 5->9, detail asserts status inside card. Unit 405->402. E2E: no Top Positions refs, skipped (dev-lock).                                                                                                                                                                                                                                                                                                            | —      |
