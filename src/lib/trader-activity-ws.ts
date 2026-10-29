@@ -7,6 +7,7 @@ import type {
   WalletOrderEvent,
 } from '@/types/trader';
 import { WALLET_CONNECTION_STATUSES as CONNECTION_STATUSES } from '@/types/trader';
+import { config } from '@/config';
 
 export type ActivityWsStatus = 'connected' | 'disconnected' | 'reconnecting';
 
@@ -37,12 +38,28 @@ export function buildActivityWsUrl(
   loc?: { protocol: string; host: string },
 ): string {
   const wallet = walletAddress.toLowerCase();
-  const protocol =
-    loc?.protocol ?? (typeof window !== 'undefined' ? window.location.protocol : 'http:');
-  const host =
-    loc?.host ?? (typeof window !== 'undefined' ? window.location.host : 'localhost:8080');
-  const scheme = protocol === 'https:' ? 'wss:' : 'ws:';
-  return `${scheme}//${host}/api/v1/traders/ws?wallet=${encodeURIComponent(wallet)}`;
+  let base: string;
+  if (loc) {
+    const scheme = loc.protocol === 'https:' ? 'wss:' : 'ws:';
+    base = `${scheme}//${loc.host}`;
+  } else if (typeof window !== 'undefined') {
+    const configured = config.NEXT_PUBLIC_WS_URL;
+    if (configured && configured.trim() !== '') {
+      base = configured.trim();
+    } else {
+      const scheme = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      base = `${scheme}//${window.location.host}`;
+    }
+  } else {
+    const configured = config.NEXT_PUBLIC_WS_URL;
+    if (configured && configured.trim() !== '') {
+      base = configured.trim();
+    } else {
+      base = 'ws://localhost:8080';
+    }
+  }
+  base = base.replace(/\/+$/, '');
+  return `${base}/api/v1/traders/ws?wallet=${encodeURIComponent(wallet)}`;
 }
 
 function isDocumentHidden(): boolean {

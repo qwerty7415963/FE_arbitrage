@@ -76,6 +76,10 @@ describe('buildActivityWsUrl', () => {
       'wss://example.com/api/v1/traders/ws?wallet=0xabc',
     );
   });
+
+  it('uses config default when loc is omitted', () => {
+    expect(buildActivityWsUrl('0xabc')).toBe('ws://localhost:8080/api/v1/traders/ws?wallet=0xabc');
+  });
 });
 
 describe('getReconnectDelayMs', () => {
