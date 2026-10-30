@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useAuthStore, formatAddress } from '@/lib/stores/auth';
 import * as authService from '@/services/auth';
 import * as tokenLib from '@/lib/token';
-import { getAccount } from 'wagmi/actions';
+import { getAccount, disconnect } from 'wagmi/actions';
 
 vi.mock('@/services/auth', () => ({
   logout: vi.fn(),
@@ -111,6 +111,31 @@ describe('auth store', () => {
     });
   });
 
+  describe('clearSession', () => {
+    it('clears address + calls disconnect + clearTokens', async () => {
+      vi.mocked(disconnect).mockResolvedValue(undefined as never);
+      useAuthStore.setState({
+        user: mockUser,
+        isAuthenticated: true,
+        address: '0xabc',
+        chainId: 1,
+        authMethod: 'wallet',
+        error: 'boom',
+        isConnecting: true,
+      });
+      await useAuthStore.getState().clearSession();
+      expect(disconnect).toHaveBeenCalled();
+      expect(tokenLib.clearTokens).toHaveBeenCalled();
+      expect(useAuthStore.getState().address).toBeNull();
+      expect(useAuthStore.getState().chainId).toBeNull();
+      expect(useAuthStore.getState().user).toBeNull();
+      expect(useAuthStore.getState().isAuthenticated).toBe(false);
+      expect(useAuthStore.getState().authMethod).toBeNull();
+      expect(useAuthStore.getState().error).toBeNull();
+      expect(useAuthStore.getState().isConnecting).toBe(false);
+    });
+  });
+
   describe('initialize', () => {
     it('loads user if tokens exist', async () => {
       vi.mocked(tokenLib.hasTokens).mockReturnValue(true);
@@ -135,6 +160,34 @@ describe('auth store', () => {
       await useAuthStore.getState().initialize();
       expect(useAuthStore.getState().isInitialized).toBe(true);
       expect(useAuthStore.getState().isLoading).toBe(false);
+    });
+
+    it('initialize without tokens -> address null even if wagmi has account', async () => {
+      vi.mocked(tokenLib.hasTokens).mockReturnValue(false);
+      vi.mocked(getAccount).mockReturnValue({
+        address: '0xabc',
+        chainId: 1,
+      } as unknown as ReturnType<typeof getAccount>);
+      useAuthStore.setState({ address: '0xold' });
+      await useAuthStore.getState().initialize();
+      expect(useAuthStore.getState().address).toBeNull();
+      expect(useAuthStore.getState().chainId).toBeNull();
+      expect(disconnect).not.toHaveBeenCalled();
+    });
+
+    it('initialize getMe fail -> address null + disconnect called', async () => {
+      vi.mocked(tokenLib.hasTokens).mockReturnValue(true);
+      vi.mocked(authService.getMe).mockRejectedValue(new Error('Unauthorized'));
+      vi.mocked(getAccount).mockReturnValue({
+        address: '0xabc',
+        chainId: 1,
+      } as unknown as ReturnType<typeof getAccount>);
+      useAuthStore.setState({ address: '0xold' });
+      await useAuthStore.getState().initialize();
+      expect(tokenLib.clearTokens).toHaveBeenCalled();
+      expect(disconnect).toHaveBeenCalled();
+      expect(useAuthStore.getState().address).toBeNull();
+      expect(useAuthStore.getState().isInitialized).toBe(true);
     });
   });
 

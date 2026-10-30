@@ -57,6 +57,7 @@ interface AuthState {
 
   connectWallet: () => Promise<void>;
   disconnectWallet: () => Promise<void>;
+  clearSession: () => Promise<void>;
   logout: () => Promise<void>;
   fetchUser: () => Promise<void>;
   initialize: () => Promise<void>;
@@ -154,12 +155,7 @@ export const useAuthStore = create<AuthState>()(
         });
       },
 
-      logout: async () => {
-        try {
-          await authService.logout();
-        } catch {
-          // Ignore logout errors
-        }
+      clearSession: async () => {
         try {
           await disconnect(config);
         } catch {
@@ -172,7 +168,18 @@ export const useAuthStore = create<AuthState>()(
           chainId: null,
           isAuthenticated: false,
           authMethod: null,
+          error: null,
+          isConnecting: false,
         });
+      },
+
+      logout: async () => {
+        try {
+          await authService.logout();
+        } catch {
+          // Ignore logout errors
+        }
+        await get().clearSession();
       },
 
       fetchUser: async () => {
@@ -180,47 +187,38 @@ export const useAuthStore = create<AuthState>()(
           const user = await authService.getMe();
           set({ user, isAuthenticated: true });
         } catch {
-          clearTokens();
-          set({
-            user: null,
-            isAuthenticated: false,
-            authMethod: null,
-          });
+          await get().clearSession();
         }
       },
 
       initialize: async () => {
-        const account = getAccount(config);
-        if (account.address) {
-          set({
-            address: account.address,
-            chainId: account.chainId ?? null,
-          });
-        }
-
         if (hasTokens()) {
           set({ isLoading: true });
           try {
             const user = await authService.getMe();
+            const account = getAccount(config);
             set({
               user,
               isAuthenticated: true,
               authMethod: 'wallet',
+              address: account?.address ?? null,
+              chainId: account?.chainId ?? null,
               isInitialized: true,
               isLoading: false,
             });
           } catch {
-            clearTokens();
+            await get().clearSession();
             set({
-              user: null,
-              isAuthenticated: false,
-              authMethod: null,
               isInitialized: true,
               isLoading: false,
             });
           }
         } else {
-          set({ isInitialized: true });
+          set({
+            address: null,
+            chainId: null,
+            isInitialized: true,
+          });
         }
       },
     }),

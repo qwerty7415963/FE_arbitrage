@@ -44,12 +44,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     return onUnauthorized(() => {
-      useAuthStore.setState({
-        user: null,
-        isAuthenticated: false,
-        authMethod: null,
-        connectModalOpen: true,
-      });
+      void useAuthStore.getState().clearSession();
+      useAuthStore.getState().setConnectModalOpen(true);
       setSessionExpired(true);
     });
   }, []);

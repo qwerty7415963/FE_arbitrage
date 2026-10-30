@@ -39,7 +39,7 @@
 | Module                                                                                    | File                                                       | Tests   | Status |
 | ----------------------------------------------------------------------------------------- | ---------------------------------------------------------- | ------- | ------ |
 | `lib/token.ts`                                                                            | `tests/unit/lib/token.test.ts`                             | 14      | ✅     |
-| `stores/auth.ts` (wallet-only)                                                            | `tests/unit/stores/auth.test.ts`                           | 11      | ✅     |
+| `stores/auth.ts` (wallet-only)                                                            | `tests/unit/stores/auth.test.ts`                           | 14      | ✅     |
 | `services/auth.ts`                                                                        | `tests/unit/services/auth.test.ts`                         | 8       | ✅     |
 | `services/funding-arbitrage.ts`                                                           | `tests/unit/services/funding-arbitrage.test.ts`            | 13      | ✅     |
 | `components/group-form.tsx`                                                               | `tests/unit/components/group-form.test.tsx`                | 7       | ✅     |
@@ -81,7 +81,7 @@
 | `hooks/use-telegram.ts`                                                                   | `tests/unit/hooks/use-telegram.test.tsx`                   | 5       | ✅     |
 | `app/[locale]/(protected)/settings/page.tsx`                                              | `tests/unit/components/settings-page.test.tsx`             | 7       | ✅     |
 | `(protected)/groups` + `/groups/[groupId]` auth gate (no API pre-auth)                    | `tests/unit/components/groups-auth-gate.test.tsx`          | 3       | ✅     |
-| **Total**                                                                                 |                                                            | **433** |        |
+| **Total**                                                                                 |                                                            | **436** |        |
 
 ### Test Details
 
@@ -522,21 +522,24 @@
 | lastTradeAfter round-trip | Draft ↔ query both directions       |
 | blank lastTradeAfter      | Empty string omitted from query     |
 
-#### `stores/auth.ts` (11 tests)
+#### `stores/auth.ts` (14 tests)
 
-| Test                         | Description               |
-| ---------------------------- | ------------------------- |
-| requireAuth true when authed | No modal opened           |
-| requireAuth opens modal      | Returns false + modal     |
-| logout clears tokens         | Calls API + wagmi + clear |
-| logout clears on API error   | Clears even if API fails  |
-| fetchUser sets user          | Gets user from API        |
-| fetchUser clears on error    | Clears tokens on 401      |
-| initialize loads user        | Token exists              |
-| initialize clears on error   | getMe fails               |
-| initialize no token          | Skips loading             |
-| formatAddress formats        | Shows 0x1234...5678       |
-| formatAddress empty          | Returns empty string      |
+| Test                          | Description                               |
+| ----------------------------- | ----------------------------------------- |
+| requireAuth true when authed  | No modal opened                           |
+| requireAuth opens modal       | Returns false + modal                     |
+| logout clears tokens          | Calls API + wagmi + clear                 |
+| logout clears on API error    | Clears even if API fails                  |
+| fetchUser sets user           | Gets user from API                        |
+| fetchUser clears on error     | Clears tokens on 401                      |
+| initialize loads user         | Token exists                              |
+| initialize clears on error    | getMe fails                               |
+| initialize no token           | Skips loading                             |
+| clearSession clears state     | Clears address + disconnect + clearTokens |
+| initialize no token + account | Address stays null                        |
+| initialize getMe fail         | Address null + disconnect                 |
+| formatAddress formats         | Shows 0x1234...5678                       |
+| formatAddress empty           | Returns empty string                      |
 
 #### `infrastructure/api-client.ts` (17 tests)
 
@@ -835,3 +838,4 @@ reviewing diffs — never blindly.
 
 - 2026-10-30: Global 401 policy - `lib/auth-events.ts` pub/sub (listener errors isolated), `apiClient` emits only on the final 401 (refresh failure or no refresh token, never `apiClientNoAuth`), providers reset auth + session-expired banner + auto-open connect modal, `useAuthGate` (`expired` only via `ApiError.status === 401`), `useTelegramStatus({ enabled })` with `retry: false`, settings/groups gate (unauthenticated CTA, expired reconnect, generic retry, 403 unchanged), i18n en/vi. Unit +18; E2E `settings-auth.spec.ts` E88/E89.
 - 2026-10-30: Groups gate regression fix - `/groups` skips `listTraderGroups()` while unauthenticated (neutral heading + connect CTA, clears list/error, refetches when auth flips true) and `/groups/[groupId]` skips both `getTraderGroup()`/`listGroupMembers()` the same way, so the global modal stays reserved for the expired-token case. Authenticated path unchanged. Unit +3 (`groups-auth-gate.test.tsx`, total 433). E2E data tests seed auth; `groups.spec.ts` + `accessibility.spec.ts` remain green.
+- 2026-10-30: Option B session loss = disconnect - clearSession() in auth store; initialize no-token keeps address null; getMe fail clears session + disconnect. Unit +3 (stores/auth, total 436).
