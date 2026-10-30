@@ -44,7 +44,12 @@ export function ConnectWalletButton() {
   }
 
   return (
-    <Button variant="outline" onClick={connectWallet}>
+    <Button
+      variant="outline"
+      onClick={() => {
+        void connectWallet();
+      }}
+    >
       <WalletIcon className="mr-2 h-4 w-4" />
       {t('connect')}
     </Button>
