@@ -16,7 +16,16 @@ vi.mock('@/lib/stores/auth', () => ({
   useAuthStore: { getState: () => ({ requireAuth: () => true }) },
 }));
 
-const groups = [{ id: 'g1', user_id: 'u1', name: 'Main', description: null, member_count: 2 }];
+const groups = [
+  {
+    id: 'g1',
+    user_id: 'u1',
+    name: 'Main',
+    description: null,
+    member_count: 2,
+    notify_enabled: false,
+  },
+];
 const members = [
   { venue: 'hyperliquid', wallet_address: '0x1111111111111111111111111111111111111111' },
 ];

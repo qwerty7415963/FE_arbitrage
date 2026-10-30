@@ -10,7 +10,10 @@
     "create": "Tạo mới",
     "search": "Tìm kiếm",
     "noData": "Không có dữ liệu",
-    "menu": "Menu"
+    "menu": "Menu",
+    "sessionExpired": "Phiên đăng nhập đã hết hạn. Hãy kết nối lại ví để tiếp tục.",
+    "reconnect": "Kết nối lại ví",
+    "dismiss": "Đóng"
   },
   "navigation": {
     "fundingArbitrage": "Funding Arbitrage",
@@ -67,6 +70,7 @@
     "forbidden": "Bạn không có quyền xem nhóm này",
     "notFound": "Không tìm thấy nhóm",
     "authRequired": "Cần đăng nhập. Hãy kết nối ví để tiếp tục.",
+    "sessionExpired": "Phiên đăng nhập đã hết hạn. Hãy kết nối lại ví để xem nhóm.",
     "searchPlaceholder": "Tìm địa chỉ hoặc tag",
     "scanning": "Đang quét...",
     "scanMore": "Quét thêm ví",
@@ -86,7 +90,9 @@
     "addMembersResult": "Đã thêm {added}",
     "wallets": "ví",
     "loading": "Đang tải...",
-    "walletsComingSoon": "Bảng wallets trong nhóm sẽ làm ở phase membership tiếp theo."
+    "walletsComingSoon": "Bảng wallets trong nhóm sẽ làm ở phase membership tiếp theo.",
+    "receiveNotifications": "Nhận thông báo",
+    "telegramNotConnectedHint": "Kết nối Telegram để bật thông báo"
   },
   "wallets": {
     "title": "Quét ví",
@@ -373,5 +379,31 @@
     "noEquity": "Không có dữ liệu equity",
     "yes": "Có",
     "no": "Không"
+  },
+  "settings": {
+    "title": "Cài đặt"
+  },
+  "notifications": {
+    "title": "Thông báo Telegram",
+    "description": "Kết nối tài khoản Telegram để nhận cảnh báo cho ví đang theo dõi.",
+    "connect": "Kết nối Telegram",
+    "disconnect": "Huỷ kết nối",
+    "connectedAs": "Đã kết nối @{username}",
+    "locale": "Ngôn ngữ",
+    "groupsEnabled": "Nhóm đã bật: {count}",
+    "deepLink": "Mở trong Telegram",
+    "code": "Mã",
+    "copy": "Sao chép",
+    "copied": "Đã sao chép",
+    "expiresAt": "Hết hạn lúc",
+    "notConnected": "Chưa kết nối",
+    "disconnectConfirm": "Huỷ kết nối Telegram? Bạn sẽ không còn nhận thông báo.",
+    "loading": "Đang tải...",
+    "error": "Không tải được trạng thái Telegram",
+    "retry": "Thử lại",
+    "hint": "Kết nối Telegram để bật thông báo nhóm.",
+    "connectToManageNotifications": "Kết nối ví để quản lý thông báo Telegram.",
+    "sessionExpired": "Phiên đăng nhập đã hết hạn. Hãy kết nối lại ví để quản lý thông báo.",
+    "reconnect": "Kết nối lại ví"
   }
 }

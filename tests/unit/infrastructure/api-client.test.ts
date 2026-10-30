@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { apiClient, apiClientNoAuth, ApiError } from '@/infrastructure/api-client';
 import * as tokenLib from '@/lib/token';
 import * as authService from '@/services/auth';
+import { emitUnauthorized } from '@/lib/auth-events';
 
 vi.mock('@/lib/token', () => ({
   getAccessToken: vi.fn(),
@@ -13,6 +14,10 @@ vi.mock('@/lib/token', () => ({
 
 vi.mock('@/services/auth', () => ({
   refresh: vi.fn(),
+}));
+
+vi.mock('@/lib/auth-events', () => ({
+  emitUnauthorized: vi.fn(),
 }));
 
 const mockFetch = vi.fn();
@@ -151,6 +156,46 @@ describe('apiClient', () => {
     await expect(apiClient('/test')).rejects.toThrow(ApiError);
     expect(tokenLib.clearTokens).toHaveBeenCalled();
   });
+
+  it('emits unauthorized once for a 401 without a refresh token', async () => {
+    mockFetch.mockResolvedValue(
+      errorResponse(401, { error: { code: 'AUTH-003', message: 'Session expired' } }),
+    );
+
+    await expect(apiClient('/test')).rejects.toThrow(ApiError);
+
+    expect(emitUnauthorized).toHaveBeenCalledTimes(1);
+  });
+
+  it('emits unauthorized once when the token refresh fails', async () => {
+    vi.mocked(tokenLib.getRefreshToken).mockReturnValue('refresh-token');
+    vi.mocked(authService.refresh).mockRejectedValue(new Error('Refresh failed'));
+
+    mockFetch.mockResolvedValue(errorResponse(401));
+
+    await expect(apiClient('/test')).rejects.toThrow(ApiError);
+
+    expect(emitUnauthorized).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not emit unauthorized when the token refresh succeeds', async () => {
+    vi.mocked(tokenLib.getRefreshToken).mockReturnValue('refresh-token');
+    vi.mocked(authService.refresh).mockResolvedValue({
+      access_token: 'new-access',
+      refresh_token: 'new-refresh',
+      expires_at: 123,
+      user: { id: '1', email: 'a@b.com', role: 'user', status: 'active', created_at: '' },
+    });
+
+    mockFetch
+      .mockResolvedValueOnce(errorResponse(401))
+      .mockResolvedValueOnce(jsonResponse({ success: true, data: 'ok' }));
+
+    const result = await apiClient('/test');
+
+    expect(result).toEqual({ success: true, data: 'ok' });
+    expect(emitUnauthorized).not.toHaveBeenCalled();
+  });
 });
 
 describe('apiClientNoAuth', () => {
@@ -194,5 +239,6 @@ describe('apiClientNoAuth', () => {
     );
 
     await expect(apiClientNoAuth('/test')).rejects.toThrow(ApiError);
+    expect(emitUnauthorized).not.toHaveBeenCalled();
   });
 });

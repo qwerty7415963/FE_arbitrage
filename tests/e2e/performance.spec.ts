@@ -32,6 +32,39 @@ function makeTrader(i: number) {
   };
 }
 
+async function seedAuth(page: Page) {
+  await page.addInitScript(() => {
+    localStorage.setItem('access_token', 'test-token');
+    localStorage.setItem('refresh_token', 'test-refresh');
+  });
+  await page.route('**/api/v1/auth/me', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        data: { id: 'u1', email: 't@t.com', role: 'user', status: 'active', created_at: '' },
+      }),
+    }),
+  );
+  await page.route('**/api/v1/telegram/status', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        data: {
+          connected: false,
+          tg_username: null,
+          locale: 'en',
+          status: 'disconnected',
+          groups_enabled: 0,
+        },
+      }),
+    }),
+  );
+}
+
 async function mockGroups(page: Page) {
   await page.route('**/api/v1/trader-groups', (route) =>
     route.fulfill({
@@ -108,6 +141,7 @@ test.describe('Performance smoke', () => {
   });
 
   test('large group stays usable with client paging', async ({ page }) => {
+    await seedAuth(page);
     const members = Array.from({ length: 500 }, (_, i) => ({
       group_id: 'g1',
       venue_id: null,

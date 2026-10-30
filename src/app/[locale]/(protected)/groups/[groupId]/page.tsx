@@ -12,8 +12,11 @@ import {
   listGroupMembers,
   removeGroupMembers,
   updateGroupMembers,
+  updateTraderGroup,
 } from '@/services/traders';
 import { useAuthStore } from '@/lib/stores/auth';
+import { useTelegramStatus } from '@/hooks/use-telegram';
+import { useAuthGate } from '@/hooks/use-auth-gate';
 import { ConnectWalletButton } from '@/components/shared/auth/connect-wallet-button';
 import { CopyAddress } from '@/components/shared/traders/copy-address';
 import { NULL_DISPLAY } from '@/components/shared/traders/trader-table';
@@ -30,10 +33,14 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
   const { groupId } = use(params);
   const t = useTranslations('groups');
   const tt = useTranslations('traders');
+  const tc = useTranslations('common');
   const router = useRouter();
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const setConnectModalOpen = useAuthStore((s) => s.setConnectModalOpen);
   const [group, setGroup] = useState<TraderGroup | null>(null);
+  const telegramStatus = useTelegramStatus({ enabled: isAuthenticated });
   const [isLoadingGroup, setIsLoadingGroup] = useState(true);
-  const [groupError, setGroupError] = useState<string | null>(null);
+  const [groupError, setGroupError] = useState<unknown>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
@@ -45,8 +52,17 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
   const [isSavingEdit, setIsSavingEdit] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoadingMembers, setIsLoadingMembers] = useState(true);
-  const [membersError, setMembersError] = useState<string | null>(null);
-  const [needsAuth, setNeedsAuth] = useState(false);
+  const [membersError, setMembersError] = useState<unknown>(null);
+  const groupGate = useAuthGate({
+    isAuthenticated,
+    isLoading: isLoadingGroup,
+    error: groupError,
+  });
+  const membersGate = useAuthGate({
+    isAuthenticated,
+    isLoading: isLoadingMembers,
+    error: membersError,
+  });
 
   const fetchGroup = useCallback(async () => {
     setIsLoadingGroup(true);
@@ -54,49 +70,49 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
     try {
       setGroup(await getTraderGroup(groupId));
     } catch (err) {
-      if (err instanceof ApiError) {
-        if (err.status === 403) setGroupError(t('forbidden'));
-        else if (err.status === 404) setGroupError(t('notFound'));
-        else setGroupError(err.message);
-      } else {
-        setGroupError(err instanceof Error ? err.message : t('unknownError'));
-      }
+      setGroupError(err);
     } finally {
       setIsLoadingGroup(false);
     }
-  }, [groupId, t]);
+  }, [groupId]);
 
   const fetchMembers = useCallback(async () => {
     setIsLoadingMembers(true);
     setMembersError(null);
-    setNeedsAuth(false);
     try {
       setMembers(await listGroupMembers(groupId));
     } catch (err) {
-      if (err instanceof ApiError && (err.status === 401 || err.code === 'AUTH-005')) {
-        setNeedsAuth(true);
-        setMembersError(t('authRequired'));
-      } else {
-        setMembersError(err instanceof Error ? err.message : t('unknownError'));
-      }
+      setMembersError(err);
     } finally {
       setIsLoadingMembers(false);
     }
-  }, [groupId, t]);
+  }, [groupId]);
 
   useEffect(() => {
     async function load() {
+      if (!isAuthenticated) {
+        setGroup(null);
+        setGroupError(null);
+        setIsLoadingGroup(false);
+        return;
+      }
       await fetchGroup();
     }
     load();
-  }, [fetchGroup]);
+  }, [fetchGroup, isAuthenticated]);
 
   useEffect(() => {
     async function load() {
+      if (!isAuthenticated) {
+        setMembers([]);
+        setMembersError(null);
+        setIsLoadingMembers(false);
+        return;
+      }
       await fetchMembers();
     }
     load();
-  }, [fetchMembers]);
+  }, [fetchMembers, isAuthenticated]);
 
   const filtered = useMemo(() => {
     const needle = search.trim().toLowerCase();
@@ -111,6 +127,37 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const page = Math.min(currentPage, totalPages);
   const visible = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  const groupErrorMessage =
+    groupError instanceof ApiError
+      ? groupError.status === 403
+        ? t('forbidden')
+        : groupError.status === 404
+          ? t('notFound')
+          : groupError.message
+      : groupError instanceof Error || typeof groupError === 'string'
+        ? typeof groupError === 'string'
+          ? groupError
+          : groupError.message
+        : t('unknownError');
+
+  const membersErrorMessage =
+    membersError instanceof Error || typeof membersError === 'string'
+      ? typeof membersError === 'string'
+        ? membersError
+        : membersError.message
+      : t('unknownError');
+
+  async function handleToggleNotify(next: boolean) {
+    if (!group) return;
+    if (!telegramStatus.data?.connected) return;
+    try {
+      const updated = await updateTraderGroup(group.id, { notify_enabled: next });
+      setGroup(updated);
+    } catch (err) {
+      setGroupError(err instanceof Error ? err.message : t('unknownError'));
+    }
+  }
 
   async function handleRemove(member: TraderMember) {
     if (!useAuthStore.getState().requireAuth()) return;
@@ -168,11 +215,38 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
     );
   }
 
+  if (groupGate === 'expired') {
+    return (
+      <div className="flex flex-1 flex-col gap-4 p-4 lg:p-6">
+        <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-200">
+          {t('sessionExpired')}{' '}
+          <Button variant="link" size="sm" onClick={() => setConnectModalOpen(true)}>
+            {tc('reconnect')}
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (groupGate === 'unauthenticated') {
+    return (
+      <div className="flex flex-1 flex-col gap-4 p-4 lg:p-6">
+        <h1 className="text-2xl font-bold">{t('title')}</h1>
+        <div className="text-muted-foreground py-12 text-center">
+          <p>{t('authRequired')}</p>
+          <div className="mt-4 inline-flex">
+            <ConnectWalletButton />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (groupError || !group) {
     return (
       <div className="flex flex-1 flex-col gap-4 p-4 lg:p-6">
         <div className="bg-destructive/10 text-destructive rounded-md p-3 text-sm">
-          {groupError ?? t('notFound')}{' '}
+          {groupError ? groupErrorMessage : t('notFound')}{' '}
           <Button variant="link" size="sm" onClick={fetchGroup}>
             {t('retry')}
           </Button>
@@ -192,6 +266,23 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
           <p className="text-muted-foreground text-sm">
             {t('walletCount')}: {group.member_count}
           </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              role="switch"
+              aria-label={t('receiveNotifications')}
+              aria-checked={group?.notify_enabled ?? false}
+              checked={group?.notify_enabled ?? false}
+              disabled={!telegramStatus.data?.connected}
+              onChange={(e) => handleToggleNotify(e.target.checked)}
+            />
+            <span>{t('receiveNotifications')}</span>
+          </label>
+          {!telegramStatus.data?.connected && (
+            <span className="text-muted-foreground text-xs">{t('telegramNotConnectedHint')}</span>
+          )}
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={() => setFormOpen(true)}>
@@ -223,20 +314,23 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
         </Link>
       </div>
 
-      {membersError && (
-        <div className="bg-destructive/10 text-destructive rounded-md p-3 text-sm">
-          {membersError}{' '}
-          {needsAuth ? (
-            <span className="ml-2 inline-flex">
-              <ConnectWalletButton />
-            </span>
-          ) : (
+      {membersError ? (
+        membersGate === 'expired' ? (
+          <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-200">
+            {t('sessionExpired')}{' '}
+            <Button variant="link" size="sm" onClick={() => setConnectModalOpen(true)}>
+              {tc('reconnect')}
+            </Button>
+          </div>
+        ) : (
+          <div className="bg-destructive/10 text-destructive rounded-md p-3 text-sm">
+            {membersErrorMessage}{' '}
             <Button variant="link" size="sm" onClick={fetchMembers}>
               {t('retry')}
             </Button>
-          )}
-        </div>
-      )}
+          </div>
+        )
+      ) : null}
 
       {isLoadingMembers && members.length === 0 ? (
         <div className="space-y-2">

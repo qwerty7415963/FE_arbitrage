@@ -261,7 +261,7 @@ export async function createTraderGroup(input: {
 
 export async function updateTraderGroup(
   id: string,
-  input: { name?: string; description?: string },
+  input: { name?: string; description?: string; notify_enabled?: boolean },
 ): Promise<TraderGroup> {
   const res = await apiClient<ApiResponse<TraderGroup>>(`${TRADER_GROUPS_BASE}/${id}`, {
     method: 'PATCH',

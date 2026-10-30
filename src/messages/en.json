@@ -10,7 +10,10 @@
     "create": "Create",
     "search": "Search",
     "noData": "No data",
-    "menu": "Menu"
+    "menu": "Menu",
+    "sessionExpired": "Your session has expired. Reconnect your wallet to continue.",
+    "reconnect": "Reconnect wallet",
+    "dismiss": "Dismiss"
   },
   "navigation": {
     "fundingArbitrage": "Funding Arbitrage",
@@ -128,6 +131,7 @@
     "forbidden": "You don't have permission to view this group",
     "notFound": "Group not found",
     "authRequired": "Authentication required. Connect your wallet to continue.",
+    "sessionExpired": "Your session has expired. Reconnect your wallet to view groups.",
     "searchPlaceholder": "Search address or tag",
     "scanning": "Scanning...",
     "scanMore": "Scan for more wallets",
@@ -147,7 +151,9 @@
     "addMembersResult": "Added {added}",
     "wallets": "wallets",
     "loading": "Loading...",
-    "walletsComingSoon": "Group wallets table comes in the next phase (membership)."
+    "walletsComingSoon": "Group wallets table comes in the next phase (membership).",
+    "receiveNotifications": "Receive notifications",
+    "telegramNotConnectedHint": "Connect Telegram to enable notifications"
   },
   "traders": {
     "title": "Trader Scanner",
@@ -373,5 +379,31 @@
     "noEquity": "No equity data",
     "yes": "Yes",
     "no": "No"
+  },
+  "settings": {
+    "title": "Settings"
+  },
+  "notifications": {
+    "title": "Telegram notifications",
+    "description": "Connect your Telegram account to receive alerts for watched wallets.",
+    "connect": "Connect Telegram",
+    "disconnect": "Disconnect",
+    "connectedAs": "Connected as @{username}",
+    "locale": "Language",
+    "groupsEnabled": "Enabled groups: {count}",
+    "deepLink": "Open in Telegram",
+    "code": "Code",
+    "copy": "Copy",
+    "copied": "Copied",
+    "expiresAt": "Expires at",
+    "notConnected": "Not connected",
+    "disconnectConfirm": "Disconnect Telegram? You will stop receiving notifications.",
+    "loading": "Loading...",
+    "error": "Failed to load Telegram status",
+    "retry": "Retry",
+    "hint": "Connect Telegram to enable group notifications.",
+    "connectToManageNotifications": "Connect your wallet to manage Telegram notifications.",
+    "sessionExpired": "Your session has expired. Reconnect your wallet to manage notifications.",
+    "reconnect": "Reconnect wallet"
   }
 }

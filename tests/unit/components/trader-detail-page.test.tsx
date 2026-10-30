@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { NextIntlClientProvider } from 'next-intl';
@@ -104,6 +104,19 @@ function renderPage() {
 describe('TraderDetailPage (contract v1.2 live, no sync)', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
+    vi.stubGlobal(
+      'WebSocket',
+      class {
+        static OPEN = 1;
+        readyState = 0;
+        onopen = null;
+        onmessage = null;
+        onclose = null;
+        onerror = null;
+        send() {}
+        close() {}
+      },
+    );
     nav.address = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
     vi.mocked(fetchTraderDetail).mockResolvedValue(detail);
     vi.mocked(listTraderGroups).mockResolvedValue([]);
@@ -124,6 +137,10 @@ describe('TraderDetailPage (contract v1.2 live, no sync)', () => {
       connection: null,
       isLoading: true,
     });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   it('blocks invalid addresses without fetching', () => {

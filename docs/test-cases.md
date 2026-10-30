@@ -61,7 +61,7 @@
 | `components/shared/pagination.tsx`                                                        | `tests/unit/components/pagination.test.tsx`                | 5       | ✅     |
 | `lib/trader-filter-draft.ts`                                                              | `tests/unit/lib/trader-filter-draft.test.ts`               | 9       | ✅     |
 | `components/funding-table.tsx`                                                            | `tests/unit/components/funding-table.test.tsx`             | 26      | ✅     |
-| `infrastructure/api-client.ts`                                                            | `tests/unit/infrastructure/api-client.test.ts`             | 14      | ✅     |
+| `infrastructure/api-client.ts` (401 emits unauthorized once)                              | `tests/unit/infrastructure/api-client.test.ts`             | 17      | ✅     |
 | `lib/trader-activity-ws.ts` (v1.2 wallet.* + SIDEBAR-3EVENTS order.created)               | `tests/unit/lib/trader-activity-ws.test.ts`                | 21      | ✅     |
 | `hooks/use-trader-activity.ts` (SIDEBAR-3EVENTS WS-only merge/sort/cap)                   | `tests/unit/hooks/use-trader-activity.test.tsx`            | 5       | ✅     |
 | `traders/[address]/_components/positions-section.tsx` (live, ready\|error)                | `tests/unit/components/positions-section.test.tsx`         | 6       | ✅     |
@@ -76,7 +76,12 @@
 | `lib/trader-retry.ts` (selective retry 429/408/5xx, max 2, backoff 1s→5s cap)             | `tests/unit/lib/trader-retry.test.ts`                      | 14      | ✅     |
 | `traders/[address]/_components/wallet-identity-card.tsx` (reskin)                         | `tests/unit/components/wallet-identity-card.test.tsx`      | 9       | ✅     |
 | `traders/[address]/_components/wallet-stat-cards.tsx` (reskin)                            | `tests/unit/components/wallet-stat-cards.test.tsx`         | 5       | ✅     |
-| **Total**                                                                                 |                                                            | **402** |        |
+| `lib/auth-events.ts`                                                                      | `tests/unit/lib/auth-events.test.ts`                       | 4       | ✅     |
+| `hooks/use-auth-gate.ts`                                                                  | `tests/unit/hooks/use-auth-gate.test.ts`                   | 6       | ✅     |
+| `hooks/use-telegram.ts`                                                                   | `tests/unit/hooks/use-telegram.test.tsx`                   | 5       | ✅     |
+| `app/[locale]/(protected)/settings/page.tsx`                                              | `tests/unit/components/settings-page.test.tsx`             | 7       | ✅     |
+| `(protected)/groups` + `/groups/[groupId]` auth gate (no API pre-auth)                    | `tests/unit/components/groups-auth-gate.test.tsx`          | 3       | ✅     |
+| **Total**                                                                                 |                                                            | **433** |        |
 
 ### Test Details
 
@@ -533,7 +538,7 @@
 | formatAddress formats        | Shows 0x1234...5678       |
 | formatAddress empty          | Returns empty string      |
 
-#### `infrastructure/api-client.ts` (14 tests)
+#### `infrastructure/api-client.ts` (17 tests)
 
 | Test                              | Description        |
 | --------------------------------- | ------------------ |
@@ -551,6 +556,18 @@
 | apiClientNoAuth adds Content-Type | Header set         |
 | apiClientNoAuth returns JSON      | Success            |
 | apiClientNoAuth throws on error   | Error response     |
+| apiClient 401 emits once          | No refresh token   |
+| apiClient refresh fail emits      | Session expired    |
+| apiClient refresh ok no emit      | Retried 200        |
+| apiClientNoAuth never emits       | 401 stays silent   |
+
+#### Auth gate / global 401 policy (2026-10-30)
+
+- `lib/auth-events.ts` (4 tests): subscribe/unsubscribe, listener errors never propagate, repeated emits are safe.
+- `hooks/use-auth-gate.ts` (6 tests): loading, unauthenticated, expired on any `ApiError` 401 (AUTH-003/AUTH-005), error for non-401, ready.
+- `hooks/use-telegram.ts` (5 tests): `enabled: false` never fetches; failures are not retried.
+- `settings/page.tsx` (7 tests): unauthenticated CTA with zero `/telegram/status` calls; 401 session-expired copy + reconnect; non-401 error + Retry.
+- `groups` pages (3 tests): unauthenticated `/groups` and `/groups/[groupId]` render the neutral heading + connect CTA while `listTraderGroups`/`getTraderGroup`/`listGroupMembers`/`getStatus` stay uncalled; `/groups` fetches once `isAuthenticated` flips to true.
 
 ---
 
@@ -647,6 +664,8 @@
 | E85 | `wallet-live.spec.ts` (v1.2) | L7 Vietnamese asOf + funding     | /vi/ ?tab=trades                  | −$12.5 + Lúc visible, 0× POST /sync                                    |
 | E86 | `trader-detail.spec.ts`      | 30s poll, inactive silent        | Mock detail → wait 30s            | detail ≥2, positions ≥2, balances 0, activity 0                        |
 | E87 | `trader-detail.spec.ts`      | Sidebar skips Close fills (C2)   | Close Long fill broadcast         | Waiting stays, 0 rows, activity 0                                      |
+| E88 | `settings-auth.spec.ts`      | Unauthenticated settings         | Navigate /settings (no auth)      | Connect CTA; zero telegram/status requests                             |
+| E89 | `settings-auth.spec.ts`      | Expired session (401)            | Auth + status 401 + refresh 401   | Banner + expired copy + reconnect CTA + modal                          |
 
 > Contract v1.2: `trader-sync.spec.ts` (E79–E82 v1.1) deleted with the sync
 > machinery. FakeWS in `wallet-live.spec.ts` delegates non-`/traders/ws`
@@ -812,3 +831,7 @@ reviewing diffs — never blindly.
 | 2026-10-11 | Wallet reskin (UI-only, no functional change): identity-card, stat-cards (no deltas/sparklines), positions-panel (top5 + View all), equity-chart (hand SVG, shared period); breadcrumb row; 9 tabs kept style-only; feed rows restyled; positions+performance always-on; Long/Short block removed per mock; i18n +7; no new deps. Unit 384->406 (+22). E2E: detail 7/7, E62 scoped, E77 fail x3, L4 red pre-existing, visual baselines need approval.                                                                                                                                                                                                                                                                                                             | —      |
 | 2026-10-11 | Drop equity-chart + sidebar notional: page chart deleted, page-level period group restored, equityPnl removed en/vi; PerformanceSection kept; notional approx USD on limit/fill rows. Unit 406->405.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | —      |
 | 2026-10-12 | Drop Top Positions panel + relocate metrics status into identity card: page drops PositionsPanel import/usage (always-on positions hook kept), WalletIdentityCard gains optional metrics prop rendering Ready/Error + Metrics as of + Partial marker, topPositions/viewAll/totalPnl removed en/vi, positions-panel spec deleted, identity-card 5->9, detail asserts status inside card. Unit 405->402. E2E: no Top Positions refs, skipped (dev-lock).                                                                                                                                                                                                                                                                                                            | —      |
+| 2026-10-29 | Telegram notifications FE (contract v1.4): services/telegram.ts, hooks/use-telegram.ts, settings page card, groups notify toggle, i18n en/vi. Unit tests: use-telegram, settings-page, groups-notify-toggle.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+
+- 2026-10-30: Global 401 policy - `lib/auth-events.ts` pub/sub (listener errors isolated), `apiClient` emits only on the final 401 (refresh failure or no refresh token, never `apiClientNoAuth`), providers reset auth + session-expired banner + auto-open connect modal, `useAuthGate` (`expired` only via `ApiError.status === 401`), `useTelegramStatus({ enabled })` with `retry: false`, settings/groups gate (unauthenticated CTA, expired reconnect, generic retry, 403 unchanged), i18n en/vi. Unit +18; E2E `settings-auth.spec.ts` E88/E89.
+- 2026-10-30: Groups gate regression fix - `/groups` skips `listTraderGroups()` while unauthenticated (neutral heading + connect CTA, clears list/error, refetches when auth flips true) and `/groups/[groupId]` skips both `getTraderGroup()`/`listGroupMembers()` the same way, so the global modal stays reserved for the expired-token case. Authenticated path unchanged. Unit +3 (`groups-auth-gate.test.tsx`, total 433). E2E data tests seed auth; `groups.spec.ts` + `accessibility.spec.ts` remain green.

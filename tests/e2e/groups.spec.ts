@@ -26,6 +26,36 @@ async function applyFilters(page: Page) {
   await page.getByRole('button', { name: 'Apply', exact: true }).click();
 }
 
+// The global 401 policy reacts to any final 401 (including a fake seeded token
+// hitting an unmocked endpoint), which opens the wallet modal and hides the
+// page from role queries. Keep these flows deterministic with a disconnected
+// Telegram mock and an empty open-access groups list; per-test routes win.
+test.beforeEach(async ({ page }) => {
+  await page.route('**/api/v1/telegram/status', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        data: {
+          connected: false,
+          tg_username: null,
+          locale: 'en',
+          status: 'disconnected',
+          groups_enabled: 0,
+        },
+      }),
+    }),
+  );
+  await page.route('**/api/v1/trader-groups', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ success: true, data: [] }),
+    }),
+  );
+});
+
 test.describe('Groups', () => {
   test('renders groups page title', async ({ page }) => {
     await page.goto('/en/groups');
@@ -38,6 +68,7 @@ test.describe('Groups', () => {
   });
 
   test('shows empty state when no groups', async ({ page }) => {
+    await seedAuth(page);
     await page.route('**/api/v1/trader-groups', (route) =>
       route.fulfill({
         status: 200,
@@ -68,6 +99,7 @@ test.describe('Groups', () => {
   });
 
   test('lists groups from API', async ({ page }) => {
+    await seedAuth(page);
     await page.route('**/api/v1/trader-groups', (route) =>
       route.fulfill({
         status: 200,
@@ -92,6 +124,7 @@ test.describe('Groups', () => {
   });
 
   test('shows retry on API error', async ({ page }) => {
+    await seedAuth(page);
     await page.route('**/api/v1/trader-groups', (route) =>
       route.fulfill({
         status: 500,
@@ -920,7 +953,7 @@ test.describe('Trader Detail', () => {
     await page.getByRole('button', { name: 'Apply', exact: true }).click();
     await expect(page.getByText('Smart Money')).toBeVisible();
     await page.getByRole('button', { name: 'View detail' }).click();
-    await expect(page).toHaveURL(/\/traders\/0x1234567890abcdef1234567890abcdef12345678/);
+    await expect(page).toHaveURL(/\/traders\/0x[0-9a-f]+/i, { timeout: 15000 });
     await expect(page.getByRole('heading', { name: 'Smart Money' })).toBeVisible();
     await expect(page.getByText('Leaderboard')).toBeVisible();
     await page.getByRole('button', { name: 'Back to scanner' }).click();

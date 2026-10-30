@@ -18,6 +18,7 @@ const mockGroup = {
   name: 'Main',
   description: 'desc',
   member_count: 2,
+  notify_enabled: false,
 };
 
 function renderForm(props: Partial<React.ComponentProps<typeof GroupForm>> = {}) {

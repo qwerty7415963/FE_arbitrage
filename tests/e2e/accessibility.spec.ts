@@ -57,6 +57,39 @@ async function mockScanner(page: Page) {
   );
 }
 
+async function seedAuth(page: Page) {
+  await page.addInitScript(() => {
+    localStorage.setItem('access_token', 'test-token');
+    localStorage.setItem('refresh_token', 'test-refresh');
+  });
+  await page.route('**/api/v1/auth/me', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        data: { id: 'u1', email: 't@t.com', role: 'user', status: 'active', created_at: '' },
+      }),
+    }),
+  );
+  await page.route('**/api/v1/telegram/status', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        data: {
+          connected: false,
+          tg_username: null,
+          locale: 'en',
+          status: 'disconnected',
+          groups_enabled: 0,
+        },
+      }),
+    }),
+  );
+}
+
 test.describe('Accessibility', () => {
   test('scanner default has no violations', async ({ page }) => {
     await mockScanner(page);
@@ -119,6 +152,7 @@ test.describe('Accessibility', () => {
   });
 
   test('groups list and create dialog have no violations', async ({ page }) => {
+    await seedAuth(page);
     await page.route('**/api/v1/trader-groups', (route) =>
       route.fulfill({
         status: 200,

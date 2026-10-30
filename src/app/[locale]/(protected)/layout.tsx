@@ -1,15 +1,10 @@
 'use client';
 
-import { useEffect } from 'react';
 import { useAuthStore } from '@/lib/stores/auth';
 import { AppLayout } from '@/components/shared/layout/app-layout';
 
 export default function ProtectedLayout({ children }: { children: React.ReactNode }) {
-  const { isInitialized, isLoading, initialize } = useAuthStore();
-
-  useEffect(() => {
-    initialize();
-  }, [initialize]);
+  const { isInitialized, isLoading } = useAuthStore();
 
   if (!isInitialized || isLoading) {
     return (

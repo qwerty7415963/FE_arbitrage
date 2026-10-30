@@ -3,6 +3,7 @@ import { Suspense, act } from 'react';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { NextIntlClientProvider } from 'next-intl';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ApiError } from '@/infrastructure/api-client';
 import GroupDetailPage from '@/app/[locale]/(protected)/groups/[groupId]/page';
 import {
@@ -11,6 +12,7 @@ import {
   removeGroupMembers,
   updateGroupMembers,
 } from '@/services/traders';
+import { getStatus } from '@/services/telegram';
 import enMessages from '@/messages/en.json';
 
 vi.mock('@/services/traders', () => ({
@@ -18,6 +20,12 @@ vi.mock('@/services/traders', () => ({
   listGroupMembers: vi.fn(),
   removeGroupMembers: vi.fn(),
   updateGroupMembers: vi.fn(),
+  updateTraderGroup: vi.fn(),
+}));
+vi.mock('@/services/telegram', () => ({
+  getStatus: vi.fn(),
+  createLink: vi.fn(),
+  unlink: vi.fn(),
 }));
 
 vi.mock('@/i18n/navigation', () => ({
@@ -27,15 +35,28 @@ vi.mock('@/i18n/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
 }));
 
-vi.mock('@/lib/stores/auth', () => ({
-  useAuthStore: { getState: () => ({ requireAuth: () => true }) },
-}));
+vi.mock('@/lib/stores/auth', () => {
+  const state = {
+    isAuthenticated: true,
+    setConnectModalOpen: vi.fn(),
+    requireAuth: () => true,
+  };
+  const useAuthStore = (selector: (s: typeof state) => unknown) => selector(state);
+  return { useAuthStore: Object.assign(useAuthStore, { getState: () => state }) };
+});
 
 vi.mock('@/components/shared/auth/connect-wallet-button', () => ({
   ConnectWalletButton: () => <button type="button">Connect stub</button>,
 }));
 
-const group = { id: 'g1', user_id: 'u1', name: 'Main', description: null, member_count: 2 };
+const group = {
+  id: 'g1',
+  user_id: 'u1',
+  name: 'Main',
+  description: null,
+  member_count: 2,
+  notify_enabled: false,
+};
 const metricsBase = {
   venue: 'hyperliquid',
   venue_id: null,
@@ -89,13 +110,16 @@ const members = [
 
 async function renderDetail() {
   let tree!: ReturnType<typeof render>;
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   await act(async () => {
     tree = render(
-      <NextIntlClientProvider locale="en" messages={enMessages}>
-        <Suspense fallback={<div>loading</div>}>
-          <GroupDetailPage params={Promise.resolve({ groupId: 'g1' })} />
-        </Suspense>
-      </NextIntlClientProvider>,
+      <QueryClientProvider client={client}>
+        <NextIntlClientProvider locale="en" messages={enMessages}>
+          <Suspense fallback={<div>loading</div>}>
+            <GroupDetailPage params={Promise.resolve({ groupId: 'g1' })} />
+          </Suspense>
+        </NextIntlClientProvider>
+      </QueryClientProvider>,
     );
   });
   return tree;
@@ -106,6 +130,13 @@ describe('GroupDetailPage', () => {
     vi.restoreAllMocks();
     vi.mocked(getTraderGroup).mockResolvedValue(group);
     vi.mocked(listGroupMembers).mockResolvedValue(members);
+    vi.mocked(getStatus).mockResolvedValue({
+      connected: false,
+      tg_username: null,
+      locale: 'vi',
+      status: 'disconnected',
+      groups_enabled: 0,
+    } as never);
   });
 
   it('renders group header and member rows', async () => {

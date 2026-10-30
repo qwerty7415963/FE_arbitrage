@@ -1,4 +1,5 @@
 import { config } from '@/config';
+import { emitUnauthorized } from '@/lib/auth-events';
 import {
   getAccessToken,
   getRefreshToken,
@@ -99,10 +100,15 @@ export async function apiClient<T>(endpoint: string, options: RequestOptions = {
         } catch (refreshError) {
           processQueue(refreshError as Error, null);
           clearTokens();
+          emitUnauthorized();
           throw new ApiError(401, 'UNAUTHORIZED', 'Session expired', requestId);
         } finally {
           isRefreshing = false;
         }
+      }
+
+      if (response.status === 401) {
+        emitUnauthorized();
       }
 
       const errorBody = await response.json().catch(() => ({}));

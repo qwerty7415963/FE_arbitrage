@@ -122,6 +122,7 @@ export interface TraderGroup {
   name: string;
   description: string | null;
   member_count: number;
+  notify_enabled: boolean;
 }
 
 export interface TraderMember {

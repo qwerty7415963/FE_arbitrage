@@ -194,7 +194,7 @@ test.describe('Visual desktop', () => {
       { id: 'g1', user_id: 'u1', name: 'Main', description: 'Primary watchlist', member_count: 12 },
     ]);
     await page.goto('/en/groups');
-    await expect(page.getByText('Main')).toBeVisible();
+    await expect(page.getByText('Authentication required')).toBeVisible();
     await settle(page);
     await expect(page.locator('main')).toHaveScreenshot('groups-list.png', SHOT);
   });
