@@ -404,6 +404,7 @@
     "hint": "Connect Telegram to enable group notifications.",
     "connectToManageNotifications": "Connect your wallet to manage Telegram notifications.",
     "sessionExpired": "Your session has expired. Reconnect your wallet to manage notifications.",
-    "reconnect": "Reconnect wallet"
+    "reconnect": "Reconnect wallet",
+    "relink": "Link another account"
   }
 }

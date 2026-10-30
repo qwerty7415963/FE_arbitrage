@@ -52,6 +52,18 @@ export default function SettingsPage() {
     }
   }, [linkMutation, locale, tn]);
 
+  const handleRelink = useCallback(async () => {
+    setConnectError(null);
+    try {
+      await unlinkMutation.mutateAsync();
+      const data = await linkMutation.mutateAsync(locale);
+      setLinkData(data);
+      setModalOpen(true);
+    } catch (err) {
+      setConnectError(err instanceof Error ? err.message : tn('error'));
+    }
+  }, [unlinkMutation, linkMutation, locale, tn]);
+
   useEffect(() => {
     if (!modalOpen) return;
     const started = Date.now();
@@ -133,19 +145,27 @@ export default function SettingsPage() {
               {tn('locale')}: {status.locale}
             </div>
             <div className="text-sm">{tn('groupsEnabled', { count: status.groups_enabled })}</div>
-            <Button
-              variant="destructive"
-              size="sm"
-              className="mt-2"
-              onClick={() => setConfirmDisconnect(true)}
-              disabled={unlinkMutation.isPending}
-            >
-              {tn('disconnect')}
-            </Button>
+            <div className="mt-2 flex gap-2">
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => setConfirmDisconnect(true)}
+                disabled={unlinkMutation.isPending || linkMutation.isPending}
+              >
+                {tn('disconnect')}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRelink}
+                disabled={unlinkMutation.isPending || linkMutation.isPending}
+              >
+                {tn('relink')}
+              </Button>
+            </div>
           </div>
         ) : (
           <div className="mt-4 space-y-2">
-            <div className="text-muted-foreground text-sm">{tn('notConnected')}</div>
             {connectError && (
               <div className="bg-destructive/10 text-destructive rounded-md p-3 text-sm">
                 {connectError}

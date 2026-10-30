@@ -404,6 +404,7 @@
     "hint": "Kết nối Telegram để bật thông báo nhóm.",
     "connectToManageNotifications": "Kết nối ví để quản lý thông báo Telegram.",
     "sessionExpired": "Phiên đăng nhập đã hết hạn. Hãy kết nối lại ví để quản lý thông báo.",
-    "reconnect": "Kết nối lại ví"
+    "reconnect": "Kết nối lại ví",
+    "relink": "Liên kết tài khoản khác"
   }
 }
