@@ -157,7 +157,11 @@ function DetailContent() {
                 onRetry={() => panelPositions.refetch()}
               />
 
-              <WalletTabs walletAddress={address.toLowerCase()} />
+              <WalletTabs
+                walletAddress={address.toLowerCase()}
+                period={period}
+                onPeriodChange={setPeriod}
+              />
             </div>
             <div className="lg:col-span-1">
               <div className="lg:sticky lg:top-4 lg:max-h-[80vh] lg:overflow-y-auto">

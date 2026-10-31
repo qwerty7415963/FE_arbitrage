@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import {
@@ -11,26 +10,23 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import {
-  formatDecimal,
-  formatInteger,
-  formatPercent,
-  formatRelativeTime,
-  formatSignedPercent,
-  formatSignedUsd,
-  formatUsd,
-} from '@/lib/trader-format';
+import { formatSignedPercent, formatSignedUsd, formatUsd } from '@/lib/trader-format';
 import { useTraderPerformance } from '@/hooks/use-trader-performance';
-import { TRADER_PERIODS, type TraderPeriod } from '@/types/trader';
+import { type TraderPeriod } from '@/types/trader';
 
 export interface PerformanceSectionProps {
   walletAddress: string;
   enabled?: boolean;
+  period: TraderPeriod;
+  onPeriodChange: (p: TraderPeriod) => void;
 }
 
-export function PerformanceSection({ walletAddress, enabled = true }: PerformanceSectionProps) {
+export function PerformanceSection({
+  walletAddress,
+  enabled = true,
+  period,
+}: PerformanceSectionProps) {
   const t = useTranslations('traders');
-  const [period, setPeriod] = useState<TraderPeriod>('30D');
   const { performance, isLoading, error, refetch } = useTraderPerformance(walletAddress, {
     period,
     enabled,
@@ -65,76 +61,11 @@ export function PerformanceSection({ walletAddress, enabled = true }: Performanc
 
   return (
     <section aria-label={t('tabPerformance')} className="flex flex-col gap-3">
-      <div className="flex flex-wrap gap-1" role="group" aria-label={t('period')}>
-        {TRADER_PERIODS.map((p) => (
-          <Button
-            key={p}
-            variant={period === p ? 'default' : 'outline'}
-            size="sm"
-            aria-pressed={period === p}
-            onClick={() => setPeriod(p)}
-          >
-            {p}
-          </Button>
-        ))}
-      </div>
-
       {metrics && (
-        <p className="text-muted-foreground text-xs">
-          {t(metrics.data_status === 'error' ? 'statusError' : 'statusReady')}
-          {metrics.metrics_as_of &&
-            ` · ${t('metricsAsOf', { time: formatRelativeTime(metrics.metrics_as_of) ?? '' })}`}
-          {metrics.is_partial && ` · ${t('partialData')}`}
+        <p className="text-sm font-medium">
+          {t('pnl')}:{' '}
+          {metrics.pnl === null || metrics.pnl === undefined ? '—' : formatSignedUsd(metrics.pnl)}
         </p>
-      )}
-
-      {metrics && (
-        <dl className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          <div className="rounded-lg border p-3">
-            <dt className="text-muted-foreground text-xs">{t('roi')}</dt>
-            <dd className="text-lg font-semibold tabular-nums">
-              {formatSignedPercent(metrics.roi) ?? '—'}
-            </dd>
-          </div>
-          <div className="rounded-lg border p-3">
-            <dt className="text-muted-foreground text-xs">{t('pnl')}</dt>
-            <dd className="text-lg font-semibold tabular-nums">
-              {metrics.pnl === null || metrics.pnl === undefined
-                ? '—'
-                : formatSignedUsd(metrics.pnl)}
-            </dd>
-          </div>
-          <div className="rounded-lg border p-3">
-            <dt className="text-muted-foreground text-xs">{t('winRate')}</dt>
-            <dd className="text-lg font-semibold tabular-nums">
-              {formatPercent(metrics.win_rate) ?? '—'}
-            </dd>
-          </div>
-          <div className="rounded-lg border p-3">
-            <dt className="text-muted-foreground text-xs">{t('volume')}</dt>
-            <dd className="text-lg font-semibold tabular-nums">
-              {formatUsd(metrics.volume) ?? '—'}
-            </dd>
-          </div>
-          <div className="rounded-lg border p-3">
-            <dt className="text-muted-foreground text-xs">{t('tradeCount')}</dt>
-            <dd className="text-lg font-semibold tabular-nums">
-              {formatInteger(metrics.trade_count) ?? '—'}
-            </dd>
-          </div>
-          <div className="rounded-lg border p-3">
-            <dt className="text-muted-foreground text-xs">{t('profitFactor')}</dt>
-            <dd className="text-lg font-semibold tabular-nums">
-              {formatDecimal(metrics.profit_factor) ?? '—'}
-            </dd>
-          </div>
-          <div className="rounded-lg border p-3">
-            <dt className="text-muted-foreground text-xs">{t('maxDrawdown')}</dt>
-            <dd className="text-lg font-semibold tabular-nums">
-              {formatDecimal(metrics.max_drawdown_pct) ?? '—'}
-            </dd>
-          </div>
-        </dl>
       )}
 
       <div className="flex flex-col gap-2">

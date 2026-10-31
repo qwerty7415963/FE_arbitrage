@@ -11,6 +11,7 @@ import {
   WALLET_TABS,
   type PositionSortKey,
   type SortDirection,
+  type TraderPeriod,
   type WalletTabId,
 } from '@/types/trader';
 import { PositionsSection } from './positions-section';
@@ -24,6 +25,8 @@ import { PlaceholderTab } from './placeholder-tab';
 
 export interface WalletTabsProps {
   walletAddress: string;
+  period: TraderPeriod;
+  onPeriodChange: (p: TraderPeriod) => void;
 }
 
 const TAB_LABEL_KEYS: Record<WalletTabId, string> = {
@@ -38,7 +41,7 @@ const TAB_LABEL_KEYS: Record<WalletTabId, string> = {
   performance: 'tabPerformance',
 };
 
-export function WalletTabs({ walletAddress }: WalletTabsProps) {
+export function WalletTabs({ walletAddress, period, onPeriodChange }: WalletTabsProps) {
   const t = useTranslations('traders');
   const { tab, setTab } = useWalletTab();
   const [positionSort, setPositionSort] = useState<PositionSortKey>(DEFAULT_POSITION_SORT);
@@ -109,7 +112,14 @@ export function WalletTabs({ walletAddress }: WalletTabsProps) {
         {tab === 'trades' && <TradesSection walletAddress={walletAddress} enabled />}
         {tab === 'swap' && <PlaceholderTab kind="swap" />}
         {tab === 'transfers' && <TransfersSection walletAddress={walletAddress} enabled />}
-        {tab === 'performance' && <PerformanceSection walletAddress={walletAddress} enabled />}
+        {tab === 'performance' && (
+          <PerformanceSection
+            walletAddress={walletAddress}
+            enabled
+            period={period}
+            onPeriodChange={onPeriodChange}
+          />
+        )}
       </div>
     </div>
   );

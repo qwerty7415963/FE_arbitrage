@@ -266,9 +266,14 @@ describe('wallet tab sections', () => {
       error: null,
       refetch: vi.fn(),
     });
-    renderWithIntl(<PerformanceSection walletAddress={WALLET} />);
+    renderWithIntl(
+      <PerformanceSection walletAddress={WALLET} period="30D" onPeriodChange={vi.fn()} />,
+    );
     expect(screen.getByText('Equity curve')).toBeInTheDocument();
     expect(screen.getByText('2026-10-01')).toBeInTheDocument();
     expect(screen.getByText('$10.00K')).toBeInTheDocument();
+    expect(screen.queryByText('ROI')).not.toBeInTheDocument();
+    expect(screen.queryByText('Win Rate')).not.toBeInTheDocument();
+    expect(screen.queryByText('Volume')).not.toBeInTheDocument();
   });
 });

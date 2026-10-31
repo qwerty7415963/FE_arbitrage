@@ -119,7 +119,7 @@ function renderTabs() {
   return render(
     <QueryClientProvider client={client}>
       <NextIntlClientProvider locale="en" messages={enMessages}>
-        <WalletTabs walletAddress={WALLET} />
+        <WalletTabs walletAddress={WALLET} period="30D" onPeriodChange={vi.fn()} />
       </NextIntlClientProvider>
     </QueryClientProvider>,
   );
