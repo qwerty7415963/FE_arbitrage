@@ -109,7 +109,7 @@ export async function fetchTraderDetail(
   params.set('period', query.period ?? DEFAULT_TRADER_PERIOD);
   const res = await apiClient<ApiResponse<TraderDetail>>(
     `${TRADERS_BASE}/${walletAddress}?${params.toString()}`,
-    { signal: options.signal },
+    { signal: options.signal, timeout: 60000 },
   );
   if (!res.data) throw new Error('No data returned');
   return res.data;
