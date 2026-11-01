@@ -137,6 +137,10 @@ describe('wallet tab sections', () => {
     expect(screen.getByText('$11.00K')).toBeInTheDocument();
     expect(screen.getByText('HYPE')).toBeInTheDocument();
     expect(screen.getByText('USDC')).toBeInTheDocument();
+    expect(screen.queryByText('Account value')).toBeNull();
+    expect(screen.queryByText('Total notional')).toBeNull();
+    expect(screen.queryByText('Total margin')).toBeNull();
+    expect(screen.queryByText('Positions value')).toBeNull();
   });
 
   it('balances shows the empty state and retries after an error', () => {

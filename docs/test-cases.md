@@ -283,18 +283,18 @@
 
 #### `traders/[address]/_components/wallet-tab-sections.tsx` (10 tests)
 
-| Test                   | Description                                                          |
-| ---------------------- | -------------------------------------------------------------------- |
-| balances fixture       | perp cards + HYPE/USDC rows                                          |
-| balances empty + retry | `noBalances`, Retry → `refetch`                                      |
-| orders open            | BUY row, no status columns                                           |
-| orders historical      | `filled` status columns shown                                        |
-| orders empty           | `noOrders`                                                           |
-| fills fixture          | ETH SELL + Close Long + fee                                          |
-| fills empty            | `noFills`                                                            |
-| transfers fixture      | subAccountTransfer + $50.00K                                         |
-| transfers empty        | `noTransfers`                                                        |
-| performance fixture    | equity only (no metric cards in tab; shared period) + 2026-10-01 row |
+| Test                   | Description                                                                                      |
+| ---------------------- | ------------------------------------------------------------------------------------------------ |
+| balances fixture       | perp cards (withdrawable + cross) + HYPE/USDC rows; duplicate top cards + Positions value absent |
+| balances empty + retry | `noBalances`, Retry → `refetch`                                                                  |
+| orders open            | BUY row, no status columns                                                                       |
+| orders historical      | `filled` status columns shown                                                                    |
+| orders empty           | `noOrders`                                                                                       |
+| fills fixture          | ETH SELL + Close Long + fee                                                                      |
+| fills empty            | `noFills`                                                                                        |
+| transfers fixture      | subAccountTransfer + $50.00K                                                                     |
+| transfers empty        | `noTransfers`                                                                                    |
+| performance fixture    | equity only (no metric cards in tab; shared period) + 2026-10-01 row                             |
 
 #### `lib/trader-retry.ts` (14 tests)
 
@@ -840,3 +840,4 @@ reviewing diffs — never blindly.
 - 2026-10-30: Groups gate regression fix - `/groups` skips `listTraderGroups()` while unauthenticated (neutral heading + connect CTA, clears list/error, refetches when auth flips true) and `/groups/[groupId]` skips both `getTraderGroup()`/`listGroupMembers()` the same way, so the global modal stays reserved for the expired-token case. Authenticated path unchanged. Unit +3 (`groups-auth-gate.test.tsx`, total 433). E2E data tests seed auth; `groups.spec.ts` + `accessibility.spec.ts` remain green.
 - 2026-10-30: Option B session loss = disconnect - clearSession() in auth store; initialize no-token keeps address null; getMe fail clears session + disconnect. Unit +3 (stores/auth, total 436).
 - 2026-11-01: Dedup Performance tab with top page metrics (Option A): PerformanceSection drops local period state + period button group + 7 metric cards + status line; keeps realized PnL header line + equity table; period now shared via props from page; WalletTabs requires period/onPeriodChange. Test count unchanged (436).
+- 2026-11-01: Dedup Balances tab (Option A): BalancesSection drops 4 duplicate perp cards (Account value, Total notional, Total margin, Positions value); keeps Withdrawable + 3 cross cards (4 cards, 1 row) + spot table + status line. Removed i18n key `assetPositionsValue` from en/vi. Test assertions updated (absence checks).

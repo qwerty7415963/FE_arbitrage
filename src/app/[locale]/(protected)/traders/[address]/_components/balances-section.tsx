@@ -76,18 +76,6 @@ export function BalancesSection({ walletAddress, enabled = true }: BalancesSecti
           <h3 className="text-sm font-semibold">{t('perpTitle')}</h3>
           <dl className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             <div className="rounded-lg border p-3">
-              <dt className="text-muted-foreground text-xs">{t('accountValue')}</dt>
-              <dd className="text-lg font-semibold tabular-nums">{usd(perp.account_value)}</dd>
-            </div>
-            <div className="rounded-lg border p-3">
-              <dt className="text-muted-foreground text-xs">{t('totalNotional')}</dt>
-              <dd className="text-lg font-semibold tabular-nums">{usd(perp.total_ntl_pos)}</dd>
-            </div>
-            <div className="rounded-lg border p-3">
-              <dt className="text-muted-foreground text-xs">{t('totalMargin')}</dt>
-              <dd className="text-lg font-semibold tabular-nums">{usd(perp.total_margin_used)}</dd>
-            </div>
-            <div className="rounded-lg border p-3">
               <dt className="text-muted-foreground text-xs">{t('withdrawable')}</dt>
               <dd className="text-lg font-semibold tabular-nums">{usd(perp.withdrawable)}</dd>
             </div>
@@ -107,12 +95,6 @@ export function BalancesSection({ walletAddress, enabled = true }: BalancesSecti
               <dt className="text-muted-foreground text-xs">{t('crossTotalMargin')}</dt>
               <dd className="text-lg font-semibold tabular-nums">
                 {usd(perp.cross_total_margin_used)}
-              </dd>
-            </div>
-            <div className="rounded-lg border p-3">
-              <dt className="text-muted-foreground text-xs">{t('assetPositionsValue')}</dt>
-              <dd className="text-lg font-semibold tabular-nums">
-                {usd(perp.asset_positions_value)}
               </dd>
             </div>
           </dl>
