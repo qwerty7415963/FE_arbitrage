@@ -82,8 +82,7 @@ describe('FundingTable', () => {
 
     it('adds venue names from pair to each row', () => {
       render(<FundingTable pairs={[createPair()]} />);
-      expect(screen.getByText('Binance')).toBeInTheDocument();
-      expect(screen.getByText('OKX')).toBeInTheDocument();
+      expect(screen.getByText('Binance / OKX')).toBeInTheDocument();
     });
 
     it('skips pair with missing tokens without crashing', () => {
@@ -158,19 +157,16 @@ describe('FundingTable', () => {
   });
 
   describe('table headers', () => {
-    it('renders all 10 column headers', () => {
+    it('renders all 7 column headers', () => {
       render(<FundingTable pairs={[createPair()]} />);
       const headers = [
         'Token',
-        'Long (Venue A)',
-        'Rate A',
-        'Short (Venue B)',
-        'Rate B',
+        'Long / Short',
+        'Rate A / B',
         'Rate 8h',
         'Rate 1h',
         'APR',
         'Spread',
-        'Status',
       ];
       for (const h of headers) {
         expect(screen.getByText(h)).toBeInTheDocument();
@@ -184,7 +180,7 @@ describe('FundingTable', () => {
         <FundingTable pairs={[createPair([{ rate_8h_percent: 10.5 }])]} />,
       );
       const row = container.querySelector('tbody tr');
-      const cell = row?.querySelectorAll('td')[5];
+      const cell = row?.querySelectorAll('td')[3];
       expect(cell?.className).toContain('text-primary');
     });
 
@@ -193,14 +189,14 @@ describe('FundingTable', () => {
         <FundingTable pairs={[createPair([{ rate_8h_percent: -5.3 }])]} />,
       );
       const row = container.querySelector('tbody tr');
-      const cell = row?.querySelectorAll('td')[5];
+      const cell = row?.querySelectorAll('td')[3];
       expect(cell?.className).toContain('text-destructive');
     });
 
     it('Rate 8h zero shows destructive color (0 is not > 0)', () => {
       const { container } = render(<FundingTable pairs={[createPair([{ rate_8h_percent: 0 }])]} />);
       const row = container.querySelector('tbody tr');
-      const cell = row?.querySelectorAll('td')[5];
+      const cell = row?.querySelectorAll('td')[3];
       expect(cell?.className).toContain('text-destructive');
     });
 
@@ -209,7 +205,7 @@ describe('FundingTable', () => {
         <FundingTable pairs={[createPair([{ rate_1h_percent: 5.2 }])]} />,
       );
       const row = container.querySelector('tbody tr');
-      const cell = row?.querySelectorAll('td')[6];
+      const cell = row?.querySelectorAll('td')[4];
       expect(cell?.className).toContain('text-primary');
     });
 
@@ -218,25 +214,8 @@ describe('FundingTable', () => {
         <FundingTable pairs={[createPair([{ rate_1h_percent: -2.1 }])]} />,
       );
       const row = container.querySelector('tbody tr');
-      const cell = row?.querySelectorAll('td')[6];
+      const cell = row?.querySelectorAll('td')[4];
       expect(cell?.className).toContain('text-destructive');
-    });
-  });
-
-  describe('StatusBadge', () => {
-    it('shows Unavailable when funding_available is false', () => {
-      render(<FundingTable pairs={[createPair([{ funding_available: false }])]} />);
-      expect(screen.getByText('Unavailable')).toBeInTheDocument();
-    });
-
-    it('shows Stale when is_stale is true', () => {
-      render(<FundingTable pairs={[createPair([{ funding_available: true, is_stale: true }])]} />);
-      expect(screen.getByText('Stale')).toBeInTheDocument();
-    });
-
-    it('shows Live when funding_available and not stale', () => {
-      render(<FundingTable pairs={[createPair([{ funding_available: true, is_stale: false }])]} />);
-      expect(screen.getByText('Live')).toBeInTheDocument();
     });
   });
 
@@ -245,6 +224,19 @@ describe('FundingTable', () => {
       const { container } = render(<FundingTable pairs={[createPair()]} />);
       const monoCells = container.querySelectorAll('.font-mono');
       expect(monoCells.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('merged cells', () => {
+    it('renders merged cells inline', () => {
+      const pairs = [
+        createPair([{ venue_a_funding_rate: '-0.0036', venue_b_funding_rate: '-0.0009' }]),
+      ];
+      pairs[0].venue_a = { id: 'v1', code: 'BINANCE', name: 'Binance' };
+      pairs[0].venue_b = { id: 'v2', code: 'EXTENDED', name: 'Extended' };
+      render(<FundingTable pairs={pairs} />);
+      expect(screen.getByText('Binance / Extended')).toBeInTheDocument();
+      expect(screen.getByText('-0.0036 / -0.0009')).toBeInTheDocument();
     });
   });
 

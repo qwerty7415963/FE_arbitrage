@@ -108,7 +108,6 @@ test.describe('Funding Arbitrage', () => {
 
     await expect(page.locator('th').filter({ hasText: 'Token' })).toBeVisible({ timeout: 10000 });
     await expect(page.locator('th').filter({ hasText: /^APR$/ })).toBeVisible();
-    await expect(page.locator('th').filter({ hasText: 'Status' })).toBeVisible();
   });
 
   test('empty state shows when search returns no results', async ({ page }) => {
@@ -127,7 +126,7 @@ test.describe('Funding Arbitrage', () => {
     ).toBeVisible({ timeout: 10000 });
   });
 
-  test('status badges render after search', async ({ page }) => {
+  test('merged headers render after search', async ({ page }) => {
     await page.goto('/en/funding-arbitrage');
 
     await page.getByText('Select venues').click();
@@ -135,7 +134,9 @@ test.describe('Funding Arbitrage', () => {
     await page.keyboard.press('Escape');
     await page.getByText('Search').click();
 
-    const badges = page.locator('span').filter({ hasText: /Live|Stale|Unavailable/ });
-    await expect(badges.first()).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('th').filter({ hasText: 'Long / Short' })).toBeVisible({
+      timeout: 10000,
+    });
+    await expect(page.locator('th').filter({ hasText: 'Rate A / B' })).toBeVisible();
   });
 });

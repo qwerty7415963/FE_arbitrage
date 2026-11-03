@@ -34,34 +34,6 @@ function formatPercent(value: number | undefined | null): string {
   return `${(value ?? 0).toFixed(2)}%`;
 }
 
-function StatusBadge({
-  funding_available,
-  is_stale,
-}: {
-  funding_available: boolean;
-  is_stale: boolean;
-}) {
-  if (!funding_available) {
-    return (
-      <span className="inline-flex items-center rounded-md bg-red-500/10 px-2 py-0.5 text-xs font-medium text-red-400">
-        Unavailable
-      </span>
-    );
-  }
-  if (is_stale) {
-    return (
-      <span className="inline-flex items-center rounded-md bg-yellow-500/10 px-2 py-0.5 text-xs font-medium text-yellow-400">
-        Stale
-      </span>
-    );
-  }
-  return (
-    <span className="bg-primary/10 text-primary inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium">
-      Live
-    </span>
-  );
-}
-
 export function FundingTable({ pairs }: FundingTableProps) {
   const rows = flattenPairs(pairs);
 
@@ -76,25 +48,24 @@ export function FundingTable({ pairs }: FundingTableProps) {
       <TableHeader>
         <TableRow>
           <TableHead>Token</TableHead>
-          <TableHead>Long (Venue A)</TableHead>
-          <TableHead>Rate A</TableHead>
-          <TableHead>Short (Venue B)</TableHead>
-          <TableHead>Rate B</TableHead>
+          <TableHead>Long / Short</TableHead>
+          <TableHead>Rate A / B</TableHead>
           <TableHead>Rate 8h</TableHead>
           <TableHead>Rate 1h</TableHead>
           <TableHead>APR</TableHead>
           <TableHead>Spread</TableHead>
-          <TableHead>Status</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {rows.map((row, idx) => (
           <TableRow key={`${row.instrument_id}-${idx}`}>
             <TableCell className="font-medium">{row.symbol}</TableCell>
-            <TableCell>{row.venue_a_name}</TableCell>
-            <TableCell className="font-mono text-xs">{row.venue_a_funding_rate}</TableCell>
-            <TableCell>{row.venue_b_name}</TableCell>
-            <TableCell className="font-mono text-xs">{row.venue_b_funding_rate}</TableCell>
+            <TableCell>
+              {row.venue_a_name} / {row.venue_b_name}
+            </TableCell>
+            <TableCell className="font-mono text-xs">
+              {row.venue_a_funding_rate} / {row.venue_b_funding_rate}
+            </TableCell>
             <TableCell
               className={(row.rate_8h_percent ?? 0) > 0 ? 'text-primary' : 'text-destructive'}
             >
@@ -107,9 +78,6 @@ export function FundingTable({ pairs }: FundingTableProps) {
             </TableCell>
             <TableCell>{formatPercent(row.apr_percent)}</TableCell>
             <TableCell>{formatPercent(row.price_spread_percent)}</TableCell>
-            <TableCell>
-              <StatusBadge funding_available={row.funding_available} is_stale={row.is_stale} />
-            </TableCell>
           </TableRow>
         ))}
       </TableBody>
