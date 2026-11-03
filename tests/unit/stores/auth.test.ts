@@ -146,6 +146,34 @@ describe('auth store', () => {
       expect(useAuthStore.getState().isInitialized).toBe(true);
     });
 
+    it('keeps persisted address when wagmi has not reconnected', async () => {
+      vi.mocked(tokenLib.hasTokens).mockReturnValue(true);
+      vi.mocked(authService.getMe).mockResolvedValue(mockUser);
+      vi.mocked(getAccount).mockReturnValue({
+        address: undefined,
+        chainId: undefined,
+      } as ReturnType<typeof getAccount>);
+      useAuthStore.setState({ address: '0xpersisted', chainId: 1 });
+      await useAuthStore.getState().initialize();
+      expect(useAuthStore.getState().address).toBe('0xpersisted');
+      expect(useAuthStore.getState().chainId).toBe(1);
+      expect(useAuthStore.getState().isAuthenticated).toBe(true);
+    });
+
+    it('uses wagmi account address when available', async () => {
+      vi.mocked(tokenLib.hasTokens).mockReturnValue(true);
+      vi.mocked(authService.getMe).mockResolvedValue(mockUser);
+      vi.mocked(getAccount).mockReturnValue({
+        address: '0xabc',
+        chainId: 1,
+      } as unknown as ReturnType<typeof getAccount>);
+      useAuthStore.setState({ address: '0xpersisted' });
+      await useAuthStore.getState().initialize();
+      expect(useAuthStore.getState().address).toBe('0xabc');
+      expect(useAuthStore.getState().chainId).toBe(1);
+      expect(useAuthStore.getState().isAuthenticated).toBe(true);
+    });
+
     it('clears tokens and marks initialized if getMe fails', async () => {
       vi.mocked(tokenLib.hasTokens).mockReturnValue(true);
       vi.mocked(authService.getMe).mockRejectedValue(new Error('Unauthorized'));

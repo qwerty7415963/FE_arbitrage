@@ -201,8 +201,8 @@ export const useAuthStore = create<AuthState>()(
               user,
               isAuthenticated: true,
               authMethod: 'wallet',
-              address: account?.address ?? null,
-              chainId: account?.chainId ?? null,
+              address: account?.address ?? get().address ?? null,
+              chainId: account?.chainId ?? get().chainId ?? null,
               isInitialized: true,
               isLoading: false,
             });

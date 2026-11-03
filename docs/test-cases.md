@@ -39,7 +39,7 @@
 | Module                                                                                    | File                                                       | Tests   | Status |
 | ----------------------------------------------------------------------------------------- | ---------------------------------------------------------- | ------- | ------ |
 | `lib/token.ts`                                                                            | `tests/unit/lib/token.test.ts`                             | 14      | ✅     |
-| `stores/auth.ts` (wallet-only)                                                            | `tests/unit/stores/auth.test.ts`                           | 14      | ✅     |
+| `stores/auth.ts` (wallet-only)                                                            | `tests/unit/stores/auth.test.ts`                           | 16      | ✅     |
 | `services/auth.ts`                                                                        | `tests/unit/services/auth.test.ts`                         | 8       | ✅     |
 | `services/funding-arbitrage.ts`                                                           | `tests/unit/services/funding-arbitrage.test.ts`            | 13      | ✅     |
 | `components/group-form.tsx`                                                               | `tests/unit/components/group-form.test.tsx`                | 7       | ✅     |
@@ -81,7 +81,7 @@
 | `hooks/use-telegram.ts`                                                                   | `tests/unit/hooks/use-telegram.test.tsx`                   | 5       | ✅     |
 | `app/[locale]/(protected)/settings/page.tsx`                                              | `tests/unit/components/settings-page.test.tsx`             | 7       | ✅     |
 | `(protected)/groups` + `/groups/[groupId]` auth gate (no API pre-auth)                    | `tests/unit/components/groups-auth-gate.test.tsx`          | 3       | ✅     |
-| **Total**                                                                                 |                                                            | **436** |        |
+| **Total**                                                                                 |                                                            | **438** |        |
 
 ### Test Details
 
@@ -522,24 +522,26 @@
 | lastTradeAfter round-trip | Draft ↔ query both directions       |
 | blank lastTradeAfter      | Empty string omitted from query     |
 
-#### `stores/auth.ts` (14 tests)
+#### `stores/auth.ts` (16 tests)
 
-| Test                          | Description                               |
-| ----------------------------- | ----------------------------------------- |
-| requireAuth true when authed  | No modal opened                           |
-| requireAuth opens modal       | Returns false + modal                     |
-| logout clears tokens          | Calls API + wagmi + clear                 |
-| logout clears on API error    | Clears even if API fails                  |
-| fetchUser sets user           | Gets user from API                        |
-| fetchUser clears on error     | Clears tokens on 401                      |
-| initialize loads user         | Token exists                              |
-| initialize clears on error    | getMe fails                               |
-| initialize no token           | Skips loading                             |
-| clearSession clears state     | Clears address + disconnect + clearTokens |
-| initialize no token + account | Address stays null                        |
-| initialize getMe fail         | Address null + disconnect                 |
-| formatAddress formats         | Shows 0x1234...5678                       |
-| formatAddress empty           | Returns empty string                      |
+| Test                               | Description                               |
+| ---------------------------------- | ----------------------------------------- |
+| requireAuth true when authed       | No modal opened                           |
+| requireAuth opens modal            | Returns false + modal                     |
+| logout clears tokens               | Calls API + wagmi + clear                 |
+| logout clears on API error         | Clears even if API fails                  |
+| fetchUser sets user                | Gets user from API                        |
+| fetchUser clears on error          | Clears tokens on 401                      |
+| initialize loads user              | Token exists                              |
+| initialize keeps persisted address | Wagmi not reconnected yet                 |
+| initialize uses wagmi address      | Wagmi account available                   |
+| initialize clears on error         | getMe fails                               |
+| initialize no token                | Skips loading                             |
+| clearSession clears state          | Clears address + disconnect + clearTokens |
+| initialize no token + account      | Address stays null                        |
+| initialize getMe fail              | Address null + disconnect                 |
+| formatAddress formats              | Shows 0x1234...5678                       |
+| formatAddress empty                | Returns empty string                      |
 
 #### `infrastructure/api-client.ts` (17 tests)
 
@@ -841,3 +843,4 @@ reviewing diffs — never blindly.
 - 2026-10-30: Option B session loss = disconnect - clearSession() in auth store; initialize no-token keeps address null; getMe fail clears session + disconnect. Unit +3 (stores/auth, total 436).
 - 2026-11-01: Dedup Performance tab with top page metrics (Option A): PerformanceSection drops local period state + period button group + 7 metric cards + status line; keeps realized PnL header line + equity table; period now shared via props from page; WalletTabs requires period/onPeriodChange. Test count unchanged (436).
 - 2026-11-01: Dedup Balances tab (Option A): BalancesSection drops 4 duplicate perp cards (Account value, Total notional, Total margin, Positions value); keeps Withdrawable + 3 cross cards (4 cards, 1 row) + spot table + status line. Removed i18n key `assetPositionsValue` from en/vi. Test assertions updated (absence checks).
+- 2026-11-03: Auth address persistence fix - `initialize()` keeps the persisted address/chainId when wagmi has not reconnected (`getAccount` address undefined) and only overwrites with the live account when available; `WagmiAuthSync` inside `WagmiProvider` syncs a late wagmi reconnect into the auth store. Unit +2 (`stores/auth`, total 438). E2E skipped (existing `next dev` on :3000 holds `.next/dev/lock`; :3001 webServer refused connection).
