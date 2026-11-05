@@ -39,6 +39,7 @@ export function useTraderDetail(
     // Selective retry on transient failures (429/408/5xx, max 2); otherwise fail fast to error UI with manual retry.
     retry: shouldRetryTraderQuery,
     retryDelay: traderRetryDelay,
+    staleTime: 30_000,
     refetchInterval: traderDataRefetchInterval,
   });
 
