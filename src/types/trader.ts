@@ -597,15 +597,33 @@ export interface EquityPoint {
   daily_return: number | null;
 }
 
+export type PortfolioRange = '24H' | '7D' | '30D' | 'ALL';
+
+export type PortfolioMode = 'perps' | 'combined';
+
+export interface PortfolioSeriesPoint {
+  time: string;
+  value: number;
+}
+
+export interface PortfolioRangeSeries {
+  account_value: PortfolioSeriesPoint[];
+  pnl: PortfolioSeriesPoint[];
+}
+
 export interface PerformanceSnapshot {
   period: TraderPeriod;
   metrics: PerformanceMetrics | null;
   equity: EquityPoint[];
+  mode?: PortfolioMode;
+  series?: Partial<Record<PortfolioRange, PortfolioRangeSeries>>;
 }
 
 export interface PerformanceQuery {
   venue?: string;
   period?: TraderPeriod;
+  mode?: PortfolioMode;
+  seriesOnly?: boolean;
 }
 
 export type WalletTabId =

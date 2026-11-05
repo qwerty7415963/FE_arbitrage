@@ -228,6 +228,8 @@ export async function fetchTraderPerformance(
   const params = new URLSearchParams();
   params.set('venue', query.venue ?? DEFAULT_VENUE);
   params.set('period', query.period ?? DEFAULT_TRADER_PERIOD);
+  params.set('mode', query.mode ?? 'perps');
+  if (query.seriesOnly) params.set('series_only', 'true');
   const res = await apiClient<ApiResponse<PerformanceSnapshot>>(
     `${TRADERS_BASE}/${walletAddress}/performance?${params.toString()}`,
     { signal: options.signal },

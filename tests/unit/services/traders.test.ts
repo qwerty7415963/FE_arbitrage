@@ -319,7 +319,7 @@ describe('traders service', () => {
       await expect(fetchTraderTransfers('0xabc')).rejects.toThrow('No data returned');
     });
 
-    it('fetchTraderPerformance defaults to 30D and forwards period', async () => {
+    it('fetchTraderPerformance defaults to 30D/perps and forwards period and mode', async () => {
       vi.mocked(apiClient.apiClient)
         .mockResolvedValueOnce({
           success: true,
@@ -331,9 +331,12 @@ describe('traders service', () => {
         });
       const monthly = await fetchTraderPerformance('0xabc');
       expect(vi.mocked(apiClient.apiClient).mock.calls[0][0]).toContain('period=30D');
+      expect(vi.mocked(apiClient.apiClient).mock.calls[0][0]).toContain('mode=perps');
       expect(monthly.period).toBe('30D');
-      await fetchTraderPerformance('0xabc', { period: '7D' });
+      await fetchTraderPerformance('0xabc', { period: '7D', mode: 'combined', seriesOnly: true });
       expect(vi.mocked(apiClient.apiClient).mock.calls[1][0]).toContain('period=7D');
+      expect(vi.mocked(apiClient.apiClient).mock.calls[1][0]).toContain('mode=combined');
+      expect(vi.mocked(apiClient.apiClient).mock.calls[1][0]).toContain('series_only=true');
     });
 
     it('fetchTraderPerformance throws when no data returned', async () => {

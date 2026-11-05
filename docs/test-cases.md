@@ -67,11 +67,11 @@
 | `traders/[address]/_components/positions-section.tsx` (live, ready\|error)                | `tests/unit/components/positions-section.test.tsx`         | 6       | ✅     |
 | `traders/[address]/_components/activity-feed.tsx` (SIDEBAR-3EVENTS 3 renderers)           | `tests/unit/components/activity-feed.test.tsx`             | 12      | ✅     |
 | `lib/wallet-tab-state.ts`                                                                 | `tests/unit/lib/wallet-tab-state.test.ts`                  | 8       | ✅     |
-| `hooks/use-trader-trades.ts` (live, funding informational + WS patch)                     | `tests/unit/hooks/use-trader-trades.test.tsx`              | 5       | ✅     |
-| `hooks/use-trader-{positions,balances,fills,orders,transfers,performance}.ts`             | `tests/unit/hooks/wallet-tab-hooks.test.tsx`               | 7       | ✅     |
+| `hooks/use-trader-{positions,balances,fills,orders,transfers,performance}.ts`             | `tests/unit/hooks/wallet-tab-hooks.test.tsx`               | 9       | ?      |
 | `traders/[address]/_components/trades-section.tsx` (live FUNDING + as_of)                 | `tests/unit/components/trades-section.test.tsx`            | 9       | ✅     |
 | `traders/[address]/_components/wallet-tabs.tsx`                                           | `tests/unit/components/wallet-tabs.test.tsx`               | 5       | ✅     |
 | `traders/[address]/_components/{balances,orders,fills,transfers,performance}-section.tsx` | `tests/unit/components/wallet-tab-sections.test.tsx`       | 10      | ✅     |
+| `traders/[address]/_components/portfolio-chart.tsx` (SVG PnL/value, 4 ranges, 2 modes)    | `tests/unit/components/portfolio-chart.test.tsx`           | 6       | ✅     |
 | `lib/trader-poll.ts` + 8 REST hooks + WS-only activity (30s poll, error stop)             | `tests/unit/hooks/trader-polling.test.tsx`                 | 14      | ✅     |
 | `lib/trader-retry.ts` (selective retry 429/408/5xx, max 2, backoff 1s→5s cap)             | `tests/unit/lib/trader-retry.test.ts`                      | 14      | ✅     |
 | `traders/[address]/_components/wallet-identity-card.tsx` (reskin)                         | `tests/unit/components/wallet-identity-card.test.tsx`      | 9       | ✅     |
@@ -81,7 +81,7 @@
 | `hooks/use-telegram.ts`                                                                   | `tests/unit/hooks/use-telegram.test.tsx`                   | 5       | ✅     |
 | `app/[locale]/(protected)/settings/page.tsx`                                              | `tests/unit/components/settings-page.test.tsx`             | 7       | ✅     |
 | `(protected)/groups` + `/groups/[groupId]` auth gate (no API pre-auth)                    | `tests/unit/components/groups-auth-gate.test.tsx`          | 3       | ✅     |
-| **Total**                                                                                 |                                                            | **438** |        |
+| **Total**                                                                                 |                                                            | **444** |        |
 
 ### Test Details
 
@@ -245,17 +245,18 @@
 | idle when disabled             | no fetch while tab inactive                      |
 | WS subscribed once, no polling | single fetch + single `connectTradeActivityWS`   |
 
-#### `hooks/wallet-tab-hooks.ts` (7 tests)
+#### `hooks/wallet-tab-hooks.ts` (9 tests)
 
-| Test                         | Description                        |
-| ---------------------------- | ---------------------------------- |
-| positions sort/dir           | lowercased wallet + sort forwarded |
-| positions idle when disabled | no fetch while tab inactive        |
-| balances snapshot            | perp/spot `data_status` mapped     |
-| fills cursor paging          | ETH fixture row, `tid` cursor      |
-| orders status                | historical filter forwarded        |
-| transfers days               | days=7 forwarded                   |
-| performance period           | period=7D forwarded                |
+| Test                         | Description                                      |
+| ---------------------------- | ------------------------------------------------ |
+| positions sort/dir           | lowercased wallet + sort forwarded               |
+| positions idle when disabled | no fetch while tab inactive                      |
+| balances snapshot            | perp/spot `data_status` mapped                   |
+| fills cursor paging          | ETH fixture row, `tid` cursor                    |
+| orders status                | historical filter forwarded                      |
+| transfers days               | days=7 forwarded                                 |
+| performance period           | period=7D + default mode=perps forwarded         |
+| performance mode query key   | mode=combined forwarded and keyed in react-query |
 
 #### `traders/[address]/_components/trades-section.tsx` (9 tests, live)
 
@@ -283,18 +284,29 @@
 
 #### `traders/[address]/_components/wallet-tab-sections.tsx` (10 tests)
 
-| Test                   | Description                                                                                      |
-| ---------------------- | ------------------------------------------------------------------------------------------------ |
-| balances fixture       | perp cards (withdrawable + cross) + HYPE/USDC rows; duplicate top cards + Positions value absent |
-| balances empty + retry | `noBalances`, Retry → `refetch`                                                                  |
-| orders open            | BUY row, no status columns                                                                       |
-| orders historical      | `filled` status columns shown                                                                    |
-| orders empty           | `noOrders`                                                                                       |
-| fills fixture          | ETH SELL + Close Long + fee                                                                      |
-| fills empty            | `noFills`                                                                                        |
-| transfers fixture      | subAccountTransfer + $50.00K                                                                     |
-| transfers empty        | `noTransfers`                                                                                    |
-| performance fixture    | equity only (no metric cards in tab; shared period) + 2026-10-01 row                             |
+| Test                   | Description                                                                                         |
+| ---------------------- | --------------------------------------------------------------------------------------------------- |
+| balances fixture       | perp cards (withdrawable + cross) + HYPE/USDC rows; duplicate top cards + Positions value absent    |
+| balances empty + retry | `noBalances`, Retry → `refetch`                                                                     |
+| orders open            | BUY row, no status columns                                                                          |
+| orders historical      | `filled` status columns shown                                                                       |
+| orders empty           | `noOrders`                                                                                          |
+| fills fixture          | ETH SELL + Close Long + fee                                                                         |
+| fills empty            | `noFills`                                                                                           |
+| transfers fixture      | subAccountTransfer + $50.00K                                                                        |
+| transfers empty        | `noTransfers`                                                                                       |
+| performance fixture    | portfolio chart title/ranges + equity only (no metric cards in tab; shared period) + 2026-10-01 row |
+
+#### `traders/[address]/_components/portfolio-chart.tsx` (6 tests)
+
+| Test               | Description                                                      |
+| ------------------ | ---------------------------------------------------------------- |
+| default ALL + PNL  | title `ALL PERPS PNL` + latest point `+$250`, four range buttons |
+| local range switch | 24H → `24H PERPS PNL` + `+$120`, no parent callback (no refetch) |
+| VALUE metric       | `ALL PERPS VALUE` + latest account value `$81.00K`               |
+| empty series       | keeps the title, shows `No data`                                 |
+| mode buttons       | COMBINED/PERPS call `onModeChange` with the picked mode          |
+| loading skeleton   | `role=status` while loading                                      |
 
 #### `lib/trader-retry.ts` (14 tests)
 
@@ -657,7 +669,7 @@
 | E73 | `wallet-tabs.spec.ts`        | Fills shape                      | ?tab=fills                        | ETH SELL + Close Long                                                  |
 | E74 | `wallet-tabs.spec.ts`        | Orders open vs historical        | open → Historical click           | No status → filled visible                                             |
 | E75 | `wallet-tabs.spec.ts`        | Transfers enum type              | ?tab=transfers                    | subAccountTransfer + $50.00K                                           |
-| E76 | `wallet-tabs.spec.ts`        | Performance + equity             | ?tab=performance                  | Equity curve + 2026-10-01 row                                          |
+| E76 | `wallet-tabs.spec.ts`        | Performance chart + equity       | ?tab=performance → VALUE          | `ALL PERPS PNL`, 4 ranges, VALUE → `ALL PERPS VALUE` + equity row      |
 | E77 | `wallet-tabs.spec.ts`        | Balances error + retry           | 500 ×3 → Retry                    | Error → Perp account recovers                                          |
 | E78 | `wallet-tabs.spec.ts`        | Vietnamese tabs                  | /vi/ ?tab=trades                  | Giao dịch selected, BTC visible                                        |
 | E79 | `wallet-live.spec.ts` (v1.2) | L1 FUNDING + as_of, no /sync     | ?tab=trades live fixtures         | −$12.5, +$1,470, As of, 0× POST /sync                                  |
@@ -845,3 +857,4 @@ reviewing diffs — never blindly.
 - 2026-11-01: Dedup Balances tab (Option A): BalancesSection drops 4 duplicate perp cards (Account value, Total notional, Total margin, Positions value); keeps Withdrawable + 3 cross cards (4 cards, 1 row) + spot table + status line. Removed i18n key `assetPositionsValue` from en/vi. Test assertions updated (absence checks).
 - 2026-11-03: Auth address persistence fix - `initialize()` keeps the persisted address/chainId when wagmi has not reconnected (`getAccount` address undefined) and only overwrites with the live account when available; `WagmiAuthSync` inside `WagmiProvider` syncs a late wagmi reconnect into the auth store. Unit +2 (`stores/auth`, total 438). E2E skipped (existing `next dev` on :3000 holds `.next/dev/lock`; :3001 webServer refused connection).
 - 2026-11-03: Compact funding-arbitrage table - merged venue columns (Long / Short) and rate columns (Rate A / B), dropped Status column and StatusBadge (BE returns live only). Unit 26 -> 24 (funding-table). E2E status badge test replaced with merged header assertions.
+- 2026-11-05: Hyperdash-style portfolio chart in the Performance tab - `PortfolioChart` (hand-rolled SVG, no new deps) with PERPS/COMBINED mode tabs, PNL/VALUE toggle, local 24H/7D/30D/ALL ranges (no refetch), PnL split above/below zero in primary/destructive, compact USD y-axis and range-aware x-axis. `PerformanceSnapshot.mode/series`, performance service + hook `mode` param (query key + `mode=perps` default), en/vi keys. Unit 436 -> 443 (+6 portfolio-chart, +1 hook mode); E2E E76 extended with chart title/ranges and VALUE switch.

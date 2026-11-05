@@ -4,10 +4,17 @@ import { useQuery } from '@tanstack/react-query';
 import { fetchTraderPerformance } from '@/services/traders';
 import { traderDataRefetchInterval } from '@/lib/trader-poll';
 import { shouldRetryTraderQuery, traderRetryDelay } from '@/lib/trader-retry';
-import { DEFAULT_TRADER_PERIOD, type PerformanceSnapshot, type TraderPeriod } from '@/types/trader';
+import {
+  DEFAULT_TRADER_PERIOD,
+  type PerformanceSnapshot,
+  type PortfolioMode,
+  type TraderPeriod,
+} from '@/types/trader';
 
 export interface TraderPerformanceOptions {
   period?: TraderPeriod;
+  mode?: PortfolioMode;
+  seriesOnly?: boolean;
   enabled?: boolean;
 }
 
@@ -24,11 +31,13 @@ export function useTraderPerformance(
 ): UseTraderPerformanceResult {
   const wallet = walletAddress.toLowerCase();
   const period = options.period ?? DEFAULT_TRADER_PERIOD;
+  const mode = options.mode ?? 'perps';
+  const seriesOnly = options.seriesOnly ?? false;
   const enabled = (options.enabled ?? true) && wallet.length > 0;
 
   const query = useQuery({
-    queryKey: ['trader-performance', wallet, period],
-    queryFn: () => fetchTraderPerformance(wallet, { period }),
+    queryKey: ['trader-performance', wallet, period, mode, seriesOnly],
+    queryFn: () => fetchTraderPerformance(wallet, { period, mode, seriesOnly }),
     enabled,
     // Selective retry on transient failures (429/408/5xx, max 2); otherwise fail fast to error UI with manual retry.
     retry: shouldRetryTraderQuery,

@@ -219,6 +219,7 @@ const mockTransfers = {
 
 const mockPerformance = {
   period: '30D',
+  mode: 'perps',
   metrics: {
     roi: 0.2,
     pnl: 1000.0,
@@ -236,6 +237,48 @@ const mockPerformance = {
     metrics_as_of: '2026-10-08T00:00:00Z',
   },
   equity: [{ date: '2026-10-01', end_equity: 10000.0, daily_return: 0.01 }],
+  series: {
+    '24H': {
+      account_value: [
+        { time: '2026-11-04T06:00:00Z', value: 76000.0 },
+        { time: '2026-11-04T08:20:00Z', value: 78620.34 },
+      ],
+      pnl: [
+        { time: '2026-11-04T06:00:00Z', value: 20.0 },
+        { time: '2026-11-04T08:20:00Z', value: 120.0 },
+      ],
+    },
+    '7D': {
+      account_value: [
+        { time: '2026-10-29T00:00:00Z', value: 75000.0 },
+        { time: '2026-11-04T08:20:00Z', value: 79000.0 },
+      ],
+      pnl: [
+        { time: '2026-10-29T00:00:00Z', value: -100.0 },
+        { time: '2026-11-04T08:20:00Z', value: 180.0 },
+      ],
+    },
+    '30D': {
+      account_value: [
+        { time: '2026-10-06T00:00:00Z', value: 64000.0 },
+        { time: '2026-11-04T08:20:00Z', value: 80000.0 },
+      ],
+      pnl: [
+        { time: '2026-10-06T00:00:00Z', value: -400.0 },
+        { time: '2026-11-04T08:20:00Z', value: 220.0 },
+      ],
+    },
+    ALL: {
+      account_value: [
+        { time: '2026-09-01T00:00:00Z', value: 50000.0 },
+        { time: '2026-11-04T08:20:00Z', value: 81000.0 },
+      ],
+      pnl: [
+        { time: '2026-09-01T00:00:00Z', value: 50.0 },
+        { time: '2026-11-04T08:20:00Z', value: 250.0 },
+      ],
+    },
+  },
 };
 
 async function seedAuth(page: Page) {
@@ -526,14 +569,20 @@ test.describe('Wallet tabs (contract v1)', () => {
     await expect(panel.getByText('$50.00K')).toBeVisible();
   });
 
-  test('E76 performance shows metrics and the equity curve', async ({ page }) => {
+  test('E76 performance shows the portfolio chart, metrics and the equity curve', async ({
+    page,
+  }) => {
     await seedAuth(page);
     await mockWalletTabs(page);
     await page.goto(`/en/traders/${WALLET}?tab=performance`);
     const panel = page.locator('#wallet-panel-performance');
-    await expect(panel.getByText('Equity curve')).toBeVisible();
-    await expect(panel.getByText('2026-10-01')).toBeVisible();
-    await expect(panel.getByText('$10.00K')).toBeVisible();
+    await expect(panel.getByText('ALL PERPS PNL')).toBeVisible();
+    for (const range of ['24H', '7D', '30D', 'ALL']) {
+      await expect(panel.getByRole('button', { name: range })).toBeVisible();
+    }
+    await panel.getByRole('button', { name: 'VALUE' }).click();
+    await expect(panel.getByText('ALL PERPS VALUE')).toBeVisible();
+    await expect(panel.getByText('$81.00K')).toBeVisible();
   });
 
   test('E77 balances error recovers on retry', async ({ page }) => {

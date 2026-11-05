@@ -1,34 +1,32 @@
 'use client';
 
+import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { formatSignedPercent, formatSignedUsd, formatUsd } from '@/lib/trader-format';
 import { useTraderPerformance } from '@/hooks/use-trader-performance';
-import { type TraderPeriod } from '@/types/trader';
+import { type PortfolioMode, type TraderPeriod } from '@/types/trader';
+import { PortfolioChart } from './portfolio-chart';
 
 export interface PerformanceSectionProps {
   walletAddress: string;
   enabled?: boolean;
   period: TraderPeriod;
   onPeriodChange: (p: TraderPeriod) => void;
+  seriesOnly?: boolean;
 }
 
 export function PerformanceSection({
   walletAddress,
   enabled = true,
   period,
+  seriesOnly = true,
 }: PerformanceSectionProps) {
   const t = useTranslations('traders');
+  const [mode, setMode] = useState<PortfolioMode>('perps');
   const { performance, isLoading, error, refetch } = useTraderPerformance(walletAddress, {
     period,
+    mode,
+    seriesOnly,
     enabled,
   });
 
@@ -56,49 +54,16 @@ export function PerformanceSection({
     );
   }
 
-  const metrics = performance?.metrics ?? null;
-  const equity = performance?.equity ?? [];
-
   return (
     <section aria-label={t('tabPerformance')} className="flex flex-col gap-3">
-      {metrics && (
-        <p className="text-sm font-medium">
-          {t('pnl')}:{' '}
-          {metrics.pnl === null || metrics.pnl === undefined ? '—' : formatSignedUsd(metrics.pnl)}
-        </p>
+      {enabled && (
+        <PortfolioChart
+          series={performance?.series}
+          mode={performance?.mode ?? mode}
+          onModeChange={setMode}
+          isLoading={isLoading}
+        />
       )}
-
-      <div className="flex flex-col gap-2">
-        <h3 className="text-sm font-semibold">{t('equityTitle')}</h3>
-        {equity.length === 0 ? (
-          <p className="text-muted-foreground text-sm">{t('noEquity')}</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t('colDate')}</TableHead>
-                  <TableHead className="text-right">{t('colEndEquity')}</TableHead>
-                  <TableHead className="text-right">{t('colDailyReturn')}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {equity.map((point) => (
-                  <TableRow key={point.date}>
-                    <TableCell className="font-medium">{point.date}</TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {formatUsd(point.end_equity) ?? '—'}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {formatSignedPercent(point.daily_return) ?? '—'}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
-      </div>
     </section>
   );
 }

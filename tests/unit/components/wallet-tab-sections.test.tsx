@@ -100,6 +100,7 @@ const transferFixture = {
 
 const performanceFixture = {
   period: '30D' as const,
+  mode: 'perps' as const,
   metrics: {
     roi: 0.2,
     pnl: 1000,
@@ -117,6 +118,48 @@ const performanceFixture = {
     metrics_as_of: '2026-10-08T00:00:00Z',
   },
   equity: [{ date: '2026-10-01', end_equity: 10000, daily_return: 0.01 }],
+  series: {
+    '24H': {
+      account_value: [
+        { time: '2026-11-04T06:00:00Z', value: 76000 },
+        { time: '2026-11-04T08:20:00Z', value: 78620.34 },
+      ],
+      pnl: [
+        { time: '2026-11-04T06:00:00Z', value: 20 },
+        { time: '2026-11-04T08:20:00Z', value: 120 },
+      ],
+    },
+    '7D': {
+      account_value: [
+        { time: '2026-10-29T00:00:00Z', value: 75000 },
+        { time: '2026-11-04T08:20:00Z', value: 79000 },
+      ],
+      pnl: [
+        { time: '2026-10-29T00:00:00Z', value: -100 },
+        { time: '2026-11-04T08:20:00Z', value: 180 },
+      ],
+    },
+    '30D': {
+      account_value: [
+        { time: '2026-10-06T00:00:00Z', value: 64000 },
+        { time: '2026-11-04T08:20:00Z', value: 80000 },
+      ],
+      pnl: [
+        { time: '2026-10-06T00:00:00Z', value: -400 },
+        { time: '2026-11-04T08:20:00Z', value: 220 },
+      ],
+    },
+    ALL: {
+      account_value: [
+        { time: '2026-09-01T00:00:00Z', value: 50000 },
+        { time: '2026-11-04T08:20:00Z', value: 81000 },
+      ],
+      pnl: [
+        { time: '2026-09-01T00:00:00Z', value: 200 },
+        { time: '2026-11-04T08:20:00Z', value: 1000 },
+      ],
+    },
+  },
 };
 
 describe('wallet tab sections', () => {
@@ -273,9 +316,11 @@ describe('wallet tab sections', () => {
     renderWithIntl(
       <PerformanceSection walletAddress={WALLET} period="30D" onPeriodChange={vi.fn()} />,
     );
-    expect(screen.getByText('Equity curve')).toBeInTheDocument();
-    expect(screen.getByText('2026-10-01')).toBeInTheDocument();
-    expect(screen.getByText('$10.00K')).toBeInTheDocument();
+    expect(screen.getByText('ALL PERPS PNL')).toBeInTheDocument();
+    for (const range of ['24H', '7D', '30D', 'ALL']) {
+      expect(screen.getByRole('button', { name: range })).toBeInTheDocument();
+    }
+    expect(screen.getByRole('button', { name: 'COMBINED' })).toBeInTheDocument();
     expect(screen.queryByText('ROI')).not.toBeInTheDocument();
     expect(screen.queryByText('Win Rate')).not.toBeInTheDocument();
     expect(screen.queryByText('Volume')).not.toBeInTheDocument();

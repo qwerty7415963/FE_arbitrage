@@ -164,7 +164,71 @@ describe('wallet tab hooks', () => {
     });
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
-    expect(vi.mocked(fetchTraderPerformance).mock.calls[0][1]).toEqual({ period: '7D' });
+    expect(vi.mocked(fetchTraderPerformance).mock.calls[0][1]).toEqual({
+      period: '7D',
+      mode: 'perps',
+      seriesOnly: false,
+    });
     expect(result.current.performance?.period).toBe('7D');
+  });
+
+  it('useTraderPerformance forwards the mode and keys the query by it', async () => {
+    vi.mocked(fetchTraderPerformance).mockResolvedValue({
+      period: '7D',
+      metrics: null,
+      equity: [],
+      mode: 'combined',
+      series: {},
+    });
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    function modeWrapper({ children }: { children: React.ReactNode }) {
+      return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+    }
+    const { result } = renderHook(
+      () => useTraderPerformance(WALLET, { period: '7D', mode: 'combined' }),
+      { wrapper: modeWrapper },
+    );
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(vi.mocked(fetchTraderPerformance).mock.calls[0][1]).toEqual({
+      period: '7D',
+      mode: 'combined',
+      seriesOnly: false,
+    });
+    const keys = client
+      .getQueryCache()
+      .getAll()
+      .map((query) => query.queryKey);
+    expect(keys).toContainEqual(['trader-performance', WALLET_LOWER, '7D', 'combined', false]);
+  });
+
+  it('useTraderPerformance forwards seriesOnly and keys the query by it', async () => {
+    vi.mocked(fetchTraderPerformance).mockResolvedValue({
+      period: '7D',
+      metrics: null,
+      equity: [],
+      mode: 'perps',
+      series: {},
+    });
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    function seriesWrapper({ children }: { children: React.ReactNode }) {
+      return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+    }
+    const { result } = renderHook(
+      () => useTraderPerformance(WALLET, { period: '7D', seriesOnly: true }),
+      { wrapper: seriesWrapper },
+    );
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(vi.mocked(fetchTraderPerformance).mock.calls[0][1]).toEqual({
+      period: '7D',
+      mode: 'perps',
+      seriesOnly: true,
+    });
+    const keys = client
+      .getQueryCache()
+      .getAll()
+      .map((query) => query.queryKey);
+    expect(keys).toContainEqual(['trader-performance', WALLET_LOWER, '7D', 'perps', true]);
   });
 });
