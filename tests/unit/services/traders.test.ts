@@ -7,8 +7,12 @@ import {
   deleteTraderGroup,
   fetchTraderActivity,
   fetchTraderBalances,
+  fetchBucketDetail,
+  fetchBucketMarkets,
+  fetchBucketWallets,
   fetchTraderDetail,
   fetchTraderFills,
+  fetchTraderOverview,
   fetchTraderOrders,
   fetchTraderPerformance,
   fetchTraderPositions,
@@ -345,6 +349,70 @@ describe('traders service', () => {
     });
   });
 
+  describe('fetchTraderOverview', () => {
+    it('GETs /api/v1/traders/overview with venue, period and series_days', async () => {
+      vi.mocked(apiClient.apiClient).mockResolvedValueOnce({
+        success: true,
+        data: {
+          as_of: '2026-01-01T00:00:00Z',
+          venue: 'hyperliquid',
+          period: '30D',
+          pnl_metric: 'realized_pnl',
+          universe_size: 10,
+          pnl_buckets: [],
+          account_buckets: [],
+          coverage: {
+            pnl_wallets: 10,
+            account_value_wallets: 5,
+            series_wallets: 5,
+            data_status: { ready: 10, stale: 0, error: 0, syncing: 0 },
+          },
+        },
+      });
+      const overview = await fetchTraderOverview({
+        venue: 'hyperliquid',
+        period: '7D',
+        seriesDays: 14,
+      });
+      const url = vi.mocked(apiClient.apiClient).mock.calls[0][0] as string;
+      expect(url).toContain('/api/v1/traders/overview');
+      expect(url).toContain('venue=hyperliquid');
+      expect(url).toContain('period=7D');
+      expect(url).toContain('series_days=14');
+      expect(overview.universe_size).toBe(10);
+    });
+
+    it('uses defaults when params omitted', async () => {
+      vi.mocked(apiClient.apiClient).mockResolvedValueOnce({
+        success: true,
+        data: {
+          as_of: '2026-01-01T00:00:00Z',
+          venue: 'hyperliquid',
+          period: '30D',
+          pnl_metric: 'realized_pnl',
+          universe_size: 0,
+          pnl_buckets: [],
+          account_buckets: [],
+          coverage: {
+            pnl_wallets: 0,
+            account_value_wallets: 0,
+            series_wallets: 0,
+            data_status: { ready: 0, stale: 0, error: 0, syncing: 0 },
+          },
+        },
+      });
+      await fetchTraderOverview();
+      const url = vi.mocked(apiClient.apiClient).mock.calls[0][0] as string;
+      expect(url).toContain('period=30D');
+      expect(url).toContain('series_days=30');
+    });
+
+    it('throws when no data returned', async () => {
+      vi.mocked(apiClient.apiClient).mockResolvedValueOnce({ success: true });
+      await expect(fetchTraderOverview()).rejects.toThrow('No data returned');
+    });
+  });
+
   describe('trader-groups', () => {
     it('gets a single group', async () => {
       vi.mocked(apiClient.apiClient).mockResolvedValueOnce({
@@ -413,6 +481,91 @@ describe('traders service', () => {
       expect(options.method).toBe('PATCH');
       expect(JSON.parse(options.body as string)).toEqual({ members });
       expect(await updateGroupMembers('g1', members)).toEqual({ updated: 0 });
+    });
+  });
+  describe('fetchBucketDetail', () => {
+    it('GETs bucket detail', async () => {
+      vi.mocked(apiClient.apiClient).mockResolvedValueOnce({
+        success: true,
+        data: {
+          as_of: '2026-01-01T00:00:00Z',
+          kind: 'pnl',
+          bucket_id: 'profitable',
+          wallet_count: 2,
+          sentiment: 'bullish',
+          long_ratio: 0.6,
+          pnl_split: { pct_profit: 0.6, pct_loss: 0.4, usd_profit: 100, usd_loss: -40 },
+          notional_split: { long_usd: 300, short_usd: 200 },
+          positioning: [{ t: '2026-01-01', long_pct: 0.6 }],
+          markets_top: [
+            { market: 'BTC', notional: 100, upnl: 10, sentiment: 'bullish', traders: 2 },
+          ],
+          coverage: { wallets_with_positions: 1, wallets_with_trades: 2 },
+        },
+      });
+      const res = await fetchBucketDetail({
+        kind: 'pnl',
+        bucket: 'profitable',
+        venue: 'hyperliquid',
+        period: '30D',
+        range: '30D',
+      });
+      const url = vi.mocked(apiClient.apiClient).mock.calls[0][0] as string;
+      expect(url).toContain('/api/v1/traders/overview/buckets/pnl/profitable');
+      expect(res.bucket_id).toBe('profitable');
+    });
+  });
+
+  describe('fetchBucketWallets', () => {
+    it('GETs bucket wallets', async () => {
+      vi.mocked(apiClient.apiClient).mockResolvedValueOnce({
+        success: true,
+        data: [
+          {
+            address: '0x1',
+            display_name: 'A',
+            perp_equity: 10,
+            position_value: 5,
+            leverage: 2,
+            win_rate: 0.5,
+            volume_range: 100,
+            realized_pnl: 5,
+            bias: 'bullish',
+            cohort: 'medium',
+          },
+        ],
+        meta: { page: 1, total: 1, total_pages: 1, limit: 20, has_more: false },
+      });
+      const res = await fetchBucketWallets({ kind: 'pnl', bucket: 'profitable' });
+      const url = vi.mocked(apiClient.apiClient).mock.calls[0][0] as string;
+      expect(url).toContain('/wallets');
+      expect(res.data.length).toBe(1);
+    });
+  });
+
+  describe('fetchBucketMarkets', () => {
+    it('GETs bucket markets', async () => {
+      vi.mocked(apiClient.apiClient).mockResolvedValueOnce({
+        success: true,
+        data: [
+          {
+            market: 'BTC',
+            sentiment: 'bullish',
+            notional_long: 10,
+            notional_short: 5,
+            traders_long: 1,
+            traders_short: 1,
+            pnl_profit: 2,
+            pnl_loss: -1,
+          },
+        ],
+        meta: { page: 1, total: 1, total_pages: 1, limit: 20, has_more: false },
+      });
+      const res = await fetchBucketMarkets({ kind: 'pnl', bucket: 'profitable', search: 'BTC' });
+      const url = vi.mocked(apiClient.apiClient).mock.calls[0][0] as string;
+      expect(url).toContain('/markets');
+      expect(url).toContain('search=BTC');
+      expect(res.data.length).toBe(1);
     });
   });
 });

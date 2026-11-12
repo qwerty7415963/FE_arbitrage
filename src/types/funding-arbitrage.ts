@@ -19,12 +19,12 @@ export interface ArbitrageToken {
   venue_a_funding_rate: string;
   venue_a_interval_seconds: number;
   venue_a_observed_at: string;
-  venue_a_oi: string;
+  venue_a_oi: string; // USD notional
   venue_b_symbol: string;
   venue_b_funding_rate: string;
   venue_b_interval_seconds: number;
   venue_b_observed_at: string;
-  venue_b_oi: string;
+  venue_b_oi: string; // USD notional
 }
 
 export interface ArbitragePair {

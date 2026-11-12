@@ -2,9 +2,17 @@
 
 import { usePathname } from 'next/navigation';
 import { Link } from '@/i18n/navigation';
+import { locales } from '@/config/i18n';
 import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
-import { TrendingUpIcon, SettingsIcon, FolderIcon, RadarIcon, type LucideIcon } from 'lucide-react';
+import {
+  TrendingUpIcon,
+  SettingsIcon,
+  FolderIcon,
+  RadarIcon,
+  LayoutDashboardIcon,
+  type LucideIcon,
+} from 'lucide-react';
 
 interface NavItem {
   href: string;
@@ -24,6 +32,11 @@ const navItems: NavItem[] = [
     labelKey: 'groups',
   },
   {
+    href: '/traders/overview',
+    icon: LayoutDashboardIcon,
+    labelKey: 'overview',
+  },
+  {
     href: '/traders',
     icon: RadarIcon,
     labelKey: 'scanner',
@@ -39,10 +52,16 @@ export function SidebarNav() {
   const pathname = usePathname();
   const t = useTranslations('navigation');
 
+  const localePrefix = new RegExp(`^/(${locales.join('|')})(?=/|$)`);
+  const normalizedPathname = pathname.replace(localePrefix, '') || '/';
+
   return (
     <nav className="flex-1 space-y-1 px-3 py-4">
       {navItems.map((item) => {
-        const isActive = pathname.includes(item.href);
+        const isActive =
+          normalizedPathname === item.href ||
+          (normalizedPathname.startsWith(item.href + '/') &&
+            !(item.href === '/traders' && normalizedPathname.startsWith('/traders/overview')));
         const Icon = item.icon;
 
         return (

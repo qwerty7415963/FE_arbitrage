@@ -20,7 +20,8 @@
     "groups": "Nhóm",
     "scanner": "Trader Scanner",
     "settings": "Cài đặt",
-    "logout": "Đăng xuất"
+    "logout": "Đăng xuất",
+    "overview": "Tổng quan"
   },
   "auth": {
     "validationError": "Dữ liệu không hợp lệ",
@@ -382,7 +383,150 @@
     "noTransfers": "Không có chuyển khoản",
     "noEquity": "Không có dữ liệu equity",
     "yes": "Có",
-    "no": "Không"
+    "no": "Không",
+    "overview": {
+      "title": "Tổng quan nhà giao dịch",
+      "subtitle": "Tổng hợp hiệu suất và quy mô tài khoản",
+      "period": "Kỳ",
+      "sections": {
+        "performance": "Hiệu suất",
+        "accountSize": "Quy mô tài khoản"
+      },
+      "loading": "Đang tải tổng quan...",
+      "error": "Tải tổng quan thất bại",
+      "retry": "Thử lại",
+      "empty": "Không có dữ liệu tổng quan",
+      "noPnlWallets": "Không có ví có PnL khác 0 trong kỳ này",
+      "long": "LONG",
+      "short": "SHORT",
+      "approx": "≈",
+      "wallets": "ví",
+      "walletsCount": "{count} ví",
+      "coverage": {
+        "title": "Phạm vi",
+        "pnlWallets": "Ví PnL",
+        "accountValueWallets": "Ví giá trị tài khoản",
+        "seriesWallets": "Ví chuỗi",
+        "ready": "sẵn sàng",
+        "stale": "cũ",
+        "error": "lỗi",
+        "syncing": "đang đồng bộ"
+      },
+      "thresholds": {
+        "extremely_profitable": ">= ",
+        "very_profitable": " - ",
+        "profitable": " - ",
+        "unprofitable": "- - ",
+        "very_unprofitable": "- - -",
+        "rekt": "<= -",
+        "apex": ">= ",
+        "whale": " - ",
+        "large": " - ",
+        "medium": " - ",
+        "small": " - "
+      },
+      "sentiment": {
+        "very_bullish": "Rất lạc quan",
+        "bullish": "Lạc quan",
+        "slightly_bullish": "Hơi lạc quan",
+        "neutral": "Trung tính",
+        "slightly_bearish": "Hơi bi quan",
+        "bearish": "Bi quan",
+        "very_bearish": "Rất bi quan"
+      },
+      "bucketLabels": {
+        "extremely_profitable": "Lãi cực lớn",
+        "very_profitable": "Lãi rất lớn",
+        "profitable": "Lãi",
+        "unprofitable": "Lỗ",
+        "very_unprofitable": "Lỗ rất lớn",
+        "rekt": "Rekt",
+        "apex": "Apex",
+        "whale": "Whale",
+        "large": "Lớn",
+        "medium": "Trung bình",
+        "small": "Nhỏ"
+      },
+      "approxTooltip": "Ước tính từ tỷ lệ lệnh long/short × tổng volume, không phải open interest thật"
+    },
+    "bucketDetail": {
+      "title": "Chi ti?t bucket",
+      "back": "Quay l?i t?ng quan",
+      "range": "Range",
+      "period": "Period",
+      "wallets": "Wallets",
+      "markets": "Markets",
+      "loading": "�ang t?i bucket...",
+      "error": "Kh�ng t?i du?c bucket",
+      "retry": "Th? l?i",
+      "empty": "Kh�ng c� d? li?u",
+      "emptyWallets": "Kh�ng c� v� trong bucket n�y",
+      "emptyMarkets": "Kh�ng c� th? tru?ng trong bucket n�y",
+      "address": "Địa chỉ",
+      "prev": "Trước",
+      "next": "Tiếp",
+      "bucketDetail": {
+        "address": "Địa chỉ",
+        "prev": "Trước",
+        "next": "Tiếp",
+        "walletsCount": "{count} wallets"
+      },
+      "walletCount": "wallets",
+      "statBars": {
+        "realizedPnl": "REALIZED PNL",
+        "notional": "NOTIONAL",
+        "profit": "Profit",
+        "loss": "Loss",
+        "long": "Long",
+        "short": "Short"
+      },
+      "chart": {
+        "title": "Positioning",
+        "positioningTitle": "Positioning {bucket}",
+        "rangeCaption": "{range} · {sentiment}",
+        "percentLong": "{value}% Long",
+        "noData": "No positioning data",
+        "long": "Long %",
+        "short": "Short %",
+        "date": "Ngày"
+      },
+      "treemap": {
+        "title": "Top Markets",
+        "noData": "No markets",
+        "upnl": "UPNL",
+        "market": "Thị trường"
+      },
+      "tables": {
+        "wallets": "Wallets",
+        "markets": "Markets"
+      },
+      "search": "T�m th? tru?ng",
+      "columns": {
+        "equity": "Equity",
+        "winRate": "Win Rate",
+        "volume": "Volume",
+        "pnl": "PnL",
+        "bias": "Bias",
+        "cohort": "Cohort",
+        "market": "Market",
+        "sentiment": "Sentiment",
+        "notionalLong": "Notional Long",
+        "notionalShort": "Notional Short",
+        "tradersLong": "Traders Long",
+        "tradersShort": "Traders Short",
+        "upnlProfit": "UPNL Profit",
+        "upnlLoss": "UPNL Loss"
+      },
+      "sentiment": {
+        "very_bullish": "Rất lạc quan",
+        "bullish": "Lạc quan",
+        "slightly_bullish": "Hơi lạc quan",
+        "neutral": "Trung tính",
+        "slightly_bearish": "Hơi bi quan",
+        "bearish": "Bi quan",
+        "very_bearish": "Rất bi quan"
+      }
+    }
   },
   "settings": {
     "title": "Cài đặt"

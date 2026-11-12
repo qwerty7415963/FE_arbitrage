@@ -60,7 +60,8 @@
 | `lib/trader-url-state.ts`                                                                 | `tests/unit/lib/trader-url-state.test.ts`                  | 10      | ✅     |
 | `components/shared/pagination.tsx`                                                        | `tests/unit/components/pagination.test.tsx`                | 5       | ✅     |
 | `lib/trader-filter-draft.ts`                                                              | `tests/unit/lib/trader-filter-draft.test.ts`               | 9       | ✅     |
-| `components/funding-table.tsx`                                                            | `tests/unit/components/funding-table.test.tsx`             | 24      | ✅     |
+| `components/funding-table.tsx` (7 columns incl. Symbol)                                   | `tests/unit/components/funding-table.test.tsx`             | 27      | ✅     |
+| `lib/funding-format.ts`                                                                   | `tests/unit/lib/funding-format.test.ts`                    | 16      | ✅     |
 | `infrastructure/api-client.ts` (401 emits unauthorized once)                              | `tests/unit/infrastructure/api-client.test.ts`             | 17      | ✅     |
 | `lib/trader-activity-ws.ts` (v1.2 wallet.* + SIDEBAR-3EVENTS order.created)               | `tests/unit/lib/trader-activity-ws.test.ts`                | 21      | ✅     |
 | `hooks/use-trader-activity.ts` (SIDEBAR-3EVENTS WS-only merge/sort/cap)                   | `tests/unit/hooks/use-trader-activity.test.tsx`            | 5       | ✅     |
@@ -81,7 +82,7 @@
 | `hooks/use-telegram.ts`                                                                   | `tests/unit/hooks/use-telegram.test.tsx`                   | 5       | ✅     |
 | `app/[locale]/(protected)/settings/page.tsx`                                              | `tests/unit/components/settings-page.test.tsx`             | 7       | ✅     |
 | `(protected)/groups` + `/groups/[groupId]` auth gate (no API pre-auth)                    | `tests/unit/components/groups-auth-gate.test.tsx`          | 3       | ✅     |
-| **Total**                                                                                 |                                                            | **444** |        |
+| **Total**                                                                                 |                                                            | **483** |        |
 
 ### Test Details
 
@@ -857,4 +858,48 @@ reviewing diffs — never blindly.
 - 2026-11-01: Dedup Balances tab (Option A): BalancesSection drops 4 duplicate perp cards (Account value, Total notional, Total margin, Positions value); keeps Withdrawable + 3 cross cards (4 cards, 1 row) + spot table + status line. Removed i18n key `assetPositionsValue` from en/vi. Test assertions updated (absence checks).
 - 2026-11-03: Auth address persistence fix - `initialize()` keeps the persisted address/chainId when wagmi has not reconnected (`getAccount` address undefined) and only overwrites with the live account when available; `WagmiAuthSync` inside `WagmiProvider` syncs a late wagmi reconnect into the auth store. Unit +2 (`stores/auth`, total 438). E2E skipped (existing `next dev` on :3000 holds `.next/dev/lock`; :3001 webServer refused connection).
 - 2026-11-03: Compact funding-arbitrage table - merged venue columns (Long / Short) and rate columns (Rate A / B), dropped Status column and StatusBadge (BE returns live only). Unit 26 -> 24 (funding-table). E2E status badge test replaced with merged header assertions.
+- 2026-11-06: Funding arbitrage table redesign - 6 columns (Pair/Funding/Funding Spread/APR/OI/Price Spread), BE venue_*_oi USD notional, long/short markers in Pair column, funding-format helpers.
+- 2026-11-06: Funding arbitrage table ticker split - 7 columns (Pair/Ticker/Funding/Funding Spread/APR/OI/Price Spread); Pair keeps LONG/SHORT markers + venue names only, Ticker shows the long venue symbol then the short one (— fallback). Unit 24 -> 28 (funding-table: header order, ticker ordering for long=A/B, placeholder fallback, pair cell excludes tickers); E2E header assertion adds Ticker.
+- 2026-11-06: Funding arbitrage table combines venue tickers into a single first "Symbol" column (Symbol/Pair/Funding/Funding Spread/APR/OI/Price Spread); Symbol = row.symbol with trailing "-PERP" stripped (fallback '—'); Pair keeps LONG/SHORT markers + venue names only. Unit 28 -> 27 (funding-table: header order, symbol base asset + fallback, pair cell excludes tickers); E2E header assertion Ticker -> Symbol.
 - 2026-11-05: Hyperdash-style portfolio chart in the Performance tab - `PortfolioChart` (hand-rolled SVG, no new deps) with PERPS/COMBINED mode tabs, PNL/VALUE toggle, local 24H/7D/30D/ALL ranges (no refetch), PnL split above/below zero in primary/destructive, compact USD y-axis and range-aware x-axis. `PerformanceSnapshot.mode/series`, performance service + hook `mode` param (query key + `mode=perps` default), en/vi keys. Unit 436 -> 443 (+6 portfolio-chart, +1 hook mode); E2E E76 extended with chart title/ranges and VALUE switch.
+
+### Trader Overview (added)
+
+- tests/unit/components/trader-overview.test.tsx (16 tests)
+- tests/unit/hooks/use-trader-overview.test.tsx (3 tests)
+- tests/e2e/trader-overview.spec.ts (3 tests)
+
+### PnL=0 exclusion (2026-11-09)
+
+- BE excludes PnL=0 wallets from PnL buckets; when all wallets have PnL=0 (or none), `pnl_buckets` is empty.
+- FE shows "No wallets with non-zero PnL in this period" (`traders.overview.noPnlWallets`) in the performance section while the account section still renders.
+
+### Account-size bucket notional (2026-11-09)
+
+- BE now returns `volume_total`, `long_ratio`, `long_notional`, `short_notional` for account buckets (same as PnL buckets).
+- FE `OverviewAccountBucket` type and `OverviewCard` updated to use account bucket notional for LONG/SHORT rendering.
+
+### Account-size bucket sentiment (2026-11-09)
+
+- BE now returns `sentiment` for account buckets (derived from long_count/short_count).
+- FE `OverviewAccountBucket` type and `OverviewCard` updated to use account bucket sentiment when PnL bucket sentiment unavailable.
+
+## Bucket Detail (Trader Overview)
+
+### Coverage Summary (added)
+
+| Module     | File                                                                        | Tests                                                                             | Status  |
+| ---------- | --------------------------------------------------------------------------- | --------------------------------------------------------------------------------- | ------- |
+| Services   | src/services/traders.ts                                                     | fetchBucketDetail, fetchBucketWallets, fetchBucketMarkets                         | Covered |
+| Hooks      | src/hooks/use-bucket-detail.ts                                              | useBucketDetail                                                                   | Covered |
+| Hooks      | src/hooks/use-bucket-wallets.ts                                             | useBucketWallets                                                                  | Covered |
+| Hooks      | src/hooks/use-bucket-markets.ts                                             | useBucketMarkets                                                                  | Covered |
+| Components | src/app/[locale]/(protected)/traders/overview/[kind]/[bucket]/_components/* | BucketHeader, BucketStatBars, BucketPositioningChart, BucketTreemap, BucketTables | Covered |
+| Lib        | src/lib/treemap.ts                                                          | squarify (bounds, overlap, normalisation, single/empty/zero)                      | Covered |
+
+### Changelog
+
+- Added Bucket Detail feature: types, services, hooks, page, components, i18n, tests, E2E.
+- 2026-11-11: Hyperdash-style bucket detail visuals - positioning chart rewritten with stacked long/short areas, right-side y-axis (100/75/50/25/0%), five date labels, hover/focus tooltip and range caption; the 24H/7D/30D selector moved from the bucket header into the chart header. Treemap rewritten with a squarified layout (`src/lib/treemap.ts`), coin badges, uppercase symbols, signed UPNL, sentiment labels and upnl-based tinting (top 12 markets). Unit tests added (`tests/unit/lib/treemap.test.ts`, `tests/unit/components/bucket-positioning-chart.test.tsx`, `tests/unit/components/bucket-treemap.test.tsx`); E2E `trader-bucket-detail.spec.ts` extended for chart captions, range tabs and treemap tiles.
+
+- 2026-11-12: Bucket detail chart + treemap laid out side-by-side in a 2-column grid (50/50) on desktop, stacked on mobile; chart resized to 640x320; treemap card uses flexible height with min-h 280px. Squarify switched to shorter-side layout to avoid strip tiles; treemap.test.ts adds max aspect ratio <= 3 check for 12-item sample. E2E trader-bucket-detail.spec.ts asserts aligned tops and equal widths on desktop and stacking on mobile.

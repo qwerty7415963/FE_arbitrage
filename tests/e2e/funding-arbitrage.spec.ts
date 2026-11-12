@@ -106,8 +106,13 @@ test.describe('Funding Arbitrage', () => {
     await page.keyboard.press('Escape');
     await page.getByText('Search').click();
 
-    await expect(page.locator('th').filter({ hasText: 'Token' })).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('th').filter({ hasText: 'Pair' })).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('th').filter({ hasText: /^Symbol$/ })).toBeVisible();
+    await expect(page.locator('th').filter({ hasText: /^Funding$/ })).toBeVisible();
+    await expect(page.locator('th').filter({ hasText: 'Funding Spread' })).toBeVisible();
     await expect(page.locator('th').filter({ hasText: /^APR$/ })).toBeVisible();
+    await expect(page.locator('th').filter({ hasText: /^OI$/ })).toBeVisible();
+    await expect(page.locator('th').filter({ hasText: 'Price Spread' })).toBeVisible();
   });
 
   test('empty state shows when search returns no results', async ({ page }) => {
@@ -126,7 +131,7 @@ test.describe('Funding Arbitrage', () => {
     ).toBeVisible({ timeout: 10000 });
   });
 
-  test('merged headers render after search', async ({ page }) => {
+  test('funding spread and OI headers render after search', async ({ page }) => {
     await page.goto('/en/funding-arbitrage');
 
     await page.getByText('Select venues').click();
@@ -134,9 +139,9 @@ test.describe('Funding Arbitrage', () => {
     await page.keyboard.press('Escape');
     await page.getByText('Search').click();
 
-    await expect(page.locator('th').filter({ hasText: 'Long / Short' })).toBeVisible({
+    await expect(page.locator('th').filter({ hasText: 'Funding Spread' })).toBeVisible({
       timeout: 10000,
     });
-    await expect(page.locator('th').filter({ hasText: 'Rate A / B' })).toBeVisible();
+    await expect(page.locator('th').filter({ hasText: 'OI' })).toBeVisible();
   });
 });

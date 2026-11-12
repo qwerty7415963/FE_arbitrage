@@ -20,7 +20,8 @@
     "groups": "Groups",
     "scanner": "Trader Scanner",
     "settings": "Settings",
-    "logout": "Logout"
+    "logout": "Logout",
+    "overview": "Overview"
   },
   "auth": {
     "validationError": "Invalid data",
@@ -382,7 +383,150 @@
     "noTransfers": "No transfers",
     "noEquity": "No equity data",
     "yes": "Yes",
-    "no": "No"
+    "no": "No",
+    "overview": {
+      "title": "Trader Overview",
+      "subtitle": "Aggregate performance and account-size buckets across the trader universe",
+      "period": "Period",
+      "sections": {
+        "performance": "Performance",
+        "accountSize": "Account Size"
+      },
+      "loading": "Loading overview...",
+      "error": "Failed to load overview",
+      "retry": "Retry",
+      "empty": "No overview data available",
+      "noPnlWallets": "No wallets with non-zero PnL in this period",
+      "long": "LONG",
+      "short": "SHORT",
+      "approx": "≈",
+      "wallets": "wallets",
+      "walletsCount": "{count} wallets",
+      "coverage": {
+        "title": "Coverage",
+        "pnlWallets": "PnL wallets",
+        "accountValueWallets": "Account value wallets",
+        "seriesWallets": "Series wallets",
+        "ready": "ready",
+        "stale": "stale",
+        "error": "error",
+        "syncing": "syncing"
+      },
+      "thresholds": {
+        "extremely_profitable": ">= ",
+        "very_profitable": " - ",
+        "profitable": " - ",
+        "unprofitable": "- - ",
+        "very_unprofitable": "- - -",
+        "rekt": "<= -",
+        "apex": ">= ",
+        "whale": " - ",
+        "large": " - ",
+        "medium": " - ",
+        "small": " - "
+      },
+      "sentiment": {
+        "very_bullish": "Very bullish",
+        "bullish": "Bullish",
+        "slightly_bullish": "Slightly bullish",
+        "neutral": "Neutral",
+        "slightly_bearish": "Slightly bearish",
+        "bearish": "Bearish",
+        "very_bearish": "Very bearish"
+      },
+      "bucketLabels": {
+        "extremely_profitable": "Extremely profitable",
+        "very_profitable": "Very profitable",
+        "profitable": "Profitable",
+        "unprofitable": "Unprofitable",
+        "very_unprofitable": "Very unprofitable",
+        "rekt": "Rekt",
+        "apex": "Apex",
+        "whale": "Whale",
+        "large": "Large",
+        "medium": "Medium",
+        "small": "Small"
+      },
+      "approxTooltip": "Estimated from long/short order ratio × total volume, not real open interest"
+    },
+    "bucketDetail": {
+      "title": "Bucket Detail",
+      "back": "Back to overview",
+      "range": "Range",
+      "period": "Period",
+      "wallets": "Wallets",
+      "markets": "Markets",
+      "loading": "Loading bucket...",
+      "error": "Failed to load bucket",
+      "retry": "Retry",
+      "empty": "No data available",
+      "emptyWallets": "No wallets in this bucket",
+      "emptyMarkets": "No markets in this bucket",
+      "address": "Address",
+      "prev": "Prev",
+      "next": "Next",
+      "bucketDetail": {
+        "address": "Address",
+        "prev": "Prev",
+        "next": "Next",
+        "walletsCount": "{count} wallets"
+      },
+      "walletCount": "wallets",
+      "statBars": {
+        "realizedPnl": "REALIZED PNL",
+        "notional": "NOTIONAL",
+        "profit": "Profit",
+        "loss": "Loss",
+        "long": "Long",
+        "short": "Short"
+      },
+      "chart": {
+        "title": "Positioning",
+        "positioningTitle": "{bucket} Positioning",
+        "rangeCaption": "{range} · {sentiment}",
+        "percentLong": "{value}% Long",
+        "noData": "No positioning data",
+        "long": "Long %",
+        "short": "Short %",
+        "date": "Date"
+      },
+      "treemap": {
+        "title": "Top Markets",
+        "noData": "No markets",
+        "upnl": "UPNL",
+        "market": "Market"
+      },
+      "tables": {
+        "wallets": "Wallets",
+        "markets": "Markets"
+      },
+      "search": "Search markets",
+      "columns": {
+        "equity": "Equity",
+        "winRate": "Win Rate",
+        "volume": "Volume",
+        "pnl": "PnL",
+        "bias": "Bias",
+        "cohort": "Cohort",
+        "market": "Market",
+        "sentiment": "Sentiment",
+        "notionalLong": "Notional Long",
+        "notionalShort": "Notional Short",
+        "tradersLong": "Traders Long",
+        "tradersShort": "Traders Short",
+        "upnlProfit": "UPNL Profit",
+        "upnlLoss": "UPNL Loss"
+      },
+      "sentiment": {
+        "very_bullish": "Very bullish",
+        "bullish": "Bullish",
+        "slightly_bullish": "Slightly bullish",
+        "neutral": "Neutral",
+        "slightly_bearish": "Slightly bearish",
+        "bearish": "Bearish",
+        "very_bearish": "Very bearish"
+      }
+    }
   },
   "settings": {
     "title": "Settings"

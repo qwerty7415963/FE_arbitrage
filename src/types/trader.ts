@@ -717,3 +717,154 @@ export type WalletWsEventType =
 export interface TraderSyncQuery {
   venue?: string;
 }
+
+export type OverviewPoint = { t: string; v: number };
+
+export type OverviewBucketId =
+  | 'extremely_profitable'
+  | 'very_profitable'
+  | 'profitable'
+  | 'unprofitable'
+  | 'very_unprofitable'
+  | 'rekt';
+
+export type OverviewAccountBucketId = 'apex' | 'whale' | 'large' | 'medium' | 'small';
+
+export type OverviewSentiment =
+  | 'very_bullish'
+  | 'bullish'
+  | 'slightly_bullish'
+  | 'neutral'
+  | 'slightly_bearish'
+  | 'bearish'
+  | 'very_bearish';
+
+export interface OverviewBucket {
+  id: OverviewBucketId;
+  min_pnl: number | null;
+  max_pnl: number | null;
+  wallet_count: number;
+  pnl_total: number;
+  volume_total: number;
+  long_count: number;
+  short_count: number;
+  long_ratio: number;
+  long_notional: number;
+  short_notional: number;
+  sentiment: OverviewSentiment;
+  series: OverviewPoint[] | null;
+}
+
+export interface OverviewAccountBucket {
+  id: OverviewAccountBucketId;
+  min_equity: number | null;
+  max_equity: number | null;
+  wallet_count: number;
+  equity_total: number;
+  volume_total: number;
+  long_count: number;
+  short_count: number;
+  long_ratio: number;
+  long_notional: number;
+  short_notional: number;
+  sentiment: OverviewSentiment;
+  series: OverviewPoint[] | null;
+}
+
+export interface OverviewCoverageDataStatus {
+  ready: number;
+  stale: number;
+  error: number;
+  syncing: number;
+}
+
+export interface OverviewCoverage {
+  pnl_wallets: number;
+  account_value_wallets: number;
+  series_wallets: number;
+  data_status: OverviewCoverageDataStatus;
+}
+
+export interface TraderOverview {
+  as_of: string;
+  venue: string;
+  period: TraderPeriod | string;
+  pnl_metric: string;
+  universe_size: number;
+  pnl_buckets: OverviewBucket[];
+  account_buckets: OverviewAccountBucket[];
+  coverage: OverviewCoverage;
+}
+export type BucketKind = 'pnl' | 'account';
+
+export type BucketRange = '24H' | '7D' | '30D';
+
+export interface BucketPnlSplit {
+  pct_profit: number;
+  pct_loss: number;
+  usd_profit: number;
+  usd_loss: number;
+}
+
+export interface BucketNotionalSplit {
+  long_usd: number;
+  short_usd: number;
+}
+
+export interface BucketPositioningPoint {
+  t: string;
+  long_pct: number;
+}
+
+export interface BucketMarketTop {
+  market: string;
+  notional: number;
+  upnl: number;
+  sentiment: OverviewSentiment | string;
+  traders: number;
+}
+
+export interface BucketDetailCoverage {
+  wallets_with_positions: number;
+  wallets_with_trades: number;
+}
+
+export interface BucketDetail {
+  as_of: string;
+  kind: BucketKind | string;
+  bucket_id: string;
+  wallet_count: number;
+  sentiment: OverviewSentiment | string;
+  long_ratio: number;
+  pnl_split: BucketPnlSplit;
+  notional_split: BucketNotionalSplit;
+  positioning: BucketPositioningPoint[] | null;
+  markets_top: BucketMarketTop[] | null;
+  coverage: BucketDetailCoverage;
+}
+
+export interface BucketWalletRow {
+  address: string;
+  display_name: string | null;
+  perp_equity: number;
+  position_value: number;
+  leverage: number;
+  win_rate: number;
+  volume_range: number;
+  realized_pnl: number;
+  bias: string;
+  cohort: string;
+  long_count?: number;
+  short_count?: number;
+}
+
+export interface BucketMarketRow {
+  market: string;
+  sentiment: string;
+  notional_long: number;
+  notional_short: number;
+  traders_long: number;
+  traders_short: number;
+  pnl_profit: number;
+  pnl_loss: number;
+}

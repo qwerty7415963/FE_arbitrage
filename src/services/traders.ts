@@ -26,8 +26,12 @@ import {
   type PositionSnapshot,
   type RangeFilter,
   type TraderDetail,
+  type BucketDetail,
+  type BucketMarketRow,
+  type BucketWalletRow,
   type TraderGroup,
   type TraderMember,
+  type TraderOverview,
   type TraderSearchQuery,
   type TraderSearchRequest,
   type TransfersPage,
@@ -238,6 +242,22 @@ export async function fetchTraderPerformance(
   return res.data;
 }
 
+export async function fetchTraderOverview(
+  params: { venue?: string; period?: string; seriesDays?: number } = {},
+  options: SearchOptions = {},
+): Promise<TraderOverview> {
+  const search = new URLSearchParams();
+  search.set('venue', params.venue ?? DEFAULT_VENUE);
+  search.set('period', params.period ?? DEFAULT_TRADER_PERIOD);
+  search.set('series_days', String(params.seriesDays ?? 30));
+  const res = await apiClient<ApiResponse<TraderOverview>>(
+    `${TRADERS_BASE}/overview?${search.toString()}`,
+    { signal: options.signal },
+  );
+  if (!res.data) throw new Error('No data returned');
+  return res.data;
+}
+
 export async function listTraderGroups(): Promise<TraderGroup[]> {
   const res = await apiClient<ApiResponse<TraderGroup[]>>(TRADER_GROUPS_BASE);
   return res.data ?? [];
@@ -320,4 +340,102 @@ export async function updateGroupMembers(
     { method: 'PATCH', body: JSON.stringify({ members }) },
   );
   return { updated: typeof res.data?.updated === 'number' ? res.data.updated : 0 };
+}
+
+function normalizeBucketArgs(args: unknown[]): {
+  kind: string;
+  id: string;
+  params: Record<string, unknown>;
+} {
+  let kind = '';
+  let id = '';
+  let params: Record<string, unknown> = {};
+  if (typeof args[0] === 'string') {
+    kind = args[0];
+    if (typeof args[1] === 'string') {
+      id = args[1];
+      params = args[2] && typeof args[2] === 'object' ? (args[2] as Record<string, unknown>) : {};
+    } else {
+      params = args[1] && typeof args[1] === 'object' ? (args[1] as Record<string, unknown>) : {};
+    }
+  } else {
+    params = args[0] && typeof args[0] === 'object' ? (args[0] as Record<string, unknown>) : {};
+    kind = String(params.kind ?? params.bucketKind ?? '');
+    id = String(
+      params.bucket ?? params.id ?? params.bucketId ?? params.bucket_id ?? params.bucketID ?? '',
+    );
+  }
+  if (!id && params.bucket) id = String(params.bucket);
+  return { kind: String(kind ?? '').toLowerCase(), id: String(id ?? ''), params };
+}
+
+export async function fetchBucketDetail(...args: unknown[]): Promise<BucketDetail> {
+  const { kind, id, params } = normalizeBucketArgs(args);
+  const venue = (params.venue as string) ?? DEFAULT_VENUE;
+  const period = (params.period as string) ?? DEFAULT_TRADER_PERIOD;
+  const range = (params.range as string) ?? '30D';
+  const search = new URLSearchParams();
+  search.set('venue', venue);
+  search.set('period', String(period).toUpperCase());
+  search.set('range', String(range).toUpperCase());
+  const res = await apiClient<ApiResponse<BucketDetail>>(
+    `${TRADERS_BASE}/overview/buckets/${kind}/${id}?${search.toString()}`,
+    { signal: params.signal as AbortSignal, timeout: 60000 },
+  );
+  if (!res.data) throw new Error('No data returned');
+  return res.data;
+}
+
+export async function fetchBucketWallets(
+  ...args: unknown[]
+): Promise<{ data: BucketWalletRow[]; meta: Meta }> {
+  const { kind, id, params } = normalizeBucketArgs(args);
+  const venue = (params.venue as string) ?? DEFAULT_VENUE;
+  const period = (params.period as string) ?? DEFAULT_TRADER_PERIOD;
+  const sort = (params.sort as string) ?? 'equity';
+  const dir = (params.dir as string) ?? 'desc';
+  const page = (params.page as number) ?? 1;
+  const limit = (params.limit as number) ?? 20;
+  const search = new URLSearchParams();
+  search.set('venue', venue);
+  search.set('period', String(period).toUpperCase());
+  search.set('sort', sort);
+  search.set('dir', dir);
+  search.set('page', String(page));
+  search.set('limit', String(limit));
+  const res = await apiClient<ApiResponse<BucketWalletRow[]>>(
+    `${TRADERS_BASE}/overview/buckets/${kind}/${id}/wallets?${search.toString()}`,
+    { signal: params.signal as AbortSignal },
+  );
+  if (!res.data) throw new Error('No data returned');
+  return { data: res.data, meta: res.meta || {} };
+}
+
+export async function fetchBucketMarkets(
+  ...args: unknown[]
+): Promise<{ data: BucketMarketRow[]; meta: Meta }> {
+  const { kind, id, params } = normalizeBucketArgs(args);
+  const venue = (params.venue as string) ?? DEFAULT_VENUE;
+  const period = (params.period as string) ?? DEFAULT_TRADER_PERIOD;
+  const range = (params.range as string) ?? '30D';
+  const search = (params.search as string) ?? (params.q as string) ?? '';
+  const sort = (params.sort as string) ?? 'notional';
+  const dir = (params.dir as string) ?? 'desc';
+  const page = (params.page as number) ?? 1;
+  const limit = (params.limit as number) ?? 20;
+  const qs = new URLSearchParams();
+  qs.set('venue', venue);
+  qs.set('period', String(period).toUpperCase());
+  qs.set('range', String(range).toUpperCase());
+  if (search) qs.set('search', search);
+  qs.set('sort', sort);
+  qs.set('dir', dir);
+  qs.set('page', String(page));
+  qs.set('limit', String(limit));
+  const res = await apiClient<ApiResponse<BucketMarketRow[]>>(
+    `${TRADERS_BASE}/overview/buckets/${kind}/${id}/markets?${qs.toString()}`,
+    { signal: params.signal as AbortSignal },
+  );
+  if (!res.data) throw new Error('No data returned');
+  return { data: res.data, meta: res.meta || {} };
 }
