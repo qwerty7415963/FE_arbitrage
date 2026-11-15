@@ -9,6 +9,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import type { ArbitrageToken, ArbitragePair } from '@/types/funding-arbitrage';
+import { AssetIcon } from '@/components/shared/asset-icon';
+import { stripDexPrefix } from '@/lib/asset-meta';
 import {
   formatFundingRate,
   formatInterval,
@@ -106,7 +108,12 @@ export function FundingTable({ pairs }: FundingTableProps) {
             return (
               <TableRow key={`${row.instrument_id}-${idx}`}>
                 <TableCell className="font-medium">
-                  {(row.symbol ?? '').replace(/-PERP$/, '') || '—'}
+                  <span className="inline-flex items-center gap-1.5">
+                    {(row.symbol ?? '').trim() !== '' && (
+                      <AssetIcon symbol={(row.symbol ?? '').split('-')[0]} size={14} />
+                    )}
+                    {stripDexPrefix((row.symbol ?? '').replace(/-PERP$/, '')) || '—'}
+                  </span>
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-1.5">

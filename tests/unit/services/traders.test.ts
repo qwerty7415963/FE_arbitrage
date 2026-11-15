@@ -498,9 +498,19 @@ describe('traders service', () => {
           notional_split: { long_usd: 300, short_usd: 200 },
           positioning: [{ t: '2026-01-01', long_pct: 0.6 }],
           markets_top: [
-            { market: 'BTC', notional: 100, upnl: 10, sentiment: 'bullish', traders: 2 },
+            {
+              market: 'BTC',
+              notional: 100,
+              upnl: 10,
+              sentiment: 'bullish',
+              traders: 2,
+              asset_id: '',
+              asset_category: '',
+              logo_url: null,
+            },
           ],
           coverage: { wallets_with_positions: 1, wallets_with_trades: 2 },
+          markets_source: 'positions',
         },
       });
       const res = await fetchBucketDetail({

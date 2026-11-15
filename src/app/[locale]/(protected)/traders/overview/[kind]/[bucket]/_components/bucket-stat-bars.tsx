@@ -59,7 +59,7 @@ export function BucketStatBars(props: BucketStatBarsProps) {
       </div>
       <div>
         <div className="text-muted-foreground mb-1 flex items-center justify-between text-xs font-semibold tracking-wide uppercase">
-          <span>{t('statBars.notional')}</span>
+          <span title={t('statBars.volumeSplitTooltip')}>{t('statBars.volumeSplit')}</span>
         </div>
         <div className="bg-muted flex h-3 w-full overflow-hidden rounded-full">
           <div

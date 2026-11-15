@@ -38,6 +38,7 @@ const mockDetail = {
     { market: 'SOL', notional: 25, upnl: 0, sentiment: 'neutral', traders: 1 },
   ],
   coverage: { wallets_with_positions: 1, wallets_with_trades: 2 },
+  markets_source: 'positions',
 };
 
 const mockWallets = [
@@ -50,6 +51,7 @@ const mockWallets = [
     win_rate: 0.6,
     volume_range: 10000,
     realized_pnl: 100,
+    sum_upnl: 50,
     bias: 'bullish',
     cohort: 'medium',
   },
@@ -170,6 +172,7 @@ test.describe('Trader Bucket Detail', () => {
     await expect(page.getByTestId('treemap-tile')).toHaveCount(3);
     await expect(page.getByTestId('bucket-treemap').getByText('BTC')).toBeVisible();
     await expect(page.getByTestId('bucket-treemap').getByText('+$10.00')).toBeVisible();
+    await expect(page.getByTestId('bucket-treemap').getByText('UPNL').first()).toBeVisible();
   });
 
   test('wallets sort and markets search', async ({ page }) => {

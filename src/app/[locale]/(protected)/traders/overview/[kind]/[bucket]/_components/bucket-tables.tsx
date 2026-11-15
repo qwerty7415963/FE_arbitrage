@@ -15,6 +15,8 @@ import {
 import { useBucketWallets } from '@/hooks/use-bucket-wallets';
 import { useBucketMarkets } from '@/hooks/use-bucket-markets';
 import { formatUsd, formatPercent, formatInteger } from '@/lib/trader-format';
+import { AssetIcon } from '@/components/shared/asset-icon';
+import { stripDexPrefix } from '@/lib/asset-meta';
 import type { BucketDetail, BucketKind, BucketMarketRow, BucketWalletRow } from '@/types/trader';
 
 export interface BucketTablesProps {
@@ -32,6 +34,7 @@ export function BucketTables(props: BucketTablesProps) {
   const t = useTranslations('traders.bucketDetail');
   const tAll = useTranslations('traders');
   const detail = props.detail ?? null;
+  const marketsSource = detail?.markets_source ?? 'positions';
   const kind = props.kind ?? detail?.kind ?? 'pnl';
   const bucket = props.bucket ?? props.bucketId ?? props.id ?? detail?.bucket_id ?? '';
   const venue = props.venue ?? 'hyperliquid';
@@ -151,6 +154,7 @@ export function BucketTables(props: BucketTablesProps) {
                         {t('columns.equity')}
                       </button>
                     </TableHead>
+                    <TableHead aria-sort="none">{t('columns.positionValue')}</TableHead>
                     <TableHead
                       aria-sort={
                         walletSort === 'win_rate'
@@ -174,7 +178,7 @@ export function BucketTables(props: BucketTablesProps) {
                       }
                     >
                       <button onClick={() => toggleWalletSort('volume')}>
-                        {t('columns.volume')}
+                        {t('columns.volumeRange')}
                       </button>
                     </TableHead>
                     <TableHead
@@ -188,6 +192,7 @@ export function BucketTables(props: BucketTablesProps) {
                     >
                       <button onClick={() => toggleWalletSort('pnl')}>{t('columns.pnl')}</button>
                     </TableHead>
+                    <TableHead aria-sort="none">{t('columns.sumUpnl')}</TableHead>
                     <TableHead aria-sort="none">{t('columns.bias')}</TableHead>
                     <TableHead aria-sort="none">{t('columns.cohort')}</TableHead>
                   </TableRow>
@@ -197,14 +202,11 @@ export function BucketTables(props: BucketTablesProps) {
                     <TableRow key={r.address}>
                       <TableCell>{r.display_name ?? r.address}</TableCell>
                       <TableCell>{formatUsd(r.perp_equity) ?? '—'}</TableCell>
-                      <TableCell>
-                        {formatPercent(
-                          r.win_rate === null || r.win_rate === undefined ? null : r.win_rate * 100,
-                          1,
-                        ) ?? '—'}
-                      </TableCell>
+                      <TableCell>{formatUsd(r.position_value) ?? '—'}</TableCell>
+                      <TableCell>{formatPercent(r.win_rate, 1) ?? '—'}</TableCell>
                       <TableCell>{formatUsd(r.volume_range) ?? '—'}</TableCell>
                       <TableCell>{formatUsd(r.realized_pnl) ?? '—'}</TableCell>
+                      <TableCell>{formatUsd(r.sum_upnl) ?? '—'}</TableCell>
                       <TableCell>
                         <span
                           className={
@@ -319,7 +321,7 @@ export function BucketTables(props: BucketTablesProps) {
                       }
                     >
                       <button onClick={() => toggleMarketSort('upnl')}>
-                        {t('columns.upnlProfit')}
+                        {marketsSource === 'trades' ? t('columns.realizedPnl') : t('columns.upnl')}
                       </button>
                     </TableHead>
                     <TableHead aria-sort="none">{t('columns.upnlLoss')}</TableHead>
@@ -328,7 +330,23 @@ export function BucketTables(props: BucketTablesProps) {
                 <TableBody>
                   {marketRows.map((r: BucketMarketRow, i: number) => (
                     <TableRow key={`${r.market}-${i}`}>
-                      <TableCell>{r.market}</TableCell>
+                      <TableCell>
+                        <span className="inline-flex items-center gap-1.5">
+                          <AssetIcon
+                            symbol={r.market}
+                            logoUrl={r.logo_url}
+                            category={r.asset_category}
+                            size={14}
+                            loading="lazy"
+                          />
+                          {stripDexPrefix(r.market)}
+                          {r.market.toUpperCase().startsWith('XYZ:') && (
+                            <span className="bg-foreground/10 shrink-0 rounded px-1 text-[8px] font-medium tracking-wide uppercase">
+                              {t('treemap.tradfi')}
+                            </span>
+                          )}
+                        </span>
+                      </TableCell>
                       <TableCell>
                         <span
                           className={

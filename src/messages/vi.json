@@ -478,7 +478,9 @@
         "profit": "Profit",
         "loss": "Loss",
         "long": "Long",
-        "short": "Short"
+        "short": "Short",
+        "volumeSplit": "VOLUME SPLIT (≈)",
+        "volumeSplitTooltip": "Estimated from traded volume × long/short order share; not open notional."
       },
       "chart": {
         "title": "Positioning",
@@ -494,7 +496,10 @@
         "title": "Top Markets",
         "noData": "No markets",
         "upnl": "UPNL",
-        "market": "Thị trường"
+        "market": "Thị trường",
+        "other": "Khác",
+        "tradfi": "TradFi",
+        "realizedPnl": "Realized PnL"
       },
       "tables": {
         "wallets": "Wallets",
@@ -515,7 +520,12 @@
         "tradersLong": "Traders Long",
         "tradersShort": "Traders Short",
         "upnlProfit": "UPNL Profit",
-        "upnlLoss": "UPNL Loss"
+        "upnlLoss": "UPNL Loss",
+        "upnl": "UPNL",
+        "realizedPnl": "Realized PnL",
+        "volumeRange": "Volume (range)",
+        "positionValue": "Position Value",
+        "sumUpnl": "Sum UPNL"
       },
       "sentiment": {
         "very_bullish": "Rất lạc quan",

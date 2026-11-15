@@ -13,6 +13,8 @@ import {
 import type { ActivityFill, LiveActivityItem, WalletConnectionStatus } from '@/types/trader';
 import type { ActivityWsStatus } from '@/lib/trader-activity-ws';
 import { ArrowDownUpIcon, CheckIcon, PlusIcon } from 'lucide-react';
+import { AssetIcon } from '@/components/shared/asset-icon';
+import { stripDexPrefix } from '@/lib/asset-meta';
 
 export interface ActivityFeedProps {
   items: LiveActivityItem[];
@@ -110,7 +112,10 @@ export function ActivityFeed({ items, live, connection = null }: ActivityFeedPro
                     <span className="flex flex-wrap items-center gap-1.5">
                       <span className="font-semibold">{t('limit')}</span>
                       {side && <span className="font-medium">{side}</span>}
-                      <span className="font-medium">{order.coin}</span>
+                      <span className="inline-flex items-center gap-1.5">
+                        <AssetIcon symbol={order.coin} size={14} />
+                        <span className="font-medium">{stripDexPrefix(order.coin)}</span>
+                      </span>
                     </span>
                     <span
                       className="text-muted-foreground text-xs"
@@ -157,7 +162,10 @@ export function ActivityFeed({ items, live, connection = null }: ActivityFeedPro
                       >
                         {t(labelKey)}
                       </span>
-                      <span className="font-medium">{fill.coin}</span>
+                      <span className="inline-flex items-center gap-1.5">
+                        <AssetIcon symbol={fill.coin} size={14} />
+                        <span className="font-medium">{stripDexPrefix(fill.coin)}</span>
+                      </span>
                     </span>
                     <span
                       className="text-muted-foreground text-xs"
@@ -197,7 +205,10 @@ export function ActivityFeed({ items, live, connection = null }: ActivityFeedPro
                     >
                       {t(trade.side === 'LONG' ? 'long' : 'short')}
                     </span>
-                    <span className="font-medium">{trade.market}</span>
+                    <span className="inline-flex items-center gap-1.5">
+                      <AssetIcon symbol={trade.market} size={14} />
+                      <span className="font-medium">{stripDexPrefix(trade.market)}</span>
+                    </span>
                     <span
                       className={cn(
                         'tabular-nums',

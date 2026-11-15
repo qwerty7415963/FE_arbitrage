@@ -11,6 +11,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { formatNumber, formatRelativeTime, formatUsd } from '@/lib/trader-format';
+import { AssetIcon } from '@/components/shared/asset-icon';
+import { stripDexPrefix } from '@/lib/asset-meta';
 import { useTraderBalances } from '@/hooks/use-trader-balances';
 
 export interface BalancesSectionProps {
@@ -118,7 +120,12 @@ export function BalancesSection({ walletAddress, enabled = true }: BalancesSecti
               <TableBody>
                 {spot.balances.map((row) => (
                   <TableRow key={`${row.coin}-${row.token}`}>
-                    <TableCell className="font-medium">{row.coin}</TableCell>
+                    <TableCell className="font-medium">
+                      <span className="inline-flex items-center gap-1.5">
+                        <AssetIcon symbol={row.coin} size={14} />
+                        {stripDexPrefix(row.coin)}
+                      </span>
+                    </TableCell>
                     <TableCell className="text-right tabular-nums">{row.token ?? '—'}</TableCell>
                     <TableCell className="text-right tabular-nums">
                       {formatNumber(row.total)}

@@ -21,6 +21,8 @@ import {
   formatUsd,
 } from '@/lib/trader-format';
 import { useTraderOrders } from '@/hooks/use-trader-orders';
+import { AssetIcon } from '@/components/shared/asset-icon';
+import { stripDexPrefix } from '@/lib/asset-meta';
 import type { OrderStatusFilter } from '@/types/trader';
 
 export interface OrdersSectionProps {
@@ -114,7 +116,12 @@ export function OrdersSection({ walletAddress, enabled = true }: OrdersSectionPr
                 const tone = activitySideTone(row.side);
                 return (
                   <TableRow key={row.oid}>
-                    <TableCell className="font-medium">{row.coin}</TableCell>
+                    <TableCell className="font-medium">
+                      <span className="inline-flex items-center gap-1.5">
+                        <AssetIcon symbol={row.coin} size={14} />
+                        {stripDexPrefix(row.coin)}
+                      </span>
+                    </TableCell>
                     <TableCell>
                       <span
                         className={cn(

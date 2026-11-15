@@ -903,3 +903,33 @@ reviewing diffs — never blindly.
 - 2026-11-11: Hyperdash-style bucket detail visuals - positioning chart rewritten with stacked long/short areas, right-side y-axis (100/75/50/25/0%), five date labels, hover/focus tooltip and range caption; the 24H/7D/30D selector moved from the bucket header into the chart header. Treemap rewritten with a squarified layout (`src/lib/treemap.ts`), coin badges, uppercase symbols, signed UPNL, sentiment labels and upnl-based tinting (top 12 markets). Unit tests added (`tests/unit/lib/treemap.test.ts`, `tests/unit/components/bucket-positioning-chart.test.tsx`, `tests/unit/components/bucket-treemap.test.tsx`); E2E `trader-bucket-detail.spec.ts` extended for chart captions, range tabs and treemap tiles.
 
 - 2026-11-12: Bucket detail chart + treemap laid out side-by-side in a 2-column grid (50/50) on desktop, stacked on mobile; chart resized to 640x320; treemap card uses flexible height with min-h 280px. Squarify switched to shorter-side layout to avoid strip tiles; treemap.test.ts adds max aspect ratio <= 3 check for 12-item sample. E2E trader-bucket-detail.spec.ts asserts aligned tops and equal widths on desktop and stacking on mobile.
+- 2026-11-13: Asset icons + treemap improvements. Added src/lib/asset-meta.ts (stripDexPrefix, classifyAsset, hasCryptoIcon, sets), src/components/shared/asset-icon.tsx, vendored crypto SVGs under public/icons/crypto, top 8 + Other treemap with adaptive labels, TradFi badge, tooltip. Applied AssetIcon across bucket tables, positions, balances, fills, orders, activity, funding table.
+- 2026-11-13: Tests: asset-meta.test.ts, asset-icon.test.tsx; updated bucket-treemap.test.tsx and funding-table.test.tsx.
+- 2026-11-13: Expanded crypto icons (~50) + stock icons (~10) from simple-icons; added use-element-size hook; pixel-based treemap levels (XL/L/M/S/XS/hidden); larger treemap fonts/icons; lazy loading for table icons; eager for treemap.
+- 2026-11-15: Fixed bucket wallet table win_rate display: BE returns 0..100, so FE no longer multiplies by 100; null volume/realized_pnl/win_rate render "—". Type BucketWalletRow fields nullable. Added tests/unit/components/bucket-tables.test.tsx cases (44.49 -> "44.5%", null -> "—").
+
+## Asset Logo Registry (Phase 4)
+
+### E2E Coverage (tests/e2e/asset-logo.spec.ts)
+
+| Case      | Description                                                  | Status  |
+| --------- | ------------------------------------------------------------ | ------- |
+| AL-E2E-01 | Crypto logo renders as <img> with correct src                | Covered |
+| AL-E2E-02 | Missing logo renders fallback (letter badge/category icon)   | Covered |
+| AL-E2E-03 | Provider timeout -> fallback                                 | Covered |
+| AL-E2E-04 | No console errors                                            | Covered |
+| AL-E2E-05 | UPNL update (re-fetch) does not create new logo requests     | Covered |
+| AL-E2E-06 | No layout shift (bounding box stable before/after logo load) | Covered |
+| AL-E2E-07 | Responsive icon sizes (mobile/desktop)                       | Covered |
+
+### Changelog
+
+- 2026-11-14: Added asset-logo.spec.ts E2E; README attribution note.
+
+## Asset Logo Registry (Phase 3)
+
+- AssetIcon renders logoUrl img, falls back on error, category icon, initials, empty symbol.
+- Treemap adaptive sizes, watermark only large, preload, no layout shift, empty state.
+- E2E crypto + TradFi logos render, missing logo fallback, no console errors.
+
+- 2026-11-15: Source-aware labels + live positions display: markets_source-driven UPNL/Realized PnL labels, nullable position_value/sum_upnl, volume split tooltip, volume (range) header.

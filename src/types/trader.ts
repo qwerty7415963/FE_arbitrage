@@ -822,6 +822,9 @@ export interface BucketMarketTop {
   upnl: number;
   sentiment: OverviewSentiment | string;
   traders: number;
+  asset_id: string;
+  asset_category: string;
+  logo_url: string | null;
 }
 
 export interface BucketDetailCoverage {
@@ -841,17 +844,20 @@ export interface BucketDetail {
   positioning: BucketPositioningPoint[] | null;
   markets_top: BucketMarketTop[] | null;
   coverage: BucketDetailCoverage;
+  markets_source: 'positions' | 'trades';
+  notional_source?: string;
 }
 
 export interface BucketWalletRow {
   address: string;
   display_name: string | null;
   perp_equity: number;
-  position_value: number;
+  position_value: number | null;
   leverage: number;
-  win_rate: number;
-  volume_range: number;
-  realized_pnl: number;
+  win_rate: number | null;
+  volume_range: number | null;
+  realized_pnl: number | null;
+  sum_upnl: number | null;
   bias: string;
   cohort: string;
   long_count?: number;
@@ -867,4 +873,7 @@ export interface BucketMarketRow {
   traders_short: number;
   pnl_profit: number;
   pnl_loss: number;
+  asset_id: string;
+  asset_category: string;
+  logo_url: string | null;
 }

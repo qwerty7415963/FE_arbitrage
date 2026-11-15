@@ -21,6 +21,8 @@ import {
   formatUsd,
 } from '@/lib/trader-format';
 import { useTraderFills } from '@/hooks/use-trader-fills';
+import { AssetIcon } from '@/components/shared/asset-icon';
+import { stripDexPrefix } from '@/lib/asset-meta';
 
 export interface FillsSectionProps {
   walletAddress: string;
@@ -88,7 +90,12 @@ export function FillsSection({ walletAddress, enabled = true }: FillsSectionProp
               const tone = activitySideTone(fill.side);
               return (
                 <TableRow key={fill.tid}>
-                  <TableCell className="font-medium">{fill.coin}</TableCell>
+                  <TableCell className="font-medium">
+                    <span className="inline-flex items-center gap-1.5">
+                      <AssetIcon symbol={fill.coin} size={14} />
+                      {stripDexPrefix(fill.coin)}
+                    </span>
+                  </TableCell>
                   <TableCell>
                     <span
                       className={cn(

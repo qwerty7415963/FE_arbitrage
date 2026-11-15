@@ -26,12 +26,24 @@ const RANGES: BucketRange[] = ['24H', '7D', '30D'];
 
 export function BucketHeader(props: BucketHeaderProps) {
   const t = useTranslations('traders.bucketDetail');
+  const tOverview = useTranslations('traders.overview');
   const detail = props.detail ?? null;
   const bucketId = props.bucket ?? props.bucketId ?? props.id ?? detail?.bucket_id ?? '';
-  const title = props.title ?? props.name ?? bucketId;
+  const bucketLabelKey = 'bucketLabels.' + bucketId;
+  const fullBucketLabelKey = 'traders.overview.' + bucketLabelKey;
+  const rawTranslatedTitle = bucketId ? tOverview(bucketLabelKey as never) : '';
+  const translatedTitle =
+    rawTranslatedTitle && rawTranslatedTitle !== fullBucketLabelKey ? rawTranslatedTitle : null;
+  const humanizedTitle = bucketId
+    ? bucketId.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+    : '';
+  const title =
+    props.title ?? props.name ?? translatedTitle ?? (bucketId ? humanizedTitle : '') ?? bucketId;
   const sentiment = props.sentiment ?? detail?.sentiment ?? 'neutral';
   const walletCount = props.walletCount ?? props.wallet_count ?? detail?.wallet_count ?? 0;
-  const backHref = props.backHref ?? '/traders/overview';
+  const backHref =
+    (props.backHref ?? '/traders/overview').replace(/^\/(vi|en)(?=\/|$)/, '') ||
+    '/traders/overview';
   const range = String(props.range ?? '30D');
 
   function sentimentColor(s: string) {

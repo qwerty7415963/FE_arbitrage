@@ -23,6 +23,7 @@ function makeDetail(longPct = 0.6): BucketDetail {
     })),
     markets_top: [],
     coverage: { wallets_with_positions: 10, wallets_with_trades: 12 },
+    markets_source: 'positions',
   };
 }
 

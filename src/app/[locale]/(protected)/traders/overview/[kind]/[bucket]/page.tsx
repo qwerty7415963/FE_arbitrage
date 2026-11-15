@@ -27,7 +27,6 @@ function BucketDetailContent() {
   const router = useRouter();
   const pathname = usePathname();
   const t = useTranslations('traders.bucketDetail');
-  const locale = params.locale ?? 'en';
   const kind = params.kind ?? '';
   const bucket = params.bucket ?? '';
   const isValidKind = kind === 'pnl' || kind === 'account';
@@ -70,7 +69,7 @@ function BucketDetailContent() {
         kind={kind}
         bucket={bucket}
         detail={data ?? null}
-        backHref={`/${locale}/traders/overview`}
+        backHref="/traders/overview"
         range={pageRange}
         onRangeChange={handlePageRangeChange}
       />

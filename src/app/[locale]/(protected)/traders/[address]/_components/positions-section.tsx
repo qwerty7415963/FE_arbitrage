@@ -2,6 +2,8 @@
 
 import { useTranslations } from 'next-intl';
 import { cn } from 'cn';
+import { AssetIcon } from '@/components/shared/asset-icon';
+import { stripDexPrefix } from '@/lib/asset-meta';
 import {
   Table,
   TableBody,
@@ -193,7 +195,12 @@ export function PositionsSection({
               const upnl = p.unrealized_pnl;
               return (
                 <TableRow key={p.coin}>
-                  <TableCell className="font-medium">{p.coin}</TableCell>
+                  <TableCell className="font-medium">
+                    <span className="inline-flex items-center gap-1.5">
+                      <AssetIcon symbol={p.coin} size={14} />
+                      {stripDexPrefix(p.coin)}
+                    </span>
+                  </TableCell>
                   <TableCell>
                     <span
                       className={cn(

@@ -6,9 +6,36 @@ import { BucketTreemap } from '@/app/[locale]/(protected)/traders/overview/[kind
 import type { BucketDetail, BucketMarketTop } from '@/types/trader';
 
 const MARKETS: BucketMarketTop[] = [
-  { market: 'BTC', notional: 60, upnl: 1250, sentiment: 'bullish', traders: 3 },
-  { market: 'ETH', notional: 30, upnl: -500, sentiment: 'bearish', traders: 2 },
-  { market: 'SOL', notional: 10, upnl: 0, sentiment: 'neutral', traders: 1 },
+  {
+    market: 'BTC',
+    notional: 60,
+    upnl: 1250,
+    sentiment: 'bullish',
+    traders: 3,
+    asset_id: '',
+    asset_category: '',
+    logo_url: null,
+  },
+  {
+    market: 'ETH',
+    notional: 30,
+    upnl: -500,
+    sentiment: 'bearish',
+    traders: 2,
+    asset_id: '',
+    asset_category: '',
+    logo_url: null,
+  },
+  {
+    market: 'SOL',
+    notional: 10,
+    upnl: 0,
+    sentiment: 'neutral',
+    traders: 1,
+    asset_id: '',
+    asset_category: '',
+    logo_url: null,
+  },
 ];
 
 function makeDetail(markets: BucketMarketTop[] = MARKETS): BucketDetail {
@@ -24,6 +51,7 @@ function makeDetail(markets: BucketMarketTop[] = MARKETS): BucketDetail {
     positioning: [],
     markets_top: markets,
     coverage: { wallets_with_positions: 10, wallets_with_trades: 12 },
+    markets_source: 'positions',
   };
 }
 
@@ -50,7 +78,6 @@ describe('BucketTreemap', () => {
     expect(screen.getAllByTestId('treemap-tile')).toHaveLength(3);
 
     const btc = getTile('BTC');
-    expect(within(btc).getByText('BT')).toBeInTheDocument();
     expect(within(btc).getByText('BTC')).toBeInTheDocument();
     expect(within(btc).getByText(/\+\$1\.25K/)).toBeInTheDocument();
     expect(within(btc).getByText('UPNL')).toBeInTheDocument();
@@ -70,28 +97,61 @@ describe('BucketTreemap', () => {
 
   it('hides the sentiment label on small tiles', () => {
     renderTreemap([
-      { market: 'BTC', notional: 990, upnl: 10, sentiment: 'bullish', traders: 2 },
-      { market: 'DOGE', notional: 10, upnl: -1, sentiment: 'bearish', traders: 1 },
+      {
+        market: 'BTC',
+        notional: 990,
+        upnl: 10,
+        sentiment: 'bullish',
+        traders: 2,
+        asset_id: '',
+        asset_category: '',
+        logo_url: null,
+      },
+      {
+        market: 'DOGE',
+        notional: 10,
+        upnl: -1,
+        sentiment: 'bearish',
+        traders: 1,
+        asset_id: '',
+        asset_category: '',
+        logo_url: null,
+      },
     ]);
 
     const small = getTile('DOGE');
-    expect(within(small).getByText('DOGE')).toBeInTheDocument();
     expect(within(small).queryByText('Bearish')).not.toBeInTheDocument();
     expect(within(getTile('BTC')).getByText('Bullish')).toBeInTheDocument();
   });
 
-  it('renders at most twelve tiles', () => {
+  it('renders at most eight tiles plus other', () => {
     const markets = Array.from({ length: 13 }, (_, index) => ({
       market: `M${index}`,
       notional: 13 - index,
       upnl: index,
       sentiment: 'neutral',
       traders: 1,
+      asset_id: '',
+      asset_category: '',
+      logo_url: null,
     }));
 
     renderTreemap(markets);
 
-    expect(screen.getAllByTestId('treemap-tile')).toHaveLength(12);
+    expect(screen.getAllByTestId('treemap-tile')).toHaveLength(9);
+  });
+
+  it('uses Realized PnL label when markets_source is trades', () => {
+    const detail = makeDetail(MARKETS);
+    detail.markets_source = 'trades';
+    render(
+      <NextIntlClientProvider locale="en" messages={enMessages}>
+        <BucketTreemap detail={detail} />
+      </NextIntlClientProvider>,
+    );
+    const btc = getTile('BTC');
+    expect(within(btc).getByText('Realized PnL')).toBeInTheDocument();
+    expect(within(btc).queryByText('UPNL')).not.toBeInTheDocument();
   });
 
   it('shows the empty state with no markets', () => {
@@ -103,8 +163,26 @@ describe('BucketTreemap', () => {
 
   it('shows the empty state when every market has zero notional', () => {
     renderTreemap([
-      { market: 'BTC', notional: 0, upnl: 0, sentiment: 'neutral', traders: 0 },
-      { market: 'ETH', notional: 0, upnl: 0, sentiment: 'neutral', traders: 0 },
+      {
+        market: 'BTC',
+        notional: 0,
+        upnl: 0,
+        sentiment: 'neutral',
+        traders: 0,
+        asset_id: '',
+        asset_category: '',
+        logo_url: null,
+      },
+      {
+        market: 'ETH',
+        notional: 0,
+        upnl: 0,
+        sentiment: 'neutral',
+        traders: 0,
+        asset_id: '',
+        asset_category: '',
+        logo_url: null,
+      },
     ]);
 
     expect(screen.getByText('No markets')).toBeInTheDocument();
