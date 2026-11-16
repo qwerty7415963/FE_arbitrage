@@ -3,6 +3,7 @@
 import { Suspense, useState } from 'react';
 import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+import { Skeleton } from '@/components/ui/skeleton';
 import { BucketHeader } from './_components/bucket-header';
 import { BucketStatBars } from './_components/bucket-stat-bars';
 import { BucketPositioningChart } from './_components/bucket-positioning-chart';
@@ -76,8 +77,8 @@ function BucketDetailContent() {
 
       {isLoading && !data ? (
         <div className="flex flex-col gap-2" role="status" aria-label={t('loading')}>
-          <div className="bg-muted h-8 w-64 animate-pulse rounded-md" />
-          <div className="bg-muted h-32 w-full animate-pulse rounded-xl" />
+          <Skeleton className="h-8 w-64" />
+          <Skeleton className="h-32 w-full rounded-xl" />
         </div>
       ) : isError ? (
         <div className="flex flex-col items-start gap-3">

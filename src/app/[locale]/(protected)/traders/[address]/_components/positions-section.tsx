@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { cn } from 'cn';
 import { AssetIcon } from '@/components/shared/asset-icon';
+import { Skeleton } from '@/components/ui/skeleton';
 import { stripDexPrefix } from '@/lib/asset-meta';
 import {
   Table,
@@ -106,8 +107,8 @@ export function PositionsSection({
       <section aria-label={t('openPositions')}>
         <h2 className="text-sm font-semibold">{t('openPositions')}</h2>
         <div className="flex flex-col gap-2" role="status" aria-label={t('loading')}>
-          <div className="bg-muted h-6 w-48 animate-pulse rounded-md" />
-          <div className="bg-muted h-24 animate-pulse rounded-lg" />
+          <Skeleton className="h-6 w-48" />
+          <Skeleton className="h-24 rounded-lg" />
         </div>
       </section>
     );

@@ -2,8 +2,10 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { useRouter } from '@/i18n/navigation';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
   TableBody,
@@ -32,6 +34,7 @@ export interface BucketTablesProps {
 
 export function BucketTables(props: BucketTablesProps) {
   const t = useTranslations('traders.bucketDetail');
+  const router = useRouter();
   const tAll = useTranslations('traders');
   const detail = props.detail ?? null;
   const marketsSource = detail?.markets_source ?? 'positions';
@@ -123,8 +126,10 @@ export function BucketTables(props: BucketTablesProps) {
       {tab === 'wallets' ? (
         <div className="flex flex-col gap-3">
           {wallets.isLoading ? (
-            <div role="status" className="text-muted-foreground text-sm">
-              {t('loading')}
+            <div className="flex flex-col gap-2" role="status" aria-label={t('loading')}>
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-full" />
             </div>
           ) : wallets.isError ? (
             <div className="flex items-center gap-2">
@@ -199,8 +204,20 @@ export function BucketTables(props: BucketTablesProps) {
                 </TableHeader>
                 <TableBody>
                   {walletRows.map((r: BucketWalletRow) => (
-                    <TableRow key={r.address}>
-                      <TableCell>{r.display_name ?? r.address}</TableCell>
+                    <TableRow
+                      key={r.address}
+                      className="hover:bg-muted/50 cursor-pointer"
+                      onClick={() => router.push('/traders/' + r.address)}
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          router.push('/traders/' + r.address);
+                        }
+                      }}
+                      aria-label={t('viewWallet', { address: r.address })}
+                    >
+                      <TableCell title={r.address}>{r.display_name ?? r.address}</TableCell>
                       <TableCell>{formatUsd(r.perp_equity) ?? '—'}</TableCell>
                       <TableCell>{formatUsd(r.position_value) ?? '—'}</TableCell>
                       <TableCell>{formatPercent(r.win_rate, 1) ?? '—'}</TableCell>
@@ -264,8 +281,10 @@ export function BucketTables(props: BucketTablesProps) {
             }}
           />
           {markets.isLoading ? (
-            <div role="status" className="text-muted-foreground text-sm">
-              {t('loading')}
+            <div className="flex flex-col gap-2" role="status" aria-label={t('loading')}>
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-full" />
             </div>
           ) : markets.isError ? (
             <div className="flex items-center gap-2">

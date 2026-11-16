@@ -10,6 +10,7 @@ import {
   type TraderPeriod,
 } from '@/types/trader';
 import { OverviewCard } from './overview-card';
+import { Skeleton } from '@/components/ui/skeleton';
 import type { LucideIcon } from 'lucide-react';
 
 export interface OverviewTabProps {
@@ -54,10 +55,10 @@ export function OverviewTab(props: OverviewTabProps) {
         role="status"
         aria-label={t('loading')}
       >
-        <div className="bg-muted h-8 w-48 animate-pulse rounded-md" />
+        <Skeleton className="h-8 w-48" />
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 11 }).map((_, i) => (
-            <div key={i} className="bg-muted h-32 animate-pulse rounded-xl" />
+            <Skeleton key={i} className="h-32 rounded-xl" />
           ))}
         </div>
       </div>

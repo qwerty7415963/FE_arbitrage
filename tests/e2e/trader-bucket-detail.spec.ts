@@ -216,4 +216,56 @@ test.describe('Trader Bucket Detail', () => {
 
     expect(treemapBox.y).toBeGreaterThan(chartBox.y + chartBox.height - 8);
   });
+
+  test('clicking wallet row navigates to wallet detail and back', async ({ page }) => {
+    await seedAuth(page);
+    await mockBucketDetail(page);
+    await page.route(
+      /\/api\/v1\/traders\/0x1111111111111111111111111111111111111111(\?|$)/,
+      (route) =>
+        route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            success: true,
+            data: {
+              registry: {
+                wallet_address: '0x1111111111111111111111111111111111111111',
+                venue: 'hyperliquid',
+                venue_id: null,
+                display_name: 'Trader One',
+                discovery_source: 'leaderboard',
+                first_seen_at: '2024-01-01T00:00:00Z',
+                last_seen_at: '2024-01-02T00:00:00Z',
+                last_trade_at: '2024-01-02T00:00:00Z',
+                leaderboard_seen_at: null,
+                status: 'active',
+              },
+              metrics: null,
+              period: '30D',
+            },
+          }),
+        }),
+    );
+    await page.route(
+      /\/api\/v1\/traders\/0x1111111111111111111111111111111111111111\/positions/,
+      (route) =>
+        route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            success: true,
+            data: { summary: null, positions: [], data_status: 'ready', as_of: null },
+          }),
+        }),
+    );
+    await page.goto('/en/traders/overview/pnl/profitable');
+
+    await page.getByRole('row', { name: /View wallet/i }).click();
+    await expect(page).toHaveURL(/\/en\/traders\/0x1111111111111111111111111111111111111111/);
+    await expect(page.getByRole('heading', { name: 'Trader One' })).toBeVisible();
+
+    await page.getByRole('button', { name: /Back to scanner/i }).click();
+    await expect(page).toHaveURL(/\/en\/traders\/overview\/pnl\/profitable/);
+  });
 });

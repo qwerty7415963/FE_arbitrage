@@ -535,7 +535,8 @@
         "slightly_bearish": "Hơi bi quan",
         "bearish": "Bi quan",
         "very_bearish": "Rất bi quan"
-      }
+      },
+      "viewWallet": "Xem ví {address}"
     }
   },
   "settings": {

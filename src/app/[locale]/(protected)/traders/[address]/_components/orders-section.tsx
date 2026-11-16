@@ -22,6 +22,7 @@ import {
 } from '@/lib/trader-format';
 import { useTraderOrders } from '@/hooks/use-trader-orders';
 import { AssetIcon } from '@/components/shared/asset-icon';
+import { Skeleton } from '@/components/ui/skeleton';
 import { stripDexPrefix } from '@/lib/asset-meta';
 import type { OrderStatusFilter } from '@/types/trader';
 
@@ -46,8 +47,8 @@ export function OrdersSection({ walletAddress, enabled = true }: OrdersSectionPr
     return (
       <section aria-label={t('tabOrders')} className="flex flex-col gap-2">
         <div className="flex flex-col gap-2" role="status" aria-label={t('loading')}>
-          <div className="bg-muted h-8 w-48 animate-pulse rounded-md" />
-          <div className="bg-muted h-24 animate-pulse rounded-lg" />
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-24 rounded-lg" />
         </div>
       </section>
     );

@@ -14,6 +14,7 @@ import type { ActivityFill, LiveActivityItem, WalletConnectionStatus } from '@/t
 import type { ActivityWsStatus } from '@/lib/trader-activity-ws';
 import { ArrowDownUpIcon, CheckIcon, PlusIcon } from 'lucide-react';
 import { AssetIcon } from '@/components/shared/asset-icon';
+import { Skeleton } from '@/components/ui/skeleton';
 import { stripDexPrefix } from '@/lib/asset-meta';
 
 export interface ActivityFeedProps {
@@ -64,8 +65,8 @@ export function ActivityFeed({ items, live, connection = null }: ActivityFeedPro
       >
         <h2 className="text-sm font-semibold">{t('recentActivity')}</h2>
         <div className="flex flex-col gap-2" role="status" aria-label={t('loading')}>
-          <div className="bg-muted h-10 animate-pulse rounded-md" />
-          <div className="bg-muted h-10 animate-pulse rounded-md" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
         </div>
       </section>
     );

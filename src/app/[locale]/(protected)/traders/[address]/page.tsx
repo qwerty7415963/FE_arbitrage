@@ -4,6 +4,7 @@ import { Suspense, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { ApiError } from '@/infrastructure/api-client';
 import { useTraderActivity } from '@/hooks/use-trader-activity';
 import { useTraderDetail } from '@/hooks/use-trader-detail';
@@ -121,10 +122,10 @@ function DetailContent() {
         </div>
       ) : isLoading && !detail ? (
         <div className="flex flex-col gap-2" role="status" aria-label={t('loading')}>
-          <div className="bg-muted h-8 w-64 animate-pulse rounded-md" />
+          <Skeleton className="h-8 w-64" />
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             {Array.from({ length: 7 }).map((_, i) => (
-              <div key={i} className="bg-muted h-20 animate-pulse rounded-lg" />
+              <Skeleton key={i} className="h-20 rounded-lg" />
             ))}
           </div>
         </div>

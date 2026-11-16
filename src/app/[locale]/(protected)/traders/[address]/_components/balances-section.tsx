@@ -11,6 +11,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { formatNumber, formatRelativeTime, formatUsd } from '@/lib/trader-format';
+import { Skeleton } from '@/components/ui/skeleton';
 import { AssetIcon } from '@/components/shared/asset-icon';
 import { stripDexPrefix } from '@/lib/asset-meta';
 import { useTraderBalances } from '@/hooks/use-trader-balances';
@@ -32,8 +33,8 @@ export function BalancesSection({ walletAddress, enabled = true }: BalancesSecti
     return (
       <section aria-label={t('tabBalances')} className="flex flex-col gap-2">
         <div className="flex flex-col gap-2" role="status" aria-label={t('loading')}>
-          <div className="bg-muted h-8 w-48 animate-pulse rounded-md" />
-          <div className="bg-muted h-24 animate-pulse rounded-lg" />
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-24 rounded-lg" />
         </div>
       </section>
     );

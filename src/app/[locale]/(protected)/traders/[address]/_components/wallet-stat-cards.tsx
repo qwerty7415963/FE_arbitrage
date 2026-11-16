@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { NULL_DISPLAY } from '@/components/shared/traders/trader-table';
 import {
   formatDecimal,
@@ -62,12 +63,12 @@ export function WalletStatCards({
       <div className="flex flex-col gap-2" role="status" aria-label={t('loading')}>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="bg-muted h-20 animate-pulse rounded-xl" />
+            <Skeleton key={i} className="h-20 rounded-xl" />
           ))}
         </div>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-6">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="bg-muted h-20 animate-pulse rounded-xl" />
+            <Skeleton key={i} className="h-20 rounded-xl" />
           ))}
         </div>
       </div>

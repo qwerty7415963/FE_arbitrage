@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { NextIntlClientProvider } from 'next-intl';
 import enMessages from '@/messages/en.json';
 import { BucketTables } from '@/app/[locale]/(protected)/traders/overview/[kind]/[bucket]/_components/bucket-tables';
@@ -7,8 +8,17 @@ import type { BucketWalletRow } from '@/types/trader';
 import { useBucketWallets } from '@/hooks/use-bucket-wallets';
 import { useBucketMarkets } from '@/hooks/use-bucket-markets';
 
+const nav = vi.hoisted(() => ({ push: vi.fn() }));
+
 vi.mock('@/hooks/use-bucket-wallets', () => ({ useBucketWallets: vi.fn() }));
 vi.mock('@/hooks/use-bucket-markets', () => ({ useBucketMarkets: vi.fn() }));
+vi.mock('@/i18n/navigation', () => ({
+  Link: ({ children, href }: { children: unknown; href: string }) => (
+    <a href={href}>{children as never}</a>
+  ),
+  useRouter: () => ({ push: nav.push, replace: vi.fn(), back: vi.fn() }),
+  usePathname: () => '/',
+}));
 
 function makeRow(overrides: Partial<BucketWalletRow> = {}): BucketWalletRow {
   return {
@@ -78,5 +88,30 @@ describe('BucketTables', () => {
   it('uses Volume (range) header', () => {
     renderTables(makeRow());
     expect(screen.getByText('Volume (range)')).toBeInTheDocument();
+  });
+
+  it('navigates to wallet detail on row click', async () => {
+    const user = userEvent.setup();
+    renderTables(makeRow());
+    nav.push.mockClear();
+    const row = screen.getByRole('row', { name: /View wallet/ });
+    await user.click(row);
+    expect(nav.push).toHaveBeenCalledWith('/traders/0x1111111111111111111111111111111111111111');
+  });
+
+  it('navigates to wallet detail on Enter key', async () => {
+    const user = userEvent.setup();
+    renderTables(makeRow());
+    nav.push.mockClear();
+    const row = screen.getByRole('row', { name: /View wallet/ });
+    row.focus();
+    await user.keyboard('{Enter}');
+    expect(nav.push).toHaveBeenCalledWith('/traders/0x1111111111111111111111111111111111111111');
+  });
+
+  it('has aria-label on wallet row', () => {
+    renderTables(makeRow());
+    const row = screen.getByRole('row', { name: /View wallet/ });
+    expect(row).toHaveAttribute('aria-label');
   });
 });

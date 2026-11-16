@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Loader2Icon } from 'lucide-react';
 import { useAuthStore } from '@/lib/stores/auth';
 import { getVenues, getFundingArbitrage } from '@/services/funding-arbitrage';
@@ -125,9 +126,12 @@ export default function FundingArbitragePage() {
       {error && <div className="text-destructive text-sm">{error}</div>}
 
       {isLoadingData && pairs.length === 0 ? (
-        <div className="text-muted-foreground flex items-center justify-center py-12">
-          <Loader2Icon className="mr-2 h-5 w-5 animate-spin" />
-          Loading...
+        <div className="flex flex-col gap-2 py-12" role="status" aria-label="Loading...">
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-full" />
         </div>
       ) : (
         <>

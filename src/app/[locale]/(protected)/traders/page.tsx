@@ -4,6 +4,7 @@ import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { ApiError } from '@/infrastructure/api-client';
 import { searchTraders } from '@/services/traders';
 import { validateTraderSearch } from '@/lib/trader-validation';
@@ -437,7 +438,7 @@ function ScannerContent() {
       {showSkeleton ? (
         <div className="flex flex-col gap-2" role="status" aria-label={t('loading')}>
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="bg-muted h-12 animate-pulse rounded-md" />
+            <Skeleton key={i} className="h-12" />
           ))}
         </div>
       ) : (

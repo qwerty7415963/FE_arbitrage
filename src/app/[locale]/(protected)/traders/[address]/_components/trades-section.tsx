@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { cn } from 'cn';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
   TableBody,
@@ -102,8 +103,8 @@ export function TradesSection({ walletAddress, enabled = true }: TradesSectionPr
     return (
       <section aria-label={t('tabTrades')} className="flex flex-col gap-2">
         <div className="flex flex-col gap-2" role="status" aria-label={t('loading')}>
-          <div className="bg-muted h-8 w-48 animate-pulse rounded-md" />
-          <div className="bg-muted h-24 animate-pulse rounded-lg" />
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-24 rounded-lg" />
         </div>
       </section>
     );

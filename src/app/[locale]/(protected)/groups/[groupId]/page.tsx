@@ -333,7 +333,8 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
       ) : null}
 
       {isLoadingMembers && members.length === 0 ? (
-        <div className="space-y-2">
+        <div className="flex flex-col gap-2" role="status" aria-label={t('loading')}>
+          <Skeleton className="h-12 w-full" />
           <Skeleton className="h-12 w-full" />
           <Skeleton className="h-12 w-full" />
         </div>

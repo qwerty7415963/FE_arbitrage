@@ -12,6 +12,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Label } from '@/components/ui/label';
 import { ApiError } from '@/infrastructure/api-client';
 import { useAuthStore } from '@/lib/stores/auth';
@@ -199,7 +200,11 @@ export function AddToTraderGroupModal({
         <div className="space-y-2">
           <Label>{t('chooseGroup')}</Label>
           {isLoadingGroups ? (
-            <p className="text-muted-foreground text-sm">{t('loading')}</p>
+            <div className="flex flex-col gap-2" role="status" aria-label={t('loading')}>
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-full" />
+            </div>
           ) : groups.length === 0 ? (
             <p className="text-muted-foreground text-sm">{t('empty')}</p>
           ) : (

@@ -3,6 +3,7 @@
 import { useId, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { cn } from 'cn';
+import { Skeleton } from '@/components/ui/skeleton';
 import { formatSignedUsd, formatUsd } from '@/lib/trader-format';
 import type {
   PortfolioMode,
@@ -198,8 +199,8 @@ export function PortfolioChart({
 
       {isLoading ? (
         <div role="status" aria-label={t('loading')} className="flex flex-col gap-2">
-          <div className="bg-muted h-8 w-40 animate-pulse rounded-md" />
-          <div className="bg-muted h-44 w-full animate-pulse rounded-lg" />
+          <Skeleton className="h-8 w-40" />
+          <Skeleton className="h-44 w-full rounded-lg" />
         </div>
       ) : (
         <>

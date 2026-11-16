@@ -12,7 +12,7 @@ import { useTelegramStatus } from '@/hooks/use-telegram';
 import { useAuthGate } from '@/hooks/use-auth-gate';
 import { useAuthStore } from '@/lib/stores/auth';
 import { ConnectWalletButton } from '@/components/shared/auth/connect-wallet-button';
-import { Loader2Icon, PencilIcon, Trash2Icon } from 'lucide-react';
+import { PencilIcon, Trash2Icon } from 'lucide-react';
 import { GroupForm } from './_components/group-form';
 import { DeleteGroupDialog } from './_components/delete-group-dialog';
 
@@ -225,9 +225,10 @@ export default function GroupsPage() {
           )}
 
           {isLoading && groups.length > 0 && (
-            <div className="text-muted-foreground flex items-center gap-2 text-sm">
-              <Loader2Icon className="h-4 w-4 animate-spin" />
-              {tCommon('loading')}
+            <div className="flex flex-col gap-2" role="status" aria-label={tCommon('loading')}>
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-full" />
             </div>
           )}
         </>
