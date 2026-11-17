@@ -151,6 +151,8 @@ export interface OpenPosition {
   unrealized_pnl: number | null;
   return_on_equity: number | null;
   liquidation_price: number | null;
+  tp_pxs?: number[];
+  sl_pxs?: number[];
   leverage: number | null;
   max_leverage: number | null;
   margin_used: number | null;

@@ -326,6 +326,17 @@ describe('TradersScannerPage', () => {
     expect(screen.getByText('0xbbbb...bbbb')).toBeInTheDocument();
   });
 
+  it('shows no traders found for empty result without error banner', async () => {
+    vi.mocked(searchTraders).mockResolvedValue({
+      data: [],
+      meta: { total: 0, total_pages: 1, page: 1, limit: 20 },
+    });
+    renderPage();
+    expect(await screen.findByText('No traders found')).toBeInTheDocument();
+    expect(screen.queryByText('An error occurred, please try again')).not.toBeInTheDocument();
+    expect(screen.getByText('Page 1 of 1 · 0 results')).toBeInTheDocument();
+  });
+
   it('empty-state reset re-runs the default search', async () => {
     const user = userEvent.setup();
     vi.mocked(searchTraders).mockResolvedValue({ data: [], meta: {} });

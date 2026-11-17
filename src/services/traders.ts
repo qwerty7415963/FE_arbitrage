@@ -99,8 +99,8 @@ export async function searchTraders(
     ),
     signal: options.signal,
   });
-  if (!res.data) throw new Error('No data returned');
-  return { data: res.data, meta: res.meta || {} };
+  const data = res.data ?? [];
+  return { data, meta: res.meta || {} };
 }
 
 export async function fetchTraderDetail(

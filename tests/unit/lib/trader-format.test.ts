@@ -12,6 +12,7 @@ import {
   formatSignedPct,
   formatSignedPercent,
   formatSignedUsd,
+  formatTpSlList,
   formatUsd,
   shortAddress,
 } from '@/lib/trader-format';
@@ -119,6 +120,39 @@ describe('formatNumber', () => {
     expect(formatNumber(0.5, 2)).toBe('0.5');
     expect(formatNumber(null)).toBe('—');
     expect(formatNumber(Number.NaN)).toBe('—');
+  });
+});
+
+describe('formatTpSlList', () => {
+  it('returns dash for empty/null/undefined', () => {
+    expect(formatTpSlList([])).toEqual({ text: '—', title: null });
+    expect(formatTpSlList(null)).toEqual({ text: '—', title: null });
+    expect(formatTpSlList(undefined)).toEqual({ text: '—', title: null });
+  });
+
+  it('formats one price', () => {
+    expect(formatTpSlList([123.4])).toEqual({ text: '$123.40', title: '$123.40' });
+  });
+
+  it('formats two prices', () => {
+    expect(formatTpSlList([123.4, 130])).toEqual({
+      text: '$123.40 · $130.00',
+      title: '$123.40, $130.00',
+    });
+  });
+
+  it('formats three+ prices with overflow', () => {
+    expect(formatTpSlList([123.4, 130, 140])).toEqual({
+      text: '$123.40 · $130.00 +1',
+      title: '$123.40, $130.00, $140.00',
+    });
+  });
+
+  it('supports custom max', () => {
+    expect(formatTpSlList([1, 2, 3, 4], 1)).toEqual({
+      text: '$1.00 +3',
+      title: '$1.00, $2.00, $3.00, $4.00',
+    });
   });
 });
 

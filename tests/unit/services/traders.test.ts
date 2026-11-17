@@ -104,9 +104,38 @@ describe('traders service', () => {
       expect(JSON.parse(options.body as string)).toMatchObject({ page: 2 });
     });
 
-    it('throws when no data returned', async () => {
-      vi.mocked(apiClient.apiClient).mockResolvedValue({ success: true });
-      await expect(searchTraders()).rejects.toThrow('No data returned');
+    it('returns empty data when res.data is null', async () => {
+      vi.mocked(apiClient.apiClient).mockResolvedValue({
+        success: true,
+        data: null,
+        meta: { total: 0, total_pages: 1, page: 1, limit: 20 },
+      });
+      const result = await searchTraders();
+      expect(result).toEqual({
+        data: [],
+        meta: { total: 0, total_pages: 1, page: 1, limit: 20 },
+      });
+    });
+
+    it('returns empty data when res.data is undefined', async () => {
+      vi.mocked(apiClient.apiClient).mockResolvedValue({
+        success: true,
+        meta: { total: 0, total_pages: 1, page: 1, limit: 20 },
+      });
+      const result = await searchTraders();
+      expect(result).toEqual({
+        data: [],
+        meta: { total: 0, total_pages: 1, page: 1, limit: 20 },
+      });
+    });
+
+    it('passes meta through when present', async () => {
+      vi.mocked(apiClient.apiClient).mockResolvedValue({
+        success: true,
+        data: null,
+      });
+      const result = await searchTraders();
+      expect(result).toEqual({ data: [], meta: {} });
     });
   });
 

@@ -19,6 +19,7 @@ import { useBucketMarkets } from '@/hooks/use-bucket-markets';
 import { formatUsd, formatPercent, formatInteger } from '@/lib/trader-format';
 import { AssetIcon } from '@/components/shared/asset-icon';
 import { stripDexPrefix } from '@/lib/asset-meta';
+import { ArrowDownIcon, ArrowUpDownIcon, ArrowUpIcon } from 'lucide-react';
 import type { BucketDetail, BucketKind, BucketMarketRow, BucketWalletRow } from '@/types/trader';
 
 export interface BucketTablesProps {
@@ -98,6 +99,15 @@ export function BucketTables(props: BucketTablesProps) {
     setMarketPage(1);
   };
 
+  function sortIndicator(column: string) {
+    if (column !== walletSort) return <ArrowUpDownIcon className="h-3.5 w-3.5" aria-hidden />;
+    return walletDir === 'asc' ? (
+      <ArrowUpIcon className="h-3.5 w-3.5" aria-hidden />
+    ) : (
+      <ArrowDownIcon className="h-3.5 w-3.5" aria-hidden />
+    );
+  }
+
   return (
     <div data-testid="bucket-tables" className="flex flex-col gap-3">
       <div className="flex items-center gap-2" role="tablist">
@@ -155,8 +165,12 @@ export function BucketTables(props: BucketTablesProps) {
                           : 'none'
                       }
                     >
-                      <button onClick={() => toggleWalletSort('equity')}>
+                      <button
+                        onClick={() => toggleWalletSort('equity')}
+                        className="inline-flex items-center gap-1"
+                      >
                         {t('columns.equity')}
+                        {sortIndicator('equity')}
                       </button>
                     </TableHead>
                     <TableHead aria-sort="none">{t('columns.positionValue')}</TableHead>
@@ -169,8 +183,12 @@ export function BucketTables(props: BucketTablesProps) {
                           : 'none'
                       }
                     >
-                      <button onClick={() => toggleWalletSort('win_rate')}>
+                      <button
+                        onClick={() => toggleWalletSort('win_rate')}
+                        className="inline-flex items-center gap-1"
+                      >
                         {t('columns.winRate')}
+                        {sortIndicator('win_rate')}
                       </button>
                     </TableHead>
                     <TableHead
@@ -182,8 +200,12 @@ export function BucketTables(props: BucketTablesProps) {
                           : 'none'
                       }
                     >
-                      <button onClick={() => toggleWalletSort('volume')}>
+                      <button
+                        onClick={() => toggleWalletSort('volume')}
+                        className="inline-flex items-center gap-1"
+                      >
                         {t('columns.volumeRange')}
+                        {sortIndicator('volume')}
                       </button>
                     </TableHead>
                     <TableHead
@@ -195,7 +217,13 @@ export function BucketTables(props: BucketTablesProps) {
                           : 'none'
                       }
                     >
-                      <button onClick={() => toggleWalletSort('pnl')}>{t('columns.pnl')}</button>
+                      <button
+                        onClick={() => toggleWalletSort('pnl')}
+                        className="inline-flex items-center gap-1"
+                      >
+                        {t('columns.pnl')}
+                        {sortIndicator('pnl')}
+                      </button>
                     </TableHead>
                     <TableHead aria-sort="none">{t('columns.sumUpnl')}</TableHead>
                     <TableHead aria-sort="none">{t('columns.bias')}</TableHead>

@@ -67,6 +67,8 @@ const mockPositions = {
       unrealized_pnl: 1500,
       return_on_equity: 0.05,
       liquidation_price: 55000,
+      tp_pxs: [123.4, 130, 140],
+      sl_pxs: [100, 90],
       leverage: 3,
       max_leverage: 10,
       margin_used: 100,
@@ -216,6 +218,50 @@ test.describe('Trader Detail positions + sidebar 3-event (SIDEBAR-3EVENTS)', () 
     await expect(page.getByText('Recent Activity')).toBeVisible();
     await expect(page.getByText('Waiting for live activity…')).toBeVisible();
     expect(counters.activity).toBe(0);
+  });
+
+  test('statement header shows one account value, details toggle, strip and context', async ({
+    page,
+  }) => {
+    const counters = { activity: 0 };
+    await seedAuthAndWs(page);
+    await mockTraderEndpoints(page, counters);
+    await page.goto(`/en/traders/${WALLET}`);
+    await expect(page.getByRole('heading', { name: 'Smart Money' })).toBeVisible();
+
+    await expect(page.getByText('Account value', { exact: true })).toHaveCount(1);
+    await expect(page.getByText('$12.35K', { exact: true })).toBeVisible();
+    await expect(page.getByText('Total notional', { exact: true })).toHaveCount(1);
+    await expect(page.getByText('Margin usage', { exact: true })).toBeVisible();
+    await expect(page.getByText('Account leverage', { exact: true })).toBeVisible();
+
+    const details = page.locator('details').filter({ hasText: 'Details' });
+    await expect(details.getByText('First seen')).toBeHidden();
+    await page.getByText('Details', { exact: true }).click();
+    await expect(details.getByText('First seen')).toBeVisible();
+
+    const period = page.getByRole('group', { name: 'Period' });
+    await expect(period).toBeVisible();
+    await expect(period.getByRole('button', { name: '7D' })).toBeVisible();
+    await period.getByRole('button', { name: '7D' }).click();
+    await expect(period.getByRole('button', { name: '7D' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+
+    await expect(page.getByText('1 position · 100% long · 3× position lev')).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Recent Activity' })).toBeVisible();
+    expect(counters.activity).toBe(0);
+  });
+
+  test('renders TP/SL column headers and cell text', async ({ page }) => {
+    const counters = { activity: 0 };
+    await seedAuthAndWs(page);
+    await mockTraderEndpoints(page, counters);
+    await page.goto(`/en/traders/${WALLET}`);
+    await expect(page.getByRole('columnheader', { name: 'TP' })).toBeVisible();
+    await expect(page.getByRole('columnheader', { name: 'SL' })).toBeVisible();
+    await expect(page.getByTitle('$123.40, $130.00, $140.00')).toBeVisible();
   });
 
   test('shows empty positions with a waiting sidebar (no Load more)', async ({ page }) => {

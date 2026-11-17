@@ -13,15 +13,10 @@ import { readLastScan } from '@/lib/trader-url-state';
 import { isValidWalletAddress } from '@/lib/trader-validation';
 import { WalletTabs } from './_components/wallet-tabs';
 import { ActivityFeed } from './_components/activity-feed';
-import { WalletIdentityCard } from './_components/wallet-identity-card';
-import { WalletStatCards } from './_components/wallet-stat-cards';
+import { WalletStatementHeader } from './_components/wallet-statement-header';
+import { WalletPerformanceStrip } from './_components/wallet-performance-strip';
 import { AddToTraderGroupModal } from '@/components/shared/traders/add-to-trader-group-modal';
-import {
-  DEFAULT_TRADER_PERIOD,
-  TRADER_PERIODS,
-  type MemberInput,
-  type TraderPeriod,
-} from '@/types/trader';
+import { DEFAULT_TRADER_PERIOD, type MemberInput, type TraderPeriod } from '@/types/trader';
 import { ArrowLeftIcon } from 'lucide-react';
 
 type DetailError = 'traderNotFound' | 'unknownError';
@@ -102,31 +97,17 @@ function DetailContent() {
         </span>
       </nav>
 
-      <div className="flex flex-wrap items-end gap-2" role="group" aria-label={t('period')}>
-        {TRADER_PERIODS.map((p) => (
-          <Button
-            key={p}
-            variant={period === p ? 'default' : 'outline'}
-            size="sm"
-            aria-pressed={period === p}
-            onClick={() => setPeriod(p)}
-          >
-            {p}
-          </Button>
-        ))}
-      </div>
-
       {!addressValid ? (
         <div className="bg-destructive/10 text-destructive rounded-md p-3 text-sm">
           {t('invalidAddress')}
         </div>
       ) : isLoading && !detail ? (
-        <div className="flex flex-col gap-2" role="status" aria-label={t('loading')}>
-          <Skeleton className="h-8 w-64" />
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            {Array.from({ length: 7 }).map((_, i) => (
-              <Skeleton key={i} className="h-20 rounded-lg" />
-            ))}
+        <div className="flex flex-col gap-4" role="status" aria-label={t('loading')}>
+          <Skeleton className="h-40 w-full rounded-xl" />
+          <Skeleton className="h-10 w-full" />
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+            <Skeleton className="h-64 rounded-xl lg:col-span-2" />
+            <Skeleton className="h-64 rounded-xl" />
           </div>
         </div>
       ) : error ? (
@@ -140,37 +121,38 @@ function DetailContent() {
         </div>
       ) : (
         registry && (
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-            <div className="flex flex-col gap-4 lg:col-span-2">
-              <WalletIdentityCard
-                registry={registry}
-                lastUpdated={lastUpdated}
-                metrics={metrics}
-                onAdd={() => setAddOpen(true)}
-              />
+          <div className="flex flex-col gap-4">
+            <WalletStatementHeader
+              registry={registry}
+              summary={positionsSnapshot?.summary ?? null}
+              positions={positionsSnapshot?.positions ?? []}
+              metrics={metrics}
+              lastUpdated={lastUpdated}
+              onAdd={() => setAddOpen(true)}
+            />
 
-              <WalletStatCards
-                summary={positionsSnapshot?.summary ?? null}
-                positions={positionsSnapshot?.positions ?? []}
-                metrics={metrics}
-                isLoading={panelPositions.isLoading && !positionsSnapshot}
-                error={!positionsSnapshot ? panelPositions.error : null}
-                onRetry={() => panelPositions.refetch()}
-              />
-
-              <WalletTabs
-                walletAddress={address.toLowerCase()}
-                period={period}
-                onPeriodChange={setPeriod}
-              />
-            </div>
-            <div className="lg:col-span-1">
-              <div className="lg:sticky lg:top-4 lg:max-h-[80vh] lg:overflow-y-auto">
-                <ActivityFeed
-                  items={activity.items}
-                  live={activity.live}
-                  connection={activity.connection}
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+              <div className="flex flex-col gap-4 lg:col-span-2">
+                <WalletPerformanceStrip
+                  period={period}
+                  onPeriodChange={setPeriod}
+                  metrics={metrics}
                 />
+
+                <WalletTabs
+                  walletAddress={address.toLowerCase()}
+                  period={period}
+                  onPeriodChange={setPeriod}
+                />
+              </div>
+              <div className="lg:col-span-1">
+                <div className="lg:sticky lg:top-4 lg:max-h-[80vh] lg:overflow-y-auto">
+                  <ActivityFeed
+                    items={activity.items}
+                    live={activity.live}
+                    connection={activity.connection}
+                  />
+                </div>
               </div>
             </div>
           </div>

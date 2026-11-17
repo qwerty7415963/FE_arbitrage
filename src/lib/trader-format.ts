@@ -100,6 +100,20 @@ export function formatNumber(value: number | null | undefined, digits = 4): stri
   });
 }
 
+export function formatTpSlList(
+  prices: number[] | null | undefined,
+  max = 2,
+): { text: string; title: string | null } {
+  const list = prices ?? [];
+  if (list.length === 0) return { text: '—', title: null };
+  const formatted = list.map((p) => formatUsd(p) ?? '—');
+  const shown = formatted.slice(0, max);
+  const text =
+    list.length <= max ? shown.join(' · ') : `${shown.join(' · ')} +${list.length - max}`;
+  const title = formatted.join(', ');
+  return { text, title };
+}
+
 export function formatDurationSec(value: number | null | undefined): string {
   if (value === null || value === undefined || Number.isNaN(value) || value < 0) return NULL_GLYPH;
   const totalSec = Math.floor(value);

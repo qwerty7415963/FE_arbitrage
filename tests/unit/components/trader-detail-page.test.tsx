@@ -150,7 +150,7 @@ describe('TraderDetailPage (contract v1.2 live, no sync)', () => {
     expect(fetchTraderDetail).not.toHaveBeenCalled();
   });
 
-  it('renders identity, stat cards and tabs', async () => {
+  it('renders the statement header, performance strip, tabs and activity feed', async () => {
     renderPage();
     expect(await screen.findByRole('heading', { name: 'Smart Money' })).toBeInTheDocument();
     expect(screen.getByText('Wallet Detail')).toBeInTheDocument();
@@ -162,6 +162,11 @@ describe('TraderDetailPage (contract v1.2 live, no sync)', () => {
     expect(screen.getByRole('button', { name: '7D' })).toBeInTheDocument();
     expect(screen.queryByText('Equity curve')).not.toBeInTheDocument();
     expect(screen.queryByText('Top Positions')).not.toBeInTheDocument();
+    expect(screen.getAllByText('Account value')).toHaveLength(1);
+    expect(screen.getAllByText('Total notional')).toHaveLength(1);
+    expect(screen.getByText('Margin usage')).toBeInTheDocument();
+    expect(screen.getByText('Account leverage')).toBeInTheDocument();
+    expect(screen.getByText('Recent Activity')).toBeInTheDocument();
     const card = screen.getByRole('region', { name: 'Smart Money' });
     expect(within(card).getByText(/Ready/)).toBeInTheDocument();
     expect(within(card).getByText(/Metrics as of/)).toBeInTheDocument();

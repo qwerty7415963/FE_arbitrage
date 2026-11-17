@@ -16,18 +16,13 @@ import {
 import {
   activitySideTone,
   formatNumber,
-  formatRelativeTime,
   formatSignedPct,
   formatSignedUsd,
+  formatTpSlList,
   formatUsd,
 } from '@/lib/trader-format';
 import type { PositionSnapshot, PositionSortKey, SortDirection } from '@/types/trader';
 import { ArrowDownIcon, ArrowUpIcon, ArrowUpDownIcon } from 'lucide-react';
-
-const STATUS_LABEL_KEYS = {
-  ready: 'statusReady',
-  error: 'positionsError',
-} as const;
 
 export interface PositionsSectionProps {
   snapshot: PositionSnapshot | null;
@@ -133,120 +128,151 @@ export function PositionsSection({
   }
 
   const positions = snapshot?.positions ?? [];
-  const summary = snapshot?.summary ?? null;
   // Live detail (contract v1.2 §1.1): ready|error only, never syncing/stale.
-  const status: keyof typeof STATUS_LABEL_KEYS = snapshot?.data_status ?? 'ready';
-  const asOf = snapshot?.as_of ?? summary?.as_of ?? null;
+  const status = snapshot?.data_status ?? 'ready';
+
+  const longCount = positions.filter((p) => p.side === 'LONG').length;
+  let totalValue = 0;
+  let longValue = 0;
+  let valuedCount = 0;
+  for (const p of positions) {
+    if (p.position_value === null || p.position_value === undefined) continue;
+    totalValue += p.position_value;
+    valuedCount += 1;
+    if (p.side === 'LONG') longValue += p.position_value;
+  }
+  const longPct =
+    positions.length === 0
+      ? 0
+      : valuedCount > 0 && totalValue > 0
+        ? Math.round((longValue / totalValue) * 100)
+        : Math.round((longCount / positions.length) * 100);
+  const leverages = positions
+    .map((p) => p.leverage)
+    .filter((value): value is number => value !== null && value !== undefined);
+  const positionLeverage =
+    leverages.length === 0
+      ? '—'
+      : formatNumber(
+          positions.length === 1
+            ? leverages[0]
+            : leverages.reduce((sum, value) => sum + value, 0) / leverages.length,
+          2,
+        );
 
   return (
     <section aria-label={t('openPositions')} className="flex flex-col gap-3 rounded-lg border p-4">
       <h2 className="text-sm font-semibold">{t('openPositions')}</h2>
-      <p className="text-muted-foreground text-xs">
-        {t(STATUS_LABEL_KEYS[status])}
-        {asOf && ` · ${t('positionsAsOf', { time: formatRelativeTime(asOf) ?? '' })}`}
+      <p className="text-muted-foreground text-[13px]">
+        {t.rich('positionsContext', {
+          count: positions.length,
+          longPct,
+          lev: positionLeverage,
+          strong: (chunks) => <span className="text-foreground font-medium">{chunks}</span>,
+        })}
       </p>
-
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-        <div className="rounded-lg border p-3">
-          <span className="text-muted-foreground text-xs">{t('accountValue')}</span>
-          <span className="block text-lg font-semibold">
-            {summary?.account_value === null || summary?.account_value === undefined
-              ? '—'
-              : formatUsdOrDash(summary.account_value)}
-          </span>
-        </div>
-        <div className="rounded-lg border p-3">
-          <span className="text-muted-foreground text-xs">{t('totalNotional')}</span>
-          <span className="block text-lg font-semibold">
-            {summary?.total_ntl_pos === null || summary?.total_ntl_pos === undefined
-              ? '—'
-              : formatUsdOrDash(summary.total_ntl_pos)}
-          </span>
-        </div>
-        <div className="rounded-lg border p-3">
-          <span className="text-muted-foreground text-xs">{t('totalMargin')}</span>
-          <span className="block text-lg font-semibold">
-            {summary?.total_margin_used === null || summary?.total_margin_used === undefined
-              ? '—'
-              : formatUsdOrDash(summary.total_margin_used)}
-          </span>
-        </div>
-      </div>
+      {status === 'error' && <p className="text-destructive text-xs">{t('statusError')}</p>}
 
       {positions.length === 0 ? (
         <p className="text-muted-foreground text-sm">{t('noOpenPositions')}</p>
       ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              {sortableHead('coin', t('coin'), 'left')}
-              <TableHead>{t('side')}</TableHead>
-              {sortableHead('size', t('size'))}
-              {sortableHead('entry_price', t('entryPrice'))}
-              {sortableHead('mark_price', t('markPrice'))}
-              {sortableHead('unrealized_pnl', t('unrealizedPnl'))}
-              {sortableHead('return_on_equity', t('roi'))}
-              <TableHead className="text-right">{t('liquidationPrice')}</TableHead>
-              {sortableHead('leverage', t('leverage'))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {positions.map((p) => {
-              const tone = activitySideTone(p.side);
-              const upnl = p.unrealized_pnl;
-              return (
-                <TableRow key={p.coin}>
-                  <TableCell className="font-medium">
-                    <span className="inline-flex items-center gap-1.5">
-                      <AssetIcon symbol={p.coin} size={14} />
-                      {stripDexPrefix(p.coin)}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <span
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                {sortableHead('coin', t('coin'), 'left')}
+                <TableHead>{t('side')}</TableHead>
+                {sortableHead('size', t('size'))}
+                {sortableHead('entry_price', t('entryPrice'))}
+                {sortableHead('mark_price', t('markPrice'))}
+                {sortableHead('unrealized_pnl', t('unrealizedPnl'))}
+                {sortableHead('return_on_equity', t('roi'))}
+                <TableHead className="text-right">{t('liquidationPrice')}</TableHead>
+                <TableHead className="text-right">{t('tp')}</TableHead>
+                <TableHead className="text-right">{t('sl')}</TableHead>
+                {sortableHead('leverage', t('leverage'))}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {positions.map((p) => {
+                const tone = activitySideTone(p.side);
+                const upnl = p.unrealized_pnl;
+                return (
+                  <TableRow key={p.coin}>
+                    <TableCell className="font-medium">
+                      <span className="inline-flex items-center gap-1.5">
+                        <AssetIcon symbol={p.coin} size={14} />
+                        {stripDexPrefix(p.coin)}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <span
+                        className={cn(
+                          'rounded px-1.5 py-0.5 text-xs font-medium',
+                          tone === 'positive'
+                            ? 'bg-primary/10 text-primary'
+                            : 'bg-destructive/10 text-destructive',
+                        )}
+                      >
+                        {t(p.side === 'LONG' ? 'long' : 'short')}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {formatNumber(p.size)}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {p.entry_price === null ? '—' : formatUsdOrDash(p.entry_price)}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {p.mark_price === null ? '—' : formatUsdOrDash(p.mark_price)}
+                    </TableCell>
+                    <TableCell
                       className={cn(
-                        'rounded px-1.5 py-0.5 text-xs font-medium',
-                        tone === 'positive'
-                          ? 'bg-primary/10 text-primary'
-                          : 'bg-destructive/10 text-destructive',
+                        'text-right tabular-nums',
+                        upnl !== null && upnl !== 0
+                          ? upnl > 0
+                            ? 'text-primary'
+                            : 'text-destructive'
+                          : undefined,
                       )}
                     >
-                      {t(p.side === 'LONG' ? 'long' : 'short')}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">{formatNumber(p.size)}</TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {p.entry_price === null ? '—' : formatUsdOrDash(p.entry_price)}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {p.mark_price === null ? '—' : formatUsdOrDash(p.mark_price)}
-                  </TableCell>
-                  <TableCell
-                    className={cn(
-                      'text-right tabular-nums',
-                      upnl !== null && upnl !== 0
-                        ? upnl > 0
-                          ? 'text-primary'
-                          : 'text-destructive'
-                        : undefined,
-                    )}
-                  >
-                    {upnl === null ? '—' : formatSignedUsd(upnl)}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {p.return_on_equity === null ? '—' : formatSignedPct(p.return_on_equity * 100)}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {p.liquidation_price === null ? '—' : formatUsdOrDash(p.liquidation_price)}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {p.leverage === null ? '—' : `${formatNumber(p.leverage, 2)}x`}
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
+                      {upnl === null ? '—' : formatSignedUsd(upnl)}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {p.return_on_equity === null
+                        ? '—'
+                        : formatSignedPct(p.return_on_equity * 100)}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {p.liquidation_price === null ? '—' : formatUsdOrDash(p.liquidation_price)}
+                    </TableCell>
+                    {(() => {
+                      const tpPxs = p.tp_pxs ?? [];
+                      const tp = formatTpSlList(tpPxs);
+                      return (
+                        <TableCell className="text-right tabular-nums">
+                          <span title={tp.title ?? undefined}>{tp.text}</span>
+                        </TableCell>
+                      );
+                    })()}
+                    {(() => {
+                      const slPxs = p.sl_pxs ?? [];
+                      const sl = formatTpSlList(slPxs);
+                      return (
+                        <TableCell className="text-right tabular-nums">
+                          <span title={sl.title ?? undefined}>{sl.text}</span>
+                        </TableCell>
+                      );
+                    })()}
+                    <TableCell className="text-right tabular-nums">
+                      {p.leverage === null ? '—' : `${formatNumber(p.leverage, 2)}x`}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
       )}
     </section>
   );

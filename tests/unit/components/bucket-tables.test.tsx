@@ -114,4 +114,58 @@ describe('BucketTables', () => {
     const row = screen.getByRole('row', { name: /View wallet/ });
     expect(row).toHaveAttribute('aria-label');
   });
+
+  it('shows sort indicators default equity desc', () => {
+    renderTables(makeRow());
+    const equityBtn = screen.getByRole('button', { name: 'Equity' });
+    expect(equityBtn.querySelector('.lucide-arrow-down')).not.toBeNull();
+    for (const label of ['Win Rate', 'Volume (range)', 'PnL']) {
+      const btn = screen.getByRole('button', { name: label });
+      expect(btn.querySelector('.lucide-arrow-up-down')).not.toBeNull();
+    }
+  });
+
+  it('updates sort indicators and aria-sort on win rate click', async () => {
+    const user = userEvent.setup();
+    renderTables(makeRow());
+    await user.click(screen.getByRole('button', { name: 'Win Rate' }));
+
+    const winBtn = screen.getByRole('button', { name: 'Win Rate' });
+    expect(winBtn.querySelector('.lucide-arrow-down')).not.toBeNull();
+    expect(
+      screen.getByRole('button', { name: 'Equity' }).querySelector('.lucide-arrow-up-down'),
+    ).not.toBeNull();
+
+    expect(screen.getByRole('columnheader', { name: /Win Rate/i })).toHaveAttribute(
+      'aria-sort',
+      'descending',
+    );
+    expect(screen.getByRole('columnheader', { name: /Equity/i })).toHaveAttribute(
+      'aria-sort',
+      'none',
+    );
+
+    await user.click(winBtn);
+    expect(winBtn.querySelector('.lucide-arrow-up')).not.toBeNull();
+  });
+
+  it('aria-sort values correct on default', () => {
+    renderTables(makeRow());
+    expect(screen.getByRole('columnheader', { name: /Equity/i })).toHaveAttribute(
+      'aria-sort',
+      'descending',
+    );
+    expect(screen.getByRole('columnheader', { name: /Win Rate/i })).toHaveAttribute(
+      'aria-sort',
+      'none',
+    );
+    expect(screen.getByRole('columnheader', { name: /Volume \(range\)/i })).toHaveAttribute(
+      'aria-sort',
+      'none',
+    );
+    expect(screen.getByRole('columnheader', { name: /^PnL$/i })).toHaveAttribute(
+      'aria-sort',
+      'none',
+    );
+  });
 });

@@ -217,6 +217,27 @@ test.describe('Trader Bucket Detail', () => {
     expect(treemapBox.y).toBeGreaterThan(chartBox.y + chartBox.height - 8);
   });
 
+  test('wallets sort header toggles aria-sort and icon', async ({ page }) => {
+    await seedAuth(page);
+    await mockBucketDetail(page);
+    await page.goto('/en/traders/overview/pnl/profitable');
+
+    const equityHeader = page.getByRole('columnheader', { name: /^Equity$/i });
+    const equityButton = page.getByRole('button', { name: 'Equity' });
+
+    await expect(equityHeader).toHaveAttribute('aria-sort', 'descending');
+    await expect(equityButton.locator('svg')).toHaveClass(/lucide-arrow-down/);
+
+    await equityButton.click();
+    await expect(equityHeader).toHaveAttribute('aria-sort', 'ascending');
+    await expect(equityButton.locator('svg')).toHaveClass(/lucide-arrow-up/);
+
+    // other sortable columns show the neutral indicator
+    await expect(page.getByRole('button', { name: 'Win Rate' }).locator('svg')).toHaveClass(
+      /lucide-arrow-up-down/,
+    );
+  });
+
   test('clicking wallet row navigates to wallet detail and back', async ({ page }) => {
     await seedAuth(page);
     await mockBucketDetail(page);
