@@ -174,11 +174,13 @@ describe('WalletStatementHeader', () => {
     expect(container.querySelector('details')).toHaveAttribute('open');
   });
 
-  it('calls onAdd from the overflow button', () => {
+  it('calls onAdd from the labeled action button', () => {
     stubMatchMedia(false);
     const onAdd = vi.fn();
     renderHeader({ onAdd });
-    fireEvent.click(screen.getByRole('button', { name: 'Add to group' }));
+    const button = screen.getByRole('button', { name: 'Add to group' });
+    expect(button).toHaveTextContent(/Add to group/);
+    fireEvent.click(button);
     expect(onAdd).toHaveBeenCalledTimes(1);
   });
 

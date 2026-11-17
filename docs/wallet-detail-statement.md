@@ -131,6 +131,14 @@ The page keeps `lg:grid-cols-3`: statement header full width, main column
 
 Recent Activity is untouched.
 
+## Wallet action
+
+The header's wallet action is a labeled outline button (not icon-only): variant
+`outline`, default size, `shrink-0`, rendered in the identity row after the
+name/address block. It shows a `UserPlusIcon` (`size-4`, `aria-hidden`) followed
+by the `addToGroup` label text, and triggers `onAdd`. Accessible name is the
+visible `Add to group` text (no separate `aria-label`).
+
 ## Test list
 
 Unit (`vitest`):

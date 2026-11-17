@@ -22,7 +22,7 @@ import type {
   PositionSummary,
   RegistryEntry,
 } from '@/types/trader';
-import { ChevronDownIcon, EllipsisIcon, TrophyIcon } from 'lucide-react';
+import { ChevronDownIcon, TrophyIcon, UserPlusIcon } from 'lucide-react';
 
 const NULL_GLYPH = '—';
 
@@ -164,13 +164,13 @@ export function WalletStatementHeader({
             </div>
             <Button
               type="button"
-              variant="ghost"
-              size="sm"
-              aria-label={t('addToGroup')}
+              variant="outline"
+              size="default"
               onClick={onAdd}
               className="shrink-0"
             >
-              <EllipsisIcon className="h-4 w-4" aria-hidden />
+              <UserPlusIcon className="size-4" aria-hidden />
+              {t('addToGroup')}
             </Button>
           </div>
 
