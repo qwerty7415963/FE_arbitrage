@@ -1,8 +1,9 @@
-'use client';
+﻿'use client';
 
 import { useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchTraderPositions } from '@/services/traders';
+import { sortPositionsClient } from '@/lib/position-sort';
 import { connectTradeActivityWS } from '@/lib/trader-activity-ws';
 import { traderDataRefetchInterval } from '@/lib/trader-poll';
 import { shouldRetryTraderQuery, traderRetryDelay } from '@/lib/trader-retry';
@@ -28,7 +29,7 @@ export interface UseTraderPositionsResult {
 }
 
 /**
- * Live positions (contract v1.2 §1.1 + §2): REST `clearinghouseState`
+ * Live positions (contract v1.2 Â§1.1 + Â§2): REST `clearinghouseState`
  * (short TTL, no WS stream for ticks). `wallet.position.updated` (sent on
  * REST bootstrap/resync only) patches the cache incrementally. Mounted tab
  * polls every 30s (`traderDataRefetchInterval`); error stops polling and
@@ -59,10 +60,11 @@ export function useTraderPositions(
     if (!wallet) return;
     const handle = connectTradeActivityWS(wallet, () => {}, undefined, {
       onPosition: (snapshot) => {
-        queryClient.setQueryData<PositionSnapshot>(
-          ['trader-positions', wallet, sort, dir],
-          snapshot,
-        );
+        const sorted = sortPositionsClient(snapshot.positions, sort, dir);
+        queryClient.setQueryData<PositionSnapshot>(['trader-positions', wallet, sort, dir], {
+          ...snapshot,
+          positions: sorted,
+        });
       },
     });
     return () => handle.close();
