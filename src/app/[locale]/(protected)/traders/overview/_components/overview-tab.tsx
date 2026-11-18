@@ -7,6 +7,7 @@ import {
   DEFAULT_TRADER_PERIOD,
   TRADER_PERIODS,
   type TraderOverview,
+  type TraderOverviewSeries,
   type TraderPeriod,
 } from '@/types/trader';
 import { OverviewCard } from './overview-card';
@@ -26,6 +27,14 @@ export interface OverviewTabProps {
   refetch?: () => void;
   pnlIcon?: LucideIcon;
   accountIcon?: LucideIcon;
+  seriesData?: TraderOverviewSeries;
+  series?: TraderOverviewSeries;
+  overviewSeries?: TraderOverviewSeries;
+  seriesLoading?: boolean;
+  isSeriesLoading?: boolean;
+  isLoadingSeries?: boolean;
+  seriesIsLoading?: boolean;
+  seriesPending?: boolean;
 }
 
 export function OverviewTab(props: OverviewTabProps) {
@@ -39,6 +48,24 @@ export function OverviewTab(props: OverviewTabProps) {
   const isLoading = props.isLoading ?? false;
   const isError = props.isError ?? false;
   const refetch = props.refetch;
+
+  const seriesData = props.seriesData ?? props.series ?? props.overviewSeries;
+  const seriesLoading =
+    props.seriesLoading ??
+    props.isSeriesLoading ??
+    props.isLoadingSeries ??
+    props.seriesIsLoading ??
+    props.seriesPending ??
+    false;
+
+  function bucketSeries(bucketId: string, kind: 'pnl' | 'account'): { t: string; v: number }[] {
+    if (!seriesData) return [];
+    const rows = kind === 'account' ? seriesData.account_series : seriesData.pnl_series;
+    return (rows ?? [])
+      .filter((r) => r.bucket === bucketId)
+      .sort((a, b) => String(a.date).localeCompare(String(b.date)))
+      .map((r) => ({ t: r.date, v: r.pnl }));
+  }
 
   const handlePeriodChange = (p: TraderPeriod) => {
     if (props.onPeriodChange) props.onPeriodChange(p);
@@ -128,6 +155,8 @@ export function OverviewTab(props: OverviewTabProps) {
                     title={t(`bucketLabels.${b.id}` as never)}
                     subtitle={t(`thresholds.${b.id}` as never)}
                     sentiment={b.sentiment}
+                    series={seriesData ? bucketSeries(b.id, 'pnl') : b.series}
+                    seriesLoading={seriesLoading}
                   />
                 ))}
               </div>
@@ -146,6 +175,8 @@ export function OverviewTab(props: OverviewTabProps) {
                   title={t(`bucketLabels.${b.id}` as never)}
                   subtitle={t(`thresholds.${b.id}` as never)}
                   sentiment={b.sentiment}
+                  series={seriesData ? bucketSeries(b.id, 'account') : b.series}
+                  seriesLoading={seriesLoading}
                 />
               ))}
             </div>

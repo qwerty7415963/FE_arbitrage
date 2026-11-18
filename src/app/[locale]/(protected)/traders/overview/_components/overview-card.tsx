@@ -10,6 +10,7 @@ import type {
 } from '@/types/trader';
 import { formatUsd } from '@/lib/trader-format';
 import { OverviewSparkline } from './overview-sparkline';
+import { Skeleton } from '@/components/ui/skeleton';
 
 type Bucket = OverviewBucket | OverviewAccountBucket;
 
@@ -24,6 +25,7 @@ export interface OverviewCardProps {
   walletCount?: number;
   wallet_count?: number;
   series?: OverviewPoint[] | null;
+  seriesLoading?: boolean;
   longNotional?: number;
   shortNotional?: number;
   longRatio?: number;
@@ -128,7 +130,11 @@ export function OverviewCard(props: OverviewCardProps) {
 
         <div className="mt-3 flex items-center justify-between text-sm">
           <span className="text-muted-foreground">{t('walletsCount', { count: walletCount })}</span>
-          <OverviewSparkline series={series} width={96} height={24} />
+          {props.seriesLoading ? (
+            <Skeleton className="h-6 w-24" data-testid="overview-sparkline-skeleton" />
+          ) : (
+            <OverviewSparkline series={series} width={96} height={24} />
+          )}
         </div>
 
         <div className="text-muted-foreground mt-3 text-xs" title={t('approxTooltip')}>

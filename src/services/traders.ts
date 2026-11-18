@@ -32,6 +32,7 @@ import {
   type TraderGroup,
   type TraderMember,
   type TraderOverview,
+  type TraderOverviewSeries,
   type TraderSearchQuery,
   type TraderSearchRequest,
   type TransfersPage,
@@ -252,6 +253,32 @@ export async function fetchTraderOverview(
   search.set('series_days', String(params.seriesDays ?? 30));
   const res = await apiClient<ApiResponse<TraderOverview>>(
     `${TRADERS_BASE}/overview?${search.toString()}`,
+    { signal: options.signal },
+  );
+  if (!res.data) throw new Error('No data returned');
+  return res.data;
+}
+
+export async function fetchTraderOverviewSeries(
+  params: {
+    venue?: string;
+    period?: string;
+    pnlMetric?: string;
+    pnl_metric?: string;
+    seriesDays?: number;
+    series_days?: number;
+  } = {},
+  options: SearchOptions = {},
+): Promise<TraderOverviewSeries> {
+  const search = new URLSearchParams();
+  search.set('venue', params.venue ?? DEFAULT_VENUE);
+  search.set('period', params.period ?? DEFAULT_TRADER_PERIOD);
+  const pnlMetric = params.pnlMetric ?? params.pnl_metric ?? 'realized_pnl';
+  search.set('pnl_metric', pnlMetric);
+  const seriesDays = params.seriesDays ?? params.series_days ?? 30;
+  search.set('series_days', String(seriesDays));
+  const res = await apiClient<ApiResponse<TraderOverviewSeries>>(
+    `${TRADERS_BASE}/overview/series?${search.toString()}`,
     { signal: options.signal },
   );
   if (!res.data) throw new Error('No data returned');

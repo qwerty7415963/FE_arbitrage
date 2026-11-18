@@ -797,6 +797,24 @@ export interface TraderOverview {
   account_buckets: OverviewAccountBucket[];
   coverage: OverviewCoverage;
 }
+
+export interface OverviewSeriesPoint {
+  date: string;
+  bucket: string;
+  pnl: number;
+}
+
+export interface TraderOverviewSeries {
+  venue: string;
+  period: string;
+  pnl_metric: string;
+  series_days: number;
+  pnl_series: OverviewSeriesPoint[];
+  account_series: OverviewSeriesPoint[];
+  series_wallets: number;
+}
+
+export type OverviewSeries = TraderOverviewSeries;
 export type BucketKind = 'pnl' | 'account';
 
 export type BucketRange = '24H' | '7D' | '30D';

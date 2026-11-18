@@ -13,6 +13,7 @@ import {
   fetchTraderDetail,
   fetchTraderFills,
   fetchTraderOverview,
+  fetchTraderOverviewSeries,
   fetchTraderOrders,
   fetchTraderPerformance,
   fetchTraderPositions,
@@ -439,6 +440,41 @@ describe('traders service', () => {
     it('throws when no data returned', async () => {
       vi.mocked(apiClient.apiClient).mockResolvedValueOnce({ success: true });
       await expect(fetchTraderOverview()).rejects.toThrow('No data returned');
+    });
+  });
+
+  describe('fetchTraderOverviewSeries', () => {
+    it('GETs /api/v1/traders/overview/series with params', async () => {
+      vi.mocked(apiClient.apiClient).mockResolvedValueOnce({
+        success: true,
+        data: {
+          venue: 'hyperliquid',
+          period: '7D',
+          pnl_metric: 'realized_pnl',
+          series_days: 14,
+          pnl_series: [{ date: '2026-01-01', bucket: 'profitable', pnl: 10 }],
+          account_series: [],
+          series_wallets: 5,
+        },
+      });
+      const series = await fetchTraderOverviewSeries({
+        venue: 'hyperliquid',
+        period: '7D',
+        pnlMetric: 'realized_pnl',
+        seriesDays: 14,
+      });
+      const url = vi.mocked(apiClient.apiClient).mock.calls[0][0] as string;
+      expect(url).toContain('/api/v1/traders/overview/series');
+      expect(url).toContain('venue=hyperliquid');
+      expect(url).toContain('period=7D');
+      expect(url).toContain('pnl_metric=realized_pnl');
+      expect(url).toContain('series_days=14');
+      expect(series.series_wallets).toBe(5);
+    });
+
+    it('throws when no data returned', async () => {
+      vi.mocked(apiClient.apiClient).mockResolvedValueOnce({ success: true });
+      await expect(fetchTraderOverviewSeries()).rejects.toThrow('No data returned');
     });
   });
 

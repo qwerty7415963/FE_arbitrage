@@ -3,7 +3,7 @@
 import { Suspense, useState } from 'react';
 import { useSearchParams, useRouter, useParams } from 'next/navigation';
 import { DEFAULT_TRADER_PERIOD, TRADER_PERIODS, type TraderPeriod } from '@/types/trader';
-import { useTraderOverview } from '@/hooks/use-trader-overview';
+import { useTraderOverview, useTraderOverviewSeries } from '@/hooks/use-trader-overview';
 import { OverviewTab } from './_components/overview-tab';
 
 export default function TradersOverviewPage() {
@@ -33,6 +33,13 @@ function OverviewContent() {
     seriesDays: 30,
   });
 
+  const { data: seriesData, isLoading: isSeriesLoading } = useTraderOverviewSeries({
+    venue: 'hyperliquid',
+    period,
+    seriesDays: 30,
+    enabled: !isLoading && !!data,
+  });
+
   const handlePeriodChange = (p: TraderPeriod) => {
     setPeriod(p);
     const sp = new URLSearchParams(searchParams.toString());
@@ -50,6 +57,8 @@ function OverviewContent() {
       isLoading={isLoading}
       isError={isError}
       refetch={refetch}
+      seriesData={seriesData}
+      seriesLoading={isSeriesLoading}
     />
   );
 }
