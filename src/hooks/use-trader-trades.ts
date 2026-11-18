@@ -3,8 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchTraderActivity } from '@/services/traders';
-import { connectTradeActivityWS, type ActivityWsStatus } from '@/lib/trader-activity-ws';
-import { traderDataRefetchInterval } from '@/lib/trader-poll';
+import { subscribeWalletLive } from '@/lib/wallet-live';
 import { shouldRetryTraderQuery, traderRetryDelay } from '@/lib/trader-retry';
 import {
   ACTIVITY_LIMIT_DEFAULT,
@@ -39,23 +38,15 @@ export interface UseTraderTradesResult {
   refetch: () => void;
   hasMore: boolean;
   isFetchingNextPage: boolean;
-  /** Live signal (contract v1.2 §1.2): ready|error only. */
   dataStatus: LiveDataStatus;
   asOf: string | null;
   partial: boolean;
-  live: ActivityWsStatus;
+  live: string;
   connection: WalletConnectionStatus | null;
 }
 
 const EMPTY_COUNTS: ActivityCounts = { win: 0, loss: 0, long: 0, short: 0, total: 0 };
 
-/**
- * Live trades (contract v1.2 §1.2 + §2): same 30d fills → reconstruct source
- * as activity; `funding` is informational (`net_pnl = pnl − fees` unchanged).
- * WS `wallet.activity.created` prepends rows and `wallet.funding.created`
- * attributes funding incrementally. Mounted tab polls every 30s
- * (`traderDataRefetchInterval`); error stops polling and needs a manual retry.
- */
 export function useTraderTrades(
   walletAddress: string,
   options: TraderTradesOptions = {},
@@ -67,8 +58,9 @@ export function useTraderTrades(
   const side = options.side ?? 'all';
   const limit = options.limit ?? ACTIVITY_LIMIT_DEFAULT;
   const enabled = (options.enabled ?? true) && wallet.length > 0;
-  const [live, setLive] = useState<ActivityWsStatus>('disconnected');
+  const [live, setLive] = useState<string>('disconnected');
   const [connection, setConnection] = useState<WalletConnectionStatus | null>(null);
+  const [wsLive, setWsLive] = useState(false);
   const queryClient = useQueryClient();
   const queryKey = ['trader-trades', wallet, sort, dir, result, side, limit];
 
@@ -79,55 +71,64 @@ export function useTraderTrades(
     getNextPageParam: (last) => last?.next_cursor ?? undefined,
     initialPageParam: undefined as string | undefined,
     enabled,
-    // Selective retry on transient failures (429/408/5xx, max 2); otherwise fail fast to error UI with manual retry.
     retry: shouldRetryTraderQuery,
     retryDelay: traderRetryDelay,
     staleTime: 30_000,
-    refetchInterval: traderDataRefetchInterval,
+    refetchInterval: (q) => {
+      if (q.state.status === 'error') return false;
+      return wsLive ? 0 : 60_000;
+    },
   });
 
   useEffect(() => {
     if (!wallet || !enabled) return;
-    const handle = connectTradeActivityWS(
-      wallet,
-      () => {},
-      (status) => setLive(status),
-      {
-        onActivity: (trade) => {
-          queryClient.setQueryData<{ pages: ActivityPage[]; pageParams: unknown[] }>(
-            queryKey,
-            (old) => {
-              if (!old) return old;
-              const pages = old.pages.slice();
-              if (pages.length === 0) return old;
-              pages[0] = { ...pages[0], rows: [trade, ...pages[0].rows] };
-              return { ...old, pages };
-            },
-          );
-        },
-        onFunding: (funding) => {
-          queryClient.setQueryData<{ pages: ActivityPage[]; pageParams: unknown[] }>(
-            queryKey,
-            (old) => {
-              if (!old) return old;
-              const pages = old.pages.map((page) => ({
-                ...page,
-                rows: page.rows.map((row) =>
-                  row.market === funding.coin &&
-                  row.opened_at <= funding.time &&
-                  funding.time <= row.closed_at
-                    ? { ...row, funding: row.funding + funding.usdc }
-                    : row,
-                ),
-              }));
-              return { ...old, pages };
-            },
-          );
-        },
-        onConnection: (status) => setConnection(status),
+    const unsub = subscribeWalletLive(wallet, ['trades', 'activity'], {
+      onBootstrap: (channel, data) => {
+        if (channel !== 'trades') return;
+        const page = data as ActivityPage;
+        queryClient.setQueryData<{ pages: ActivityPage[]; pageParams: unknown[] }>(queryKey, {
+          pages: [page],
+          pageParams: [undefined],
+        });
       },
-    );
-    return () => handle.close();
+      onActivity: (trade) => {
+        queryClient.setQueryData<{ pages: ActivityPage[]; pageParams: unknown[] }>(
+          queryKey,
+          (old) => {
+            if (!old) return old;
+            const pages = old.pages.slice();
+            if (pages.length === 0) return old;
+            pages[0] = { ...pages[0], rows: [trade, ...pages[0].rows] };
+            return { ...old, pages };
+          },
+        );
+      },
+      onFunding: (funding) => {
+        queryClient.setQueryData<{ pages: ActivityPage[]; pageParams: unknown[] }>(
+          queryKey,
+          (old) => {
+            if (!old) return old;
+            const pages = old.pages.map((page) => ({
+              ...page,
+              rows: page.rows.map((row) =>
+                row.market === funding.coin &&
+                row.opened_at <= funding.time &&
+                funding.time <= row.closed_at
+                  ? { ...row, funding: row.funding + funding.usdc }
+                  : row,
+              ),
+            }));
+            return { ...old, pages };
+          },
+        );
+      },
+      onStatus: (status) => {
+        setLive(status);
+        setWsLive(status === 'connected');
+      },
+      onConnection: (status) => setConnection(status),
+    });
+    return unsub;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wallet, enabled, queryClient, sort, dir, result, side, limit]);
 

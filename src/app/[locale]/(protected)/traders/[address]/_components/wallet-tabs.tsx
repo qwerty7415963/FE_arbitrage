@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { cn } from 'cn';
 import { useWalletTab } from '@/hooks/use-wallet-tab';
@@ -9,6 +9,7 @@ import {
   DEFAULT_POSITION_DIR,
   DEFAULT_POSITION_SORT,
   WALLET_TABS,
+  type PositionSnapshot,
   type PositionSortKey,
   type SortDirection,
   type TraderPeriod,
@@ -27,6 +28,7 @@ export interface WalletTabsProps {
   walletAddress: string;
   period: TraderPeriod;
   onPeriodChange: (p: TraderPeriod) => void;
+  onPositionsSnapshot?: (snapshot: PositionSnapshot | null) => void;
 }
 
 const TAB_LABEL_KEYS: Record<WalletTabId, string> = {
@@ -41,7 +43,12 @@ const TAB_LABEL_KEYS: Record<WalletTabId, string> = {
   performance: 'tabPerformance',
 };
 
-export function WalletTabs({ walletAddress, period, onPeriodChange }: WalletTabsProps) {
+export function WalletTabs({
+  walletAddress,
+  period,
+  onPeriodChange,
+  onPositionsSnapshot,
+}: WalletTabsProps) {
   const t = useTranslations('traders');
   const { tab, setTab } = useWalletTab();
   const [positionSort, setPositionSort] = useState<PositionSortKey>(DEFAULT_POSITION_SORT);
@@ -52,6 +59,10 @@ export function WalletTabs({ walletAddress, period, onPeriodChange }: WalletTabs
     dir: positionDir,
     enabled: tab === 'positions',
   });
+
+  useEffect(() => {
+    onPositionsSnapshot?.(positions.snapshot);
+  }, [positions.snapshot, onPositionsSnapshot]);
 
   function handlePositionSort(next: PositionSortKey) {
     if (next === positionSort) {

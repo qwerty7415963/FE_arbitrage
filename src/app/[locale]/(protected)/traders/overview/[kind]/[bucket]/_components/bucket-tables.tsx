@@ -3,6 +3,9 @@
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
+import { useQueryClient } from '@tanstack/react-query';
+import type { QueryClient } from '@tanstack/react-query';
+import { fetchTraderDetail } from '@/services/traders';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -31,11 +34,19 @@ export interface BucketTablesProps {
   venue?: string;
   period?: string;
   range?: string;
+  queryClient?: QueryClient;
 }
 
 export function BucketTables(props: BucketTablesProps) {
   const t = useTranslations('traders.bucketDetail');
   const router = useRouter();
+  let queryClient: QueryClient | undefined = props.queryClient;
+  try {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    queryClient = queryClient ?? useQueryClient();
+  } catch {
+    // no provider (tests) -> prefetch skipped
+  }
   const tAll = useTranslations('traders');
   const detail = props.detail ?? null;
   const marketsSource = detail?.markets_source ?? 'positions';
@@ -235,6 +246,14 @@ export function BucketTables(props: BucketTablesProps) {
                     <TableRow
                       key={r.address}
                       className="hover:bg-muted/50 cursor-pointer"
+                      onMouseEnter={() => {
+                        if (!queryClient) return;
+                        const wallet = r.address.toLowerCase();
+                        void queryClient.prefetchQuery({
+                          queryKey: ['trader-detail', wallet, period],
+                          queryFn: () => fetchTraderDetail(wallet, { period: period as never }),
+                        });
+                      }}
                       onClick={() => router.push('/traders/' + r.address)}
                       tabIndex={0}
                       onKeyDown={(e) => {

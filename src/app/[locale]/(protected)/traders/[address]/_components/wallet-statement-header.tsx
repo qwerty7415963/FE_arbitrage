@@ -52,6 +52,8 @@ export interface WalletStatementHeaderProps {
   metrics: PeriodMetrics | PerformanceMetrics | null;
   /** positions.as_of ?? positions.summary.as_of ?? metrics.metrics_as_of. */
   lastUpdated: string | null;
+  live?: string;
+  wsStatus?: string;
   onAdd: () => void;
 }
 
@@ -79,6 +81,8 @@ export function WalletStatementHeader({
   positions,
   metrics,
   lastUpdated,
+  live,
+  wsStatus,
   onAdd,
 }: WalletStatementHeaderProps) {
   const t = useTranslations('traders');
@@ -104,14 +108,33 @@ export function WalletStatementHeader({
   const initial = (title.trim().charAt(0) || '?').toUpperCase();
   const updatedAgo = lastUpdated ? formatRelativeTime(lastUpdated) : null;
 
-  const accountValue = summary?.account_value ?? null;
-  const totalNotional = summary?.total_ntl_pos ?? null;
-  const totalMargin = summary?.total_margin_used ?? null;
+  const metricsAny = metrics as
+    | (
+        | PeriodMetrics
+        | PerformanceMetrics
+        | (Record<string, unknown> & (PeriodMetrics | PerformanceMetrics))
+      )
+    | null;
+  const accountValue =
+    (metricsAny as Record<string, unknown> | null)?.account_value !== undefined
+      ? ((metricsAny as Record<string, unknown>).account_value as number | null)
+      : (summary?.account_value ?? null);
+  const totalNotional =
+    (metricsAny as Record<string, unknown> | null)?.total_ntl_pos !== undefined
+      ? ((metricsAny as Record<string, unknown>).total_ntl_pos as number | null)
+      : (summary?.total_ntl_pos ?? null);
+  const totalMargin =
+    (metricsAny as Record<string, unknown> | null)?.total_margin_used !== undefined
+      ? ((metricsAny as Record<string, unknown>).total_margin_used as number | null)
+      : (summary?.total_margin_used ?? null);
   const hasAccountValue = accountValue !== null && accountValue > 0;
 
   const available =
     accountValue === null || totalMargin === null ? null : accountValue - totalMargin;
-  const unrealized = sumUnrealizedPnl(positions);
+  const unrealized =
+    (metricsAny as Record<string, unknown> | null)?.unrealized_pnl !== undefined
+      ? ((metricsAny as Record<string, unknown>).unrealized_pnl as number | null)
+      : sumUnrealizedPnl(positions);
   const unrealizedTone =
     unrealized === null || unrealized === 0
       ? undefined
@@ -123,7 +146,18 @@ export function WalletStatementHeader({
   const accountLeverage =
     hasAccountValue && totalNotional !== null ? totalNotional / accountValue : null;
 
+  const wsState = (wsStatus ?? live ?? '').toUpperCase();
+  const syncBadge =
+    wsState === 'CONNECTED' || wsState === 'LIVE'
+      ? 'LIVE'
+      : wsState === 'RECONNECTING'
+        ? 'RECONNECTING'
+        : lastUpdated && updatedAgo
+          ? `Synced ${updatedAgo}`
+          : null;
+
   const statusParts = [
+    syncBadge,
     metrics ? t(metrics.data_status === 'error' ? 'statusError' : 'statusReady') : null,
     updatedAgo ? t('lastUpdated', { time: updatedAgo }) : null,
     metrics?.metrics_as_of

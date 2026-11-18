@@ -8,7 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ApiError } from '@/infrastructure/api-client';
 import { useTraderActivity } from '@/hooks/use-trader-activity';
 import { useTraderDetail } from '@/hooks/use-trader-detail';
-import { useTraderPositions } from '@/hooks/use-trader-positions';
+
 import { readLastScan } from '@/lib/trader-url-state';
 import { isValidWalletAddress } from '@/lib/trader-validation';
 import { WalletTabs } from './_components/wallet-tabs';
@@ -16,7 +16,12 @@ import { ActivityFeed } from './_components/activity-feed';
 import { WalletStatementHeader } from './_components/wallet-statement-header';
 import { WalletPerformanceStrip } from './_components/wallet-performance-strip';
 import { AddToTraderGroupModal } from '@/components/shared/traders/add-to-trader-group-modal';
-import { DEFAULT_TRADER_PERIOD, type MemberInput, type TraderPeriod } from '@/types/trader';
+import {
+  DEFAULT_TRADER_PERIOD,
+  type MemberInput,
+  type PositionSnapshot,
+  type TraderPeriod,
+} from '@/types/trader';
 import { ArrowLeftIcon } from 'lucide-react';
 
 type DetailError = 'traderNotFound' | 'unknownError';
@@ -37,6 +42,7 @@ function DetailContent() {
 
   const [period, setPeriod] = useState<TraderPeriod>(DEFAULT_TRADER_PERIOD);
   const [addOpen, setAddOpen] = useState(false);
+  const [positionsSnapshot, setPositionsSnapshot] = useState<PositionSnapshot | null>(null);
   const addressValid = isValidWalletAddress(address);
   const wallet = addressValid ? address.toLowerCase() : '';
   // Live detail (contract v1.2): every number is LIVE for the viewed wallet.
@@ -48,9 +54,6 @@ function DetailContent() {
     error: detailError,
     refetch: refetchDetail,
   } = useTraderDetail(wallet, { period, enabled: addressValid });
-  // Always-on panel queries (same hooks/endpoints as the lazy tab queries,
-  // no new fetching logic): default positions sort + page-local period.
-  const panelPositions = useTraderPositions(wallet, { enabled: addressValid });
   const activity = useTraderActivity(wallet);
 
   const error: DetailError | null =
@@ -62,7 +65,6 @@ function DetailContent() {
 
   const registry = detail?.registry ?? null;
   const metrics = detail?.metrics ?? null;
-  const positionsSnapshot = panelPositions.snapshot;
   const lastUpdated =
     positionsSnapshot?.as_of ?? positionsSnapshot?.summary?.as_of ?? metrics?.metrics_as_of ?? null;
 
@@ -128,6 +130,7 @@ function DetailContent() {
               positions={positionsSnapshot?.positions ?? []}
               metrics={metrics}
               lastUpdated={lastUpdated}
+              live={activity.live}
               onAdd={() => setAddOpen(true)}
             />
 
@@ -143,13 +146,14 @@ function DetailContent() {
                   walletAddress={address.toLowerCase()}
                   period={period}
                   onPeriodChange={setPeriod}
+                  onPositionsSnapshot={setPositionsSnapshot}
                 />
               </div>
               <div className="lg:col-span-1">
                 <div className="lg:sticky lg:top-4 lg:max-h-[80vh] lg:overflow-y-auto">
                   <ActivityFeed
                     items={activity.items}
-                    live={activity.live}
+                    live={activity.live as 'connected' | 'disconnected' | 'reconnecting'}
                     connection={activity.connection}
                   />
                 </div>

@@ -2,7 +2,6 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { fetchTraderPerformance } from '@/services/traders';
-import { traderDataRefetchInterval } from '@/lib/trader-poll';
 import { shouldRetryTraderQuery, traderRetryDelay } from '@/lib/trader-retry';
 import {
   DEFAULT_TRADER_PERIOD,
@@ -42,8 +41,7 @@ export function useTraderPerformance(
     // Selective retry on transient failures (429/408/5xx, max 2); otherwise fail fast to error UI with manual retry.
     retry: shouldRetryTraderQuery,
     retryDelay: traderRetryDelay,
-    staleTime: 30_000,
-    refetchInterval: traderDataRefetchInterval,
+    staleTime: 180_000,
   });
 
   return {

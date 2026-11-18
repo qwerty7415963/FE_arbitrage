@@ -1,8 +1,9 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchTraderOrders } from '@/services/traders';
-import { traderDataRefetchInterval } from '@/lib/trader-poll';
+import { subscribeWalletLive } from '@/lib/wallet-live';
 import { shouldRetryTraderQuery, traderRetryDelay } from '@/lib/trader-retry';
 import { ORDERS_LIMIT_DEFAULT, type OrderStatusFilter, type OrdersPage } from '@/types/trader';
 
@@ -17,6 +18,7 @@ export interface UseTraderOrdersResult {
   isLoading: boolean;
   error: unknown;
   refetch: () => void;
+  live?: string;
 }
 
 export function useTraderOrders(
@@ -27,17 +29,61 @@ export function useTraderOrders(
   const status = options.status ?? 'open';
   const limit = options.limit ?? ORDERS_LIMIT_DEFAULT;
   const enabled = (options.enabled ?? true) && wallet.length > 0;
+  const queryClient = useQueryClient();
+  const [wsLive, setWsLive] = useState(false);
 
   const query = useQuery({
     queryKey: ['trader-orders', wallet, status, limit],
     queryFn: () => fetchTraderOrders(wallet, { status, limit }),
     enabled,
-    // Selective retry on transient failures (429/408/5xx, max 2); otherwise fail fast to error UI with manual retry.
     retry: shouldRetryTraderQuery,
     retryDelay: traderRetryDelay,
     staleTime: 30_000,
-    refetchInterval: traderDataRefetchInterval,
+    refetchInterval: (q) => {
+      if (q.state.status === 'error') return false;
+      return wsLive ? 0 : 60_000;
+    },
   });
+
+  useEffect(() => {
+    if (!wallet || !enabled) return;
+    const unsub = subscribeWalletLive(wallet, ['orders'], {
+      onBootstrap: (channel, data) => {
+        if (channel !== 'orders') return;
+        let page: OrdersPage | null = null;
+        if (Array.isArray(data)) {
+          page = { status, rows: data as OrdersPage['rows'] };
+        } else if (data && typeof data === 'object') {
+          const d = data as Partial<OrdersPage>;
+          page = { status: d.status ?? status, rows: d.rows ?? [] };
+        }
+        if (page) {
+          queryClient.setQueryData<OrdersPage>(['trader-orders', wallet, status, limit], page);
+        }
+      },
+      onOrder: (order) => {
+        queryClient.setQueryData<OrdersPage>(['trader-orders', wallet, status, limit], (old) => {
+          if (!old) return old;
+          const rows = old.rows.map((r) =>
+            r.oid === order.oid ? ({ ...r, ...order } as typeof r) : r,
+          );
+          // if not found, append
+          if (!old.rows.some((r) => r.oid === order.oid))
+            rows.unshift(order as unknown as (typeof rows)[number]);
+          return { ...old, rows };
+        });
+      },
+      onOrderCreated: (order) => {
+        queryClient.setQueryData<OrdersPage>(['trader-orders', wallet, status, limit], (old) => {
+          const base = old ?? { status, rows: [] };
+          if (base.rows.some((r) => r.oid === order.oid)) return base;
+          return { ...base, rows: [order as unknown as (typeof base.rows)[number], ...base.rows] };
+        });
+      },
+      onStatus: (s) => setWsLive(s === 'connected'),
+    });
+    return unsub;
+  }, [wallet, status, limit, enabled, queryClient]);
 
   return {
     orders: query.data ?? null,
@@ -46,5 +92,6 @@ export function useTraderOrders(
     refetch: () => {
       void query.refetch();
     },
+    live: wsLive ? 'connected' : 'disconnected',
   };
 }

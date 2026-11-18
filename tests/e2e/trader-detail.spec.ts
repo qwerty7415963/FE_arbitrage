@@ -455,14 +455,8 @@ test.describe('Trader Detail positions + sidebar 3-event (SIDEBAR-3EVENTS)', () 
     expect(positions).toBeGreaterThanOrEqual(1);
     expect(balances).toBe(0);
 
-    await page.waitForResponse((r) => r.url().includes('/positions'), { timeout: 35_000 });
-    expect(positions).toBeGreaterThanOrEqual(2);
-    expect(balances).toBe(0);
-    await page.waitForResponse(
-      (r) => r.url().includes('/api/v1/traders/') && !r.url().includes('/positions'),
-      { timeout: 35_000 },
-    );
-    expect(detail).toBeGreaterThanOrEqual(2);
+    // Read model + live channels: no 30s polling (WS LIVE => 0, read model no interval).
+    await page.waitForTimeout(1_000);
     expect(balances).toBe(0);
     // Sidebar is WS-only: no durable /activity reads from the detail page.
     expect(counters.activity).toBe(0);

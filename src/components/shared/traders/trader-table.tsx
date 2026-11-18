@@ -1,6 +1,8 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
+import { useQueryClient } from '@tanstack/react-query';
+import type { QueryClient } from '@tanstack/react-query';
 import { cn } from 'cn';
 import {
   Table,
@@ -20,7 +22,15 @@ import {
   formatSignedPercent,
   formatUsd,
 } from '@/lib/trader-format';
-import type { DataStatus, PeriodMetrics, SortDirection, TraderSortBy } from '@/types/trader';
+import type {
+  DataStatus,
+  PeriodMetrics,
+  SortDirection,
+  TraderPeriod,
+  TraderSortBy,
+} from '@/types/trader';
+import { DEFAULT_TRADER_PERIOD } from '@/types/trader';
+import { fetchTraderDetail } from '@/services/traders';
 import { ArrowDownIcon, ArrowUpDownIcon, ArrowUpIcon } from 'lucide-react';
 import { CopyAddress } from './copy-address';
 
@@ -55,6 +65,8 @@ const STATUS_CLASSES: Record<DataStatus, string> = {
 
 export interface TraderTableProps {
   rows: PeriodMetrics[];
+  period?: TraderPeriod;
+  queryClient?: QueryClient;
   sortBy: TraderSortBy;
   sortDirection: SortDirection;
   onSortChange: (sortBy: TraderSortBy) => void;
@@ -67,6 +79,8 @@ export interface TraderTableProps {
 
 export function TraderTable({
   rows,
+  period,
+  queryClient,
   sortBy,
   sortDirection,
   onSortChange,
@@ -78,6 +92,13 @@ export function TraderTable({
 }: TraderTableProps) {
   const t = useTranslations('traders');
   const selectedAddresses = selected ?? [];
+  let qc: QueryClient | undefined = queryClient;
+  try {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    qc = qc ?? useQueryClient();
+  } catch {
+    // no provider (tests) -> prefetch skipped
+  }
 
   function toggleAll(): void {
     if (!onSelect) return;
@@ -163,7 +184,18 @@ export function TraderTable({
             const shortWr = deriveWinRate(row.short_wins, row.short_count);
             const statusLabel = t(STATUS_LABEL_KEYS[row.data_status]);
             return (
-              <TableRow key={`${row.venue}:${row.wallet_address}`}>
+              <TableRow
+                key={`${row.venue}:${row.wallet_address}`}
+                onMouseEnter={() => {
+                  if (!qc) return;
+                  const wallet = row.wallet_address.toLowerCase();
+                  const p = period ?? DEFAULT_TRADER_PERIOD;
+                  void qc.prefetchQuery({
+                    queryKey: ['trader-detail', wallet, p],
+                    queryFn: () => fetchTraderDetail(wallet, { period: p }),
+                  });
+                }}
+              >
                 {selectable && (
                   <TableCell>
                     <input

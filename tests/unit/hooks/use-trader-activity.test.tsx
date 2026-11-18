@@ -3,18 +3,18 @@ import { renderHook, waitFor, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useTraderActivity } from '@/hooks/use-trader-activity';
 import { fetchTraderActivity } from '@/services/traders';
-import { connectTradeActivityWS } from '@/lib/trader-activity-ws';
+import { subscribeWalletLive } from '@/lib/wallet-live';
 import type { ActivityFill, ActivityTrade, WalletOrderEvent } from '@/types/trader';
 
 vi.mock('@/services/traders', () => ({
   fetchTraderActivity: vi.fn(),
 }));
 
-vi.mock('@/lib/trader-activity-ws', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/lib/trader-activity-ws')>();
+vi.mock('@/lib/wallet-live', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/wallet-live')>();
   return {
     ...actual,
-    connectTradeActivityWS: vi.fn(() => ({ close: vi.fn() })),
+    subscribeWalletLive: vi.fn(() => vi.fn()),
   };
 });
 
@@ -37,12 +37,16 @@ type WsCall = {
 };
 
 function lastWsCall(): WsCall {
-  const calls = vi.mocked(connectTradeActivityWS).mock.calls;
+  const calls = vi.mocked(subscribeWalletLive).mock.calls;
   const last = calls[calls.length - 1] as unknown[];
+  const handlers = (last[2] ?? {}) as WsCall['handlers'] & {
+    onFill: (fill: ActivityFill) => void;
+    onStatus?: (status: 'connected' | 'disconnected' | 'reconnecting') => void;
+  };
   return {
-    onFill: last[1] as WsCall['onFill'],
-    onStatus: last[2] as WsCall['onStatus'],
-    handlers: (last[3] ?? {}) as WsCall['handlers'],
+    onFill: handlers.onFill,
+    onStatus: handlers.onStatus,
+    handlers,
   };
 }
 
@@ -85,12 +89,12 @@ const closeCycle: ActivityTrade = {
 describe('useTraderActivity (SIDEBAR-3EVENTS WS-only)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(connectTradeActivityWS).mockReturnValue({ close: vi.fn() });
+    vi.mocked(subscribeWalletLive).mockReturnValue(vi.fn());
   });
 
   it('never calls REST and starts disconnected-loading', async () => {
     const { result } = renderHook(() => useTraderActivity(WALLET), { wrapper });
-    expect(vi.mocked(connectTradeActivityWS).mock.calls[0][0]).toBe(WALLET_LOWER);
+    expect(vi.mocked(subscribeWalletLive).mock.calls[0][0]).toBe(WALLET_LOWER);
     expect(vi.mocked(fetchTraderActivity)).not.toHaveBeenCalled();
     expect(result.current.items).toEqual([]);
     expect(result.current.live).toBe('disconnected');

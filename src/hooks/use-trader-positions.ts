@@ -1,11 +1,10 @@
-﻿'use client';
+'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchTraderPositions } from '@/services/traders';
 import { sortPositionsClient } from '@/lib/position-sort';
-import { connectTradeActivityWS } from '@/lib/trader-activity-ws';
-import { traderDataRefetchInterval } from '@/lib/trader-poll';
+import { subscribeWalletLive } from '@/lib/wallet-live';
 import { shouldRetryTraderQuery, traderRetryDelay } from '@/lib/trader-retry';
 import {
   DEFAULT_POSITION_DIR,
@@ -26,15 +25,9 @@ export interface UseTraderPositionsResult {
   isLoading: boolean;
   error: unknown;
   refetch: () => void;
+  live?: string;
 }
 
-/**
- * Live positions (contract v1.2 Â§1.1 + Â§2): REST `clearinghouseState`
- * (short TTL, no WS stream for ticks). `wallet.position.updated` (sent on
- * REST bootstrap/resync only) patches the cache incrementally. Mounted tab
- * polls every 30s (`traderDataRefetchInterval`); error stops polling and
- * needs a manual retry.
- */
 export function useTraderPositions(
   walletAddress: string,
   options: TraderPositionsOptions = {},
@@ -44,21 +37,33 @@ export function useTraderPositions(
   const dir = options.dir ?? DEFAULT_POSITION_DIR;
   const enabled = (options.enabled ?? true) && wallet.length > 0;
   const queryClient = useQueryClient();
+  const [wsLive, setWsLive] = useState(false);
 
   const query = useQuery({
     queryKey: ['trader-positions', wallet, sort, dir],
     queryFn: () => fetchTraderPositions(wallet, { sort, dir }),
     enabled,
-    // Selective retry on transient failures (429/408/5xx, max 2); otherwise fail fast to error UI with manual retry.
     retry: shouldRetryTraderQuery,
     retryDelay: traderRetryDelay,
     staleTime: 30_000,
-    refetchInterval: traderDataRefetchInterval,
+    refetchInterval: (q) => {
+      if (q.state.status === 'error') return false;
+      return wsLive ? 0 : 60_000;
+    },
   });
 
   useEffect(() => {
     if (!wallet) return;
-    const handle = connectTradeActivityWS(wallet, () => {}, undefined, {
+    const unsub = subscribeWalletLive(wallet, ['positions'], {
+      onBootstrap: (channel, data) => {
+        if (channel !== 'positions') return;
+        const snapshot = data as PositionSnapshot;
+        const sorted = sortPositionsClient(snapshot.positions, sort, dir);
+        queryClient.setQueryData<PositionSnapshot>(['trader-positions', wallet, sort, dir], {
+          ...snapshot,
+          positions: sorted,
+        });
+      },
       onPosition: (snapshot) => {
         const sorted = sortPositionsClient(snapshot.positions, sort, dir);
         queryClient.setQueryData<PositionSnapshot>(['trader-positions', wallet, sort, dir], {
@@ -66,8 +71,9 @@ export function useTraderPositions(
           positions: sorted,
         });
       },
+      onStatus: (status) => setWsLive(status === 'connected'),
     });
-    return () => handle.close();
+    return unsub;
   }, [wallet, sort, dir, queryClient]);
 
   return {
@@ -77,5 +83,6 @@ export function useTraderPositions(
     refetch: () => {
       void query.refetch();
     },
+    live: wsLive ? 'connected' : 'disconnected',
   };
 }

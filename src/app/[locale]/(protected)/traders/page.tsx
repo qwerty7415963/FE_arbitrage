@@ -446,6 +446,7 @@ function ScannerContent() {
           <>
             <TraderTable
               rows={rows}
+              period={form.period}
               sortBy={sortBy}
               sortDirection={sortDirection}
               onSortChange={handleSortChange}

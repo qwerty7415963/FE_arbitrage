@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { connectTradeActivityWS, type ActivityWsStatus } from '@/lib/trader-activity-ws';
+import { subscribeWalletLive } from '@/lib/wallet-live';
 import type {
   ActivityFill,
   ActivityTrade,
@@ -12,10 +12,8 @@ import type {
 
 export interface UseTraderActivityResult {
   items: LiveActivityItem[];
-  live: ActivityWsStatus;
-  /** Backend reconnect state (`wallet.connection.updated`); null until first event. */
+  live: string;
   connection: WalletConnectionStatus | null;
-  /** True while the WS transport is not connected (connecting-loading state). */
   isLoading: boolean;
 }
 
@@ -30,21 +28,12 @@ function itemTimeMs(item: LiveActivityItem): number {
   return Number.isNaN(parsed) ? 0 : parsed;
 }
 
-/**
- * Sidebar 3-event timeline (SIDEBAR-3EVENTS, frozen delta over contract v1.2).
- * WS-only: no REST (`/activity` counter stays 0), no fundings, no durable
- * prepend. Merges limit placements (`wallet.order.created`), open-direction
- * fills (`wallet.fill.created` with dir not starting with Close), and
- * completed-cycle closes (`wallet.activity.created`) into a single timeline
- * sorted time DESC and capped at 50. WS connect/status/reconnect behavior is
- * unchanged (live + connection surfaced for the LIVE badge).
- */
 export function useTraderActivity(walletAddress: string): UseTraderActivityResult {
   const wallet = walletAddress.toLowerCase();
   const [orders, setOrders] = useState<WalletOrderEvent[]>([]);
   const [fills, setFills] = useState<ActivityFill[]>([]);
   const [closes, setCloses] = useState<ActivityTrade[]>([]);
-  const [live, setLive] = useState<ActivityWsStatus>('disconnected');
+  const [live, setLive] = useState<string>('disconnected');
   const [connection, setConnection] = useState<WalletConnectionStatus | null>(null);
   const [prevWallet, setPrevWallet] = useState(wallet);
   if (prevWallet !== wallet) {
@@ -56,24 +45,30 @@ export function useTraderActivity(walletAddress: string): UseTraderActivityResul
 
   useEffect(() => {
     if (!wallet) return;
-    const handle = connectTradeActivityWS(
-      wallet,
-      (fill) => {
+    const unsub = subscribeWalletLive(wallet, ['activity', 'orders'], {
+      onBootstrap: (channel, data) => {
+        if (channel !== 'activity') return;
+        const fillsData = Array.isArray(data)
+          ? data
+          : (data as { fills?: ActivityFill[] } | null)?.fills;
+        if (Array.isArray(fillsData)) {
+          setFills(fillsData as ActivityFill[]);
+        }
+      },
+      onFill: (fill) => {
         if (isCloseDir(fill.dir)) return;
         setFills((prev) => [fill, ...prev].slice(0, LIVE_ACTIVITY_MAX));
       },
-      (status) => setLive(status),
-      {
-        onOrderCreated: (order) => {
-          setOrders((prev) => [order, ...prev].slice(0, LIVE_ACTIVITY_MAX));
-        },
-        onActivity: (trade) => {
-          setCloses((prev) => [trade, ...prev].slice(0, LIVE_ACTIVITY_MAX));
-        },
-        onConnection: (status) => setConnection(status),
+      onOrderCreated: (order) => {
+        setOrders((prev) => [order, ...prev].slice(0, LIVE_ACTIVITY_MAX));
       },
-    );
-    return () => handle.close();
+      onActivity: (trade) => {
+        setCloses((prev) => [trade, ...prev].slice(0, LIVE_ACTIVITY_MAX));
+      },
+      onConnection: (status) => setConnection(status),
+      onStatus: (status) => setLive(status),
+    });
+    return unsub;
   }, [wallet]);
 
   const items = useMemo<LiveActivityItem[]>(() => {
@@ -100,7 +95,7 @@ export function useTraderActivity(walletAddress: string): UseTraderActivityResul
 
   return {
     items,
-    live,
+    live: live as string,
     connection,
     isLoading: live !== 'connected',
   };

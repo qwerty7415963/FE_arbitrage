@@ -3,18 +3,18 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useTraderTrades } from '@/hooks/use-trader-trades';
 import { fetchTraderActivity } from '@/services/traders';
-import { connectTradeActivityWS } from '@/lib/trader-activity-ws';
+import { subscribeWalletLive } from '@/lib/wallet-live';
 import type { ActivityPage } from '@/types/trader';
 
 vi.mock('@/services/traders', () => ({
   fetchTraderActivity: vi.fn(),
 }));
 
-vi.mock('@/lib/trader-activity-ws', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/lib/trader-activity-ws')>();
+vi.mock('@/lib/wallet-live', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/wallet-live')>();
   return {
     ...actual,
-    connectTradeActivityWS: vi.fn(() => ({ close: vi.fn() })),
+    subscribeWalletLive: vi.fn(() => vi.fn()),
   };
 });
 
@@ -127,7 +127,7 @@ describe('useTraderTrades (contract v1.2 live)', () => {
     vi.mocked(fetchTraderActivity).mockResolvedValue(emptyPage);
     renderHook(() => useTraderTrades(WALLET), { wrapper });
     await waitFor(() => expect(fetchTraderActivity).toHaveBeenCalledTimes(1));
-    expect(vi.mocked(connectTradeActivityWS)).toHaveBeenCalledTimes(1);
-    expect(vi.mocked(connectTradeActivityWS).mock.calls[0][0]).toBe(WALLET_LOWER);
+    expect(vi.mocked(subscribeWalletLive)).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(subscribeWalletLive).mock.calls[0][0]).toBe(WALLET_LOWER);
   });
 });

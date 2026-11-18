@@ -2,7 +2,6 @@
 
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { fetchTraderFills } from '@/services/traders';
-import { traderDataRefetchInterval } from '@/lib/trader-poll';
 import { shouldRetryTraderQuery, traderRetryDelay } from '@/lib/trader-retry';
 import { FILLS_LIMIT_DEFAULT, type TraderFillRow } from '@/types/trader';
 
@@ -39,8 +38,8 @@ export function useTraderFills(
     // Selective retry on transient failures (429/408/5xx, max 2); otherwise fail fast to error UI with manual retry.
     retry: shouldRetryTraderQuery,
     retryDelay: traderRetryDelay,
-    staleTime: 30_000,
-    refetchInterval: traderDataRefetchInterval,
+    staleTime: 60_000,
+    refetchInterval: 60_000,
   });
 
   const fills = (query.data?.pages ?? []).flatMap((page) => page?.rows ?? []);

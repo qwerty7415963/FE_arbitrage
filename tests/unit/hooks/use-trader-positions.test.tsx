@@ -3,18 +3,18 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useTraderPositions } from '@/hooks/use-trader-positions';
 import { fetchTraderPositions } from '@/services/traders';
-import { connectTradeActivityWS } from '@/lib/trader-activity-ws';
+import { subscribeWalletLive } from '@/lib/wallet-live';
 import type { OpenPosition, PositionSnapshot } from '@/types/trader';
 
 vi.mock('@/services/traders', () => ({
   fetchTraderPositions: vi.fn(),
 }));
 
-vi.mock('@/lib/trader-activity-ws', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/lib/trader-activity-ws')>();
+vi.mock('@/lib/wallet-live', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/wallet-live')>();
   return {
     ...actual,
-    connectTradeActivityWS: vi.fn(() => ({ close: vi.fn() })),
+    subscribeWalletLive: vi.fn(() => vi.fn()),
   };
 });
 
@@ -71,8 +71,9 @@ describe('useTraderPositions (contract v2.3 Plan B)', () => {
     await waitFor(() => expect(result.current.snapshot).not.toBeNull());
     const callsBefore = vi.mocked(fetchTraderPositions).mock.calls.length;
 
-    const handlers = vi.mocked(connectTradeActivityWS).mock.calls[0][3] as {
+    const handlers = vi.mocked(subscribeWalletLive).mock.calls[0][2] as {
       onPosition?: (snapshot: PositionSnapshot) => void;
+      onBootstrap?: (channel: string, data: unknown) => void;
     };
     const incoming: PositionSnapshot = {
       summary: null,
@@ -103,7 +104,7 @@ describe('useTraderPositions (contract v2.3 Plan B)', () => {
     const { wrapper } = makeWrapper();
     renderHook(() => useTraderPositions(WALLET), { wrapper });
     await vi.waitFor(() => expect(fetchTraderPositions).toHaveBeenCalledTimes(1));
-    await vi.advanceTimersByTimeAsync(30_000);
+    await vi.advanceTimersByTimeAsync(60_000);
     await vi.waitFor(() => expect(fetchTraderPositions).toHaveBeenCalledTimes(2));
   });
 });

@@ -33,11 +33,11 @@ vi.mock('@/services/traders', () => ({
   fetchTraderPerformance: vi.fn(),
 }));
 
-vi.mock('@/lib/trader-activity-ws', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/lib/trader-activity-ws')>();
+vi.mock('@/lib/wallet-live', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/wallet-live')>();
   return {
     ...actual,
-    connectTradeActivityWS: vi.fn(() => ({ close: vi.fn() })),
+    subscribeWalletLive: vi.fn(() => vi.fn()),
   };
 });
 
@@ -126,69 +126,69 @@ describe('trader-data polling (30s, FE-only)', () => {
     vi.restoreAllMocks();
   });
 
-  it('useTraderPositions refetches after 30s', async () => {
+  it('useTraderPositions refetches after 60s', async () => {
     renderHook(() => useTraderPositions(WALLET), { wrapper: createWrapper() });
     await vi.waitFor(() => expect(fetchTraderPositions).toHaveBeenCalledTimes(1));
-    await vi.advanceTimersByTimeAsync(30_000);
+    await vi.advanceTimersByTimeAsync(60_000);
     await vi.waitFor(() => expect(fetchTraderPositions).toHaveBeenCalledTimes(2));
   });
 
-  it('useTraderTrades refetches after 30s', async () => {
+  it('useTraderTrades refetches after 60s', async () => {
     renderHook(() => useTraderTrades(WALLET), { wrapper: createWrapper() });
     await vi.waitFor(() => expect(fetchTraderActivity).toHaveBeenCalledTimes(1));
-    await vi.advanceTimersByTimeAsync(30_000);
+    await vi.advanceTimersByTimeAsync(60_000);
     await vi.waitFor(() => expect(fetchTraderActivity).toHaveBeenCalledTimes(2));
   });
 
   it('useTraderActivity never fetches (WS-only sidebar, SIDEBAR-3EVENTS)', async () => {
-    const { connectTradeActivityWS } = await import('@/lib/trader-activity-ws');
-    vi.mocked(connectTradeActivityWS).mockClear();
+    const { subscribeWalletLive } = await import('@/lib/wallet-live');
+    vi.mocked(subscribeWalletLive).mockClear();
     vi.mocked(fetchTraderActivity).mockClear();
     renderHook(() => useTraderActivity(WALLET), { wrapper: createWrapper() });
-    await vi.waitFor(() => expect(connectTradeActivityWS).toHaveBeenCalledTimes(1));
+    await vi.waitFor(() => expect(subscribeWalletLive).toHaveBeenCalledTimes(1));
     await vi.advanceTimersByTimeAsync(60_000);
     expect(vi.mocked(fetchTraderActivity)).not.toHaveBeenCalled();
   });
 
-  it('useTraderDetail (overview) refetches after 30s', async () => {
+  it('useTraderDetail (overview) does not poll (read model)', async () => {
     renderHook(() => useTraderDetail(WALLET), { wrapper: createWrapper() });
     await vi.waitFor(() => expect(fetchTraderDetail).toHaveBeenCalledTimes(1));
-    await vi.advanceTimersByTimeAsync(30_000);
-    await vi.waitFor(() => expect(fetchTraderDetail).toHaveBeenCalledTimes(2));
+    await vi.advanceTimersByTimeAsync(60_000);
+    expect(fetchTraderDetail).toHaveBeenCalledTimes(1);
   });
 
-  it('useTraderPerformance refetches after 30s', async () => {
+  it('useTraderPerformance does not poll (read model)', async () => {
     renderHook(() => useTraderPerformance(WALLET), { wrapper: createWrapper() });
     await vi.waitFor(() => expect(fetchTraderPerformance).toHaveBeenCalledTimes(1));
-    await vi.advanceTimersByTimeAsync(30_000);
-    await vi.waitFor(() => expect(fetchTraderPerformance).toHaveBeenCalledTimes(2));
+    await vi.advanceTimersByTimeAsync(60_000);
+    expect(fetchTraderPerformance).toHaveBeenCalledTimes(1);
   });
 
-  it('useTraderBalances refetches after 30s', async () => {
+  it('useTraderBalances refetches after 60s', async () => {
     renderHook(() => useTraderBalances(WALLET), { wrapper: createWrapper() });
     await vi.waitFor(() => expect(fetchTraderBalances).toHaveBeenCalledTimes(1));
-    await vi.advanceTimersByTimeAsync(30_000);
+    await vi.advanceTimersByTimeAsync(60_000);
     await vi.waitFor(() => expect(fetchTraderBalances).toHaveBeenCalledTimes(2));
   });
 
-  it('useTraderFills refetches after 30s', async () => {
+  it('useTraderFills refetches after 60s', async () => {
     renderHook(() => useTraderFills(WALLET), { wrapper: createWrapper() });
     await vi.waitFor(() => expect(fetchTraderFills).toHaveBeenCalledTimes(1));
-    await vi.advanceTimersByTimeAsync(30_000);
+    await vi.advanceTimersByTimeAsync(60_000);
     await vi.waitFor(() => expect(fetchTraderFills).toHaveBeenCalledTimes(2));
   });
 
-  it('useTraderOrders refetches after 30s', async () => {
+  it('useTraderOrders refetches after 60s', async () => {
     renderHook(() => useTraderOrders(WALLET), { wrapper: createWrapper() });
     await vi.waitFor(() => expect(fetchTraderOrders).toHaveBeenCalledTimes(1));
-    await vi.advanceTimersByTimeAsync(30_000);
+    await vi.advanceTimersByTimeAsync(60_000);
     await vi.waitFor(() => expect(fetchTraderOrders).toHaveBeenCalledTimes(2));
   });
 
-  it('useTraderTransfers refetches after 30s', async () => {
+  it('useTraderTransfers refetches after 120s', async () => {
     renderHook(() => useTraderTransfers(WALLET), { wrapper: createWrapper() });
     await vi.waitFor(() => expect(fetchTraderTransfers).toHaveBeenCalledTimes(1));
-    await vi.advanceTimersByTimeAsync(30_000);
+    await vi.advanceTimersByTimeAsync(120_000);
     await vi.waitFor(() => expect(fetchTraderTransfers).toHaveBeenCalledTimes(2));
   });
 
