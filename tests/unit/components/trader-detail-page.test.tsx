@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { NextIntlClientProvider } from 'next-intl';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ApiError } from '@/infrastructure/api-client';
-import DetailPage from '@/app/[locale]/(protected)/traders/[address]/page';
+import ClientDetailPage from '@/app/[locale]/(protected)/traders/[address]/_components/client-detail-page';
 import {
   fetchTraderDetail,
   fetchTraderPositions,
@@ -95,7 +95,7 @@ function renderPage() {
   return render(
     <QueryClientProvider client={client}>
       <NextIntlClientProvider locale="en" messages={enMessages}>
-        <DetailPage />
+        <ClientDetailPage />
       </NextIntlClientProvider>
     </QueryClientProvider>,
   );

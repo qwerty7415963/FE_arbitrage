@@ -8,6 +8,7 @@ import { DEFAULT_TRADER_PERIOD, type TraderDetail, type TraderPeriod } from '@/t
 export interface TraderDetailOptions {
   period?: TraderPeriod;
   enabled?: boolean;
+  initialData?: TraderDetail;
 }
 
 export interface UseTraderDetailResult {
@@ -35,6 +36,7 @@ export function useTraderDetail(
     queryKey: ['trader-detail', wallet, period],
     queryFn: () => fetchTraderDetail(wallet, { period }),
     enabled,
+    initialData: options.initialData,
     // Selective retry on transient failures (429/408/5xx, max 2); otherwise fail fast to error UI with manual retry.
     retry: shouldRetryTraderQuery,
     retryDelay: traderRetryDelay,

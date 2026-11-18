@@ -949,3 +949,7 @@ reviewing diffs â€” never blindly.
 
 - 2026-11-17: Wallet statement header action button changed from icon-only ellipsis to labeled outline button (UserPlusIcon + Add to group text); unit assertion added for visible text; visual baselines trader-detail.png / trader-detail-narrow.png regenerated.
 - 2026-11-18: Contract v2.4 overview split: /overview returns cards without series; new /overview/series endpoint; FE adds fetchTraderOverviewSeries, useTraderOverviewSeries, OverviewTab series skeleton; cards render before series. Tests: services/traders, use-trader-overview, trader-overview.
+
+## Changelog
+
+- Converted wallet detail page to RSC with client fallback; updated trader-detail-page unit test to cover client fallback component.

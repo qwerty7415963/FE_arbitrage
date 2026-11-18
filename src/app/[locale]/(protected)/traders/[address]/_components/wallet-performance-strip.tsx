@@ -12,6 +12,7 @@ import {
 import {
   TRADER_PERIODS,
   type PerformanceMetrics,
+  type PerformanceSnapshot,
   type PeriodMetrics,
   type TraderPeriod,
 } from '@/types/trader';
@@ -22,29 +23,37 @@ export interface WalletPerformanceStripProps {
   period: TraderPeriod;
   onPeriodChange: (p: TraderPeriod) => void;
   metrics: PeriodMetrics | PerformanceMetrics | null;
+  initialPerformance?: PerformanceSnapshot | null;
 }
 
 export function WalletPerformanceStrip({
   period,
   onPeriodChange,
   metrics,
+  initialPerformance,
 }: WalletPerformanceStripProps) {
   const t = useTranslations('traders');
 
+  const effectiveMetrics = metrics ?? initialPerformance?.metrics ?? null;
+
   const items = [
-    { key: 'roi', label: t('roi'), value: formatSignedPercent(metrics?.roi) },
-    { key: 'winRate', label: t('winRate'), value: formatPercent(metrics?.win_rate) },
-    { key: 'volume', label: t('volume'), value: formatUsd(metrics?.volume) },
-    { key: 'tradeCount', label: t('tradeCount'), value: formatInteger(metrics?.trade_count) },
+    { key: 'roi', label: t('roi'), value: formatSignedPercent(effectiveMetrics?.roi) },
+    { key: 'winRate', label: t('winRate'), value: formatPercent(effectiveMetrics?.win_rate) },
+    { key: 'volume', label: t('volume'), value: formatUsd(effectiveMetrics?.volume) },
+    {
+      key: 'tradeCount',
+      label: t('tradeCount'),
+      value: formatInteger(effectiveMetrics?.trade_count),
+    },
     {
       key: 'profitFactor',
       label: t('profitFactor'),
-      value: formatDecimal(metrics?.profit_factor),
+      value: formatDecimal(effectiveMetrics?.profit_factor),
     },
     {
       key: 'maxDrawdown',
       label: t('maxDrawdown'),
-      value: formatDecimal(metrics?.max_drawdown_pct),
+      value: formatDecimal(effectiveMetrics?.max_drawdown_pct),
     },
   ];
 
