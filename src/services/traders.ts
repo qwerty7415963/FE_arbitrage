@@ -29,6 +29,10 @@ import {
   type BucketDetail,
   type BucketMarketRow,
   type BucketWalletRow,
+  type MarketDetailResponse,
+  type MarketTradeRow,
+  type MarketWalletRow,
+  type WatchedMarket,
   type TraderGroup,
   type TraderMember,
   type TraderOverview,
@@ -465,4 +469,162 @@ export async function fetchBucketMarkets(
   );
   if (!res.data) throw new Error('No data returned');
   return { data: res.data, meta: res.meta || {} };
+}
+
+export async function fetchMarketDetail(
+  market: string,
+  params: {
+    venue?: string;
+    from?: string;
+    to?: string;
+    signal?: AbortSignal;
+  } = {},
+  options: { signal?: AbortSignal } = {},
+): Promise<MarketDetailResponse> {
+  const search = new URLSearchParams();
+  search.set('venue', params.venue ?? DEFAULT_VENUE);
+  if (params.from) search.set('from', params.from);
+  if (params.to) search.set('to', params.to);
+  const res = await apiClient<ApiResponse<MarketDetailResponse>>(
+    `${TRADERS_BASE}/markets/${encodeURIComponent(market)}?${search.toString()}`,
+    { signal: params.signal ?? options.signal },
+  );
+  if (!res.data) throw new Error('No data returned');
+  return res.data;
+}
+
+export async function fetchMarketWallets(
+  market: string,
+  params: {
+    venue?: string;
+    from?: string;
+    to?: string;
+    win_rate_min?: number;
+    trades_min?: number;
+    last_trade_after?: string;
+    groups?: string;
+    sort?: string;
+    dir?: string;
+    page?: number;
+    limit?: number;
+    signal?: AbortSignal;
+  } = {},
+  options: { signal?: AbortSignal } = {},
+): Promise<{ data: MarketWalletRow[]; meta: Meta }> {
+  const search = new URLSearchParams();
+  search.set('venue', params.venue ?? DEFAULT_VENUE);
+  if (params.from) search.set('from', params.from);
+  if (params.to) search.set('to', params.to);
+  if (params.win_rate_min !== undefined) search.set('win_rate_min', String(params.win_rate_min));
+  if (params.trades_min !== undefined) search.set('trades_min', String(params.trades_min));
+  if (params.last_trade_after) search.set('last_trade_after', params.last_trade_after);
+  if (params.groups) search.set('groups', params.groups);
+  search.set('sort', params.sort ?? 'volume');
+  search.set('dir', params.dir ?? 'desc');
+  search.set('page', String(params.page ?? 1));
+  search.set('limit', String(params.limit ?? 20));
+  const res = await apiClient<ApiResponse<MarketWalletRow[]>>(
+    `${TRADERS_BASE}/markets/${encodeURIComponent(market)}/wallets?${search.toString()}`,
+    { signal: params.signal ?? options.signal },
+  );
+  return { data: res.data ?? [], meta: res.meta || {} };
+}
+
+export async function fetchMarketTrades(
+  market: string,
+  params: {
+    venue?: string;
+    from?: string;
+    to?: string;
+    side?: string;
+    page?: number;
+    limit?: number;
+    signal?: AbortSignal;
+  } = {},
+  options: { signal?: AbortSignal } = {},
+): Promise<{ data: MarketTradeRow[]; meta: Meta }> {
+  const search = new URLSearchParams();
+  search.set('venue', params.venue ?? DEFAULT_VENUE);
+  if (params.from) search.set('from', params.from);
+  if (params.to) search.set('to', params.to);
+  if (params.side) search.set('side', params.side);
+  search.set('page', String(params.page ?? 1));
+  search.set('limit', String(params.limit ?? 20));
+  const res = await apiClient<ApiResponse<MarketTradeRow[]>>(
+    `${TRADERS_BASE}/markets/${encodeURIComponent(market)}/trades?${search.toString()}`,
+    { signal: params.signal ?? options.signal },
+  );
+  return { data: res.data ?? [], meta: res.meta || {} };
+}
+
+// Admin watched markets CRUD
+export async function listWatchedMarkets(
+  options: { signal?: AbortSignal } = {},
+): Promise<WatchedMarket[]> {
+  const res = await apiClient<ApiResponse<WatchedMarket[]>>(
+    `${TRADERS_BASE.replace('/traders', '/admin/traders')}/markets`,
+    { signal: options.signal },
+  );
+  return res.data ?? [];
+}
+
+export async function fetchWatchedMarkets(
+  options: { signal?: AbortSignal } = {},
+): Promise<WatchedMarket[]> {
+  return listWatchedMarkets(options);
+}
+
+export async function createWatchedMarket(
+  input: {
+    venue?: string;
+    market: string;
+    enabled?: boolean;
+    sort_order?: number;
+    sortOrder?: number;
+  },
+  options: { signal?: AbortSignal } = {},
+): Promise<void> {
+  await apiClient(`${TRADERS_BASE.replace('/traders', '/admin/traders')}/markets`, {
+    method: 'POST',
+    body: JSON.stringify({
+      venue: input.venue ?? DEFAULT_VENUE,
+      market: input.market,
+      enabled: input.enabled ?? true,
+      sort_order: input.sort_order ?? input.sortOrder ?? 0,
+    }),
+    signal: options.signal,
+  });
+}
+
+export async function updateWatchedMarket(
+  market: string,
+  input: { venue?: string; enabled?: boolean; sort_order?: number; sortOrder?: number },
+  options: { signal?: AbortSignal } = {},
+): Promise<void> {
+  const search = new URLSearchParams();
+  search.set('venue', input.venue ?? DEFAULT_VENUE);
+  await apiClient(
+    `${TRADERS_BASE.replace('/traders', '/admin/traders')}/markets/${encodeURIComponent(market)}?${search.toString()}`,
+    {
+      method: 'PATCH',
+      body: JSON.stringify({
+        enabled: input.enabled,
+        sort_order: input.sort_order ?? input.sortOrder,
+      }),
+      signal: options.signal,
+    },
+  );
+}
+
+export async function deleteWatchedMarket(
+  market: string,
+  params: { venue?: string } = {},
+  options: { signal?: AbortSignal } = {},
+): Promise<void> {
+  const search = new URLSearchParams();
+  search.set('venue', params.venue ?? DEFAULT_VENUE);
+  await apiClient(
+    `${TRADERS_BASE.replace('/traders', '/admin/traders')}/markets/${encodeURIComponent(market)}?${search.toString()}`,
+    { method: 'DELETE', signal: options.signal },
+  );
 }

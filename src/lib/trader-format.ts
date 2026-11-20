@@ -1,3 +1,27 @@
+export function formatPrice(value: number | null | undefined): string | null {
+  if (value === null || value === undefined || Number.isNaN(value)) return null;
+  const sign = value < 0 ? '-' : '';
+  const abs = Math.abs(value);
+  if (abs >= 1000) {
+    return `${sign}$${abs.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  }
+  if (abs >= 1) {
+    return `${sign}$${abs.toFixed(2)}`;
+  }
+  if (abs >= 0.01) {
+    return `${sign}$${abs.toFixed(4)}`;
+  }
+  if (abs === 0) {
+    return `${sign}$0.00`;
+  }
+  const log = Math.floor(Math.log10(abs));
+  const decimals = Math.min(Math.max(0, 6 - log - 1), 20);
+  let s = abs.toFixed(decimals);
+  s = s.replace(/\.?0+$/, '');
+  if (s === '' || s === '.') s = '0';
+  return `${sign}$${s}`;
+}
+
 export function formatUsd(value: number | null | undefined): string | null {
   if (value === null || value === undefined || Number.isNaN(value)) return null;
   const sign = value < 0 ? '-' : '';

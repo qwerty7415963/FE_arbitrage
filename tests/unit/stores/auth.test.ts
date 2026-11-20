@@ -1,8 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { useAuthStore, formatAddress } from '@/lib/stores/auth';
 import * as authService from '@/services/auth';
 import * as tokenLib from '@/lib/token';
-import { getAccount, disconnect } from 'wagmi/actions';
+import { connect, getAccount, disconnect, signMessage } from 'wagmi/actions';
 
 vi.mock('@/services/auth', () => ({
   logout: vi.fn(),
@@ -73,6 +73,68 @@ describe('auth store', () => {
       useAuthStore.setState({ isAuthenticated: false, connectModalOpen: false });
       expect(useAuthStore.getState().requireAuth()).toBe(false);
       expect(useAuthStore.getState().connectModalOpen).toBe(true);
+    });
+  });
+
+  describe('connectWallet', () => {
+    beforeEach(() => {
+      (window as unknown as { ethereum?: Record<string, unknown> }).ethereum = {};
+    });
+
+    afterEach(() => {
+      delete (window as unknown as { ethereum?: Record<string, unknown> }).ethereum;
+    });
+
+    it('swallows user rejection without surfacing an error', async () => {
+      vi.mocked(connect).mockRejectedValue(
+        Object.assign(new Error('User rejected the request.'), {
+          name: 'UserRejectedRequestError',
+          code: 4001,
+        }),
+      );
+
+      await expect(useAuthStore.getState().connectWallet()).resolves.toBeUndefined();
+      expect(useAuthStore.getState().error).toBeNull();
+      expect(useAuthStore.getState().isConnecting).toBe(false);
+    });
+
+    it('stores generic errors without rejecting', async () => {
+      vi.mocked(connect).mockRejectedValue(new Error('boom'));
+
+      await expect(useAuthStore.getState().connectWallet()).resolves.toBeUndefined();
+      expect(useAuthStore.getState().error).toBe('boom');
+      expect(useAuthStore.getState().isConnecting).toBe(false);
+    });
+
+    it('authenticates on successful connect + signature', async () => {
+      vi.mocked(connect).mockResolvedValue({
+        accounts: ['0xabc'],
+        chainId: 1,
+      } as never);
+      vi.mocked(authService.getNonce).mockResolvedValue({
+        id: 'nonce-1',
+        address: '0xabc',
+        chain_id: 1,
+        nonce: 'n',
+        created_at: '2024-01-01T00:00:00Z',
+        expires_at: '2024-01-01T00:05:00Z',
+        used: false,
+      });
+      vi.mocked(signMessage).mockResolvedValue('0xsig');
+      vi.mocked(authService.verifyWallet).mockResolvedValue({
+        access_token: 'a',
+        refresh_token: 'r',
+        expires_at: 0,
+        user: mockUser,
+      });
+
+      await useAuthStore.getState().connectWallet();
+
+      expect(useAuthStore.getState().isAuthenticated).toBe(true);
+      expect(useAuthStore.getState().address).toBe('0xabc');
+      expect(useAuthStore.getState().chainId).toBe(1);
+      expect(useAuthStore.getState().error).toBeNull();
+      expect(tokenLib.setTokens).toHaveBeenCalledWith('a', 'r');
     });
   });
 

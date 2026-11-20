@@ -264,6 +264,45 @@
     "deleteSavedSearch": "Delete {name}",
     "backToScanner": "Back to scanner",
     "walletDetail": "Wallet Detail",
+    "marketDetail": {
+      "title": "Market Detail",
+      "markPrice": "Mark price",
+      "indexPrice": "Index price",
+      "fundingRate": "Funding rate",
+      "nextFunding": "Next funding",
+      "longShortRatio": "Long/short ratio",
+      "netUnrealizedPnl": "Net unrealized PnL",
+      "error": "Failed to load market",
+      "loading": "Loading market...",
+      "marketOi": "Market OI",
+      "openNotional": "Open notional",
+      "unrealizedPnl": "Unrealized PnL",
+      "traders": "Traders",
+      "marginUsed": "Margin used",
+      "leverage": "Leverage",
+      "trackedWallets": "Tracked wallets",
+      "synced": "Synced",
+      "noWallets": "No wallets",
+      "noTrades": "No trades",
+      "invalidRange": "Invalid range",
+      "spanTooLarge": "Span too large",
+      "from": "From",
+      "to": "To",
+      "apply": "Apply",
+      "cancel": "Cancel",
+      "reset": "Reset",
+      "sortBy": "Sort by"
+    },
+    "marketOi": "Market OI",
+    "trackedWallets": "Tracked wallets",
+    "synced": "Synced",
+    "openNotional": "Open notional",
+    "traders": "Traders",
+    "marginUsed": "Margin used",
+    "lastTrade": "Last trade",
+    "tradeWinRate": "Trade win rate",
+    "notWatched": "Not watched",
+    "noWallets": "No wallets",
     "lastUpdated": "Last updated {time}",
     "firstSeen": "First seen",
     "lastSeen": "Last seen",
@@ -542,7 +581,17 @@
         "bearish": "Bearish",
         "very_bearish": "Very bearish"
       },
-      "viewWallet": "View wallet {address}"
+      "viewWallet": "View wallet {address}",
+      "viewMarket": "View market {market}"
+    },
+    "dateRange": {
+      "trigger": "Date range",
+      "presets": {
+        "24h": "24H",
+        "7d": "7D",
+        "30d": "30D",
+        "90d": "90D"
+      }
     }
   },
   "settings": {

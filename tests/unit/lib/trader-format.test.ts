@@ -8,6 +8,7 @@ import {
   formatInteger,
   formatNumber,
   formatPercent,
+  formatPrice,
   formatRelativeTime,
   formatSignedPct,
   formatSignedPercent,
@@ -162,6 +163,21 @@ describe('activitySideTone', () => {
     expect(activitySideTone('BUY')).toBe('positive');
     expect(activitySideTone('SHORT')).toBe('negative');
     expect(activitySideTone('SELL')).toBe('negative');
+  });
+});
+
+describe('formatPrice', () => {
+  it('returns null for missing', () => {
+    expect(formatPrice(null)).toBeNull();
+    expect(formatPrice(undefined)).toBeNull();
+    expect(formatPrice(Number.NaN)).toBeNull();
+  });
+  it('formats tiers', () => {
+    expect(formatPrice(62028)).toBe('$62,028.00');
+    expect(formatPrice(500)).toBe('$500.00');
+    expect(formatPrice(0.5)).toBe('$0.5000');
+    expect(formatPrice(0.001234)).toBe('$0.001234');
+    expect(formatPrice(0)).toBe('$0.00');
   });
 });
 

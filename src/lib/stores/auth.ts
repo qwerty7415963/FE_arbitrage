@@ -19,6 +19,17 @@ function formatAddress(address: string): string {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
 }
 
+function isUserRejection(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false;
+  const e = error as { name?: string; code?: number; cause?: unknown };
+  return (
+    e.name === 'UserRejectedRequestError' ||
+    e.code === 4001 ||
+    (typeof e.name === 'string' && e.name.includes('UserRejected')) ||
+    isUserRejection(e.cause)
+  );
+}
+
 function buildSiweMessage(params: {
   address: string;
   chainId: number;
@@ -132,9 +143,15 @@ export const useAuthStore = create<AuthState>()(
             isConnecting: false,
           });
         } catch (error) {
+          if (isUserRejection(error)) {
+            // User closed/rejected the wallet prompt: not an app error.
+            set({ isConnecting: false, error: null });
+            return;
+          }
           const message = error instanceof Error ? error.message : 'Failed to connect wallet';
           set({ isConnecting: false, error: message });
-          throw error;
+          // Do not rethrow: callers use `void connectWallet()`; unhandled rejections
+          // surface as runtime overlays. The error is stored in state instead.
         }
       },
 

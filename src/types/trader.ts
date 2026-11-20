@@ -1,3 +1,4 @@
+import type { Meta } from './api';
 export type TraderPeriod = '1D' | '7D' | '30D' | 'ALL';
 
 export type TraderSortBy = 'pnl' | 'roi' | 'win_rate' | 'volume' | 'trade_count' | 'last_trade';
@@ -896,4 +897,99 @@ export interface BucketMarketRow {
   asset_id: string;
   asset_category: string;
   logo_url: string | null;
+}
+export interface MarketDetailHeader {
+  venue: string;
+  market: string;
+  mark_price: number | null;
+  index_price: number | null;
+  funding_rate: number | null;
+  next_funding_at: string | null;
+  market_oi: number | null;
+  logo_url: string;
+  category: string;
+  enabled: boolean;
+  as_of: string;
+}
+
+export interface MarketSnapshot {
+  open_notional_long: number;
+  open_notional_short: number;
+  long_short_ratio: number;
+  unrealized_pnl_long: number;
+  unrealized_pnl_short: number;
+  net_unrealized_pnl: number | null;
+  traders_long: number;
+  traders_short: number;
+  traders_total: number;
+  margin_used_long: number;
+  margin_used_short: number;
+  margin_used_total: number | null;
+  avg_leverage_long: number | null;
+  avg_leverage_short: number | null;
+  market_oi: number | null;
+  synced_at: string;
+}
+
+export interface MarketDetailCoverage {
+  tracked_wallets_with_positions: number;
+  total_wallets_in_market: number;
+}
+
+export interface MarketWalletRow {
+  address: string;
+  display_name: string | null;
+  cohort: string;
+  bias: string;
+  volume: number;
+  trades: number;
+  win_rate: number | null;
+  realized_pnl: number;
+  long_count: number;
+  short_count: number;
+  last_trade_at: string | null;
+  position_side: string;
+  position_notional: number | null;
+  position_upnl: number | null;
+  position_leverage: number | null;
+  margin_used: number | null;
+}
+
+export interface MarketTradeRow {
+  closed_at: string;
+  wallet_address: string;
+  display_name: string | null;
+  side: string;
+  size: number;
+  entry_price: number | null;
+  exit_price: number | null;
+  volume: number;
+  pnl: number;
+  fees: number;
+  fills: number;
+}
+
+export interface MarketDetailResponse {
+  header: MarketDetailHeader;
+  snapshot: MarketSnapshot;
+  coverage: MarketDetailCoverage;
+}
+
+export interface MarketWalletsResponse {
+  data: MarketWalletRow[];
+  meta: Meta;
+}
+
+export interface MarketTradesResponse {
+  data: MarketTradeRow[];
+  meta: Meta;
+}
+
+export interface WatchedMarket {
+  venue: string;
+  market: string;
+  enabled: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
 }

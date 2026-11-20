@@ -264,6 +264,45 @@
     "deleteSavedSearch": "Xóa {name}",
     "backToScanner": "Về trang quét",
     "walletDetail": "Chi tiết ví",
+    "marketDetail": {
+      "title": "Chi tiet thi truong",
+      "markPrice": "Gia mark",
+      "indexPrice": "Gia index",
+      "fundingRate": "Funding rate",
+      "nextFunding": "Funding tiep",
+      "longShortRatio": "Ty le long/short",
+      "netUnrealizedPnl": "uPnL rong",
+      "error": "Tai thi truong that bai",
+      "loading": "Dang tai thi truong...",
+      "marketOi": "OI thi truong",
+      "openNotional": "Notional mo",
+      "unrealizedPnl": "uPnL chua thuc hien",
+      "traders": "Trader",
+      "marginUsed": "Ky quy da dung",
+      "leverage": "Don bay",
+      "trackedWallets": "Vi theo doi",
+      "synced": "Dong bo",
+      "noWallets": "Khong co vi",
+      "noTrades": "Khong co giao dich",
+      "invalidRange": "Khoang khong hop le",
+      "spanTooLarge": "Khoang qua lon",
+      "from": "Tu",
+      "to": "Den",
+      "apply": "Ap dung",
+      "cancel": "Huy",
+      "reset": "Dat lai",
+      "sortBy": "Sap xep theo"
+    },
+    "marketOi": "OI thi truong",
+    "trackedWallets": "Vi theo doi",
+    "synced": "Dong bo",
+    "openNotional": "Notional mo",
+    "traders": "Trader",
+    "marginUsed": "Margin da dung",
+    "lastTrade": "Giao dich cuoi",
+    "tradeWinRate": "Ty le thang giao dich",
+    "notWatched": "Chua theo doi",
+    "noWallets": "Khong co vi",
     "lastUpdated": "Cập nhật lúc {time}",
     "firstSeen": "Thấy lần đầu",
     "lastSeen": "Thấy lần cuối",
@@ -542,7 +581,17 @@
         "bearish": "Bi quan",
         "very_bearish": "Rất bi quan"
       },
-      "viewWallet": "Xem ví {address}"
+      "viewWallet": "Xem ví {address}",
+      "viewMarket": "Xem thi truong {market}"
+    },
+    "dateRange": {
+      "trigger": "Khoang thoi gian",
+      "presets": {
+        "24h": "24H",
+        "7d": "7D",
+        "30d": "30D",
+        "90d": "90D"
+      }
     }
   },
   "settings": {

@@ -1,4 +1,4 @@
-@import url('https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap');
+﻿@import url('https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap');
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
@@ -97,5 +97,40 @@
   }
   html {
     @apply font-sans;
+  }
+}
+
+/* ── Custom scrollbar (thin, trackless, auto-show on overflow) ── */
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(138, 155, 147, 0.35) transparent;
+}
+*:hover {
+  scrollbar-color: rgba(85, 211, 150, 0.6) transparent;
+}
+
+/* WebKit (Chrome/Edge/Safari) */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(138, 155, 147, 0.35);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(85, 211, 150, 0.6);
+}
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::-webkit-scrollbar-thumb {
+    transition: none;
   }
 }

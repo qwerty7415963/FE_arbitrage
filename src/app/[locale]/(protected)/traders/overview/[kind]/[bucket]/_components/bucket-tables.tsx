@@ -394,50 +394,83 @@ export function BucketTables(props: BucketTablesProps) {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {marketRows.map((r: BucketMarketRow, i: number) => (
-                    <TableRow key={`${r.market}-${i}`}>
-                      <TableCell>
-                        <span className="inline-flex items-center gap-1.5">
-                          <AssetIcon
-                            symbol={r.market}
-                            logoUrl={r.logo_url}
-                            category={r.asset_category}
-                            size={14}
-                            loading="lazy"
-                          />
-                          {stripDexPrefix(r.market)}
-                          {r.market.toUpperCase().startsWith('XYZ:') && (
-                            <span className="bg-foreground/10 shrink-0 rounded px-1 text-[8px] font-medium tracking-wide uppercase">
-                              {t('treemap.tradfi')}
-                            </span>
-                          )}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <span
-                          className={
-                            r.sentiment === 'very_bullish' ||
-                            r.sentiment === 'bullish' ||
-                            r.sentiment === 'slightly_bullish'
-                              ? 'text-emerald-600 dark:text-emerald-400'
-                              : r.sentiment === 'very_bearish' ||
-                                  r.sentiment === 'bearish' ||
-                                  r.sentiment === 'slightly_bearish'
-                                ? 'text-rose-600 dark:text-rose-400'
-                                : 'text-muted-foreground'
+                  {marketRows.map((r: BucketMarketRow, i: number) => {
+                    const now = new Date();
+                    const to = now.toISOString();
+                    const from = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+                    return (
+                      <TableRow
+                        key={`${r.market}-${i}`}
+                        className="hover:bg-muted/50 cursor-pointer"
+                        onClick={() =>
+                          router.push(
+                            '/traders/markets/' +
+                              encodeURIComponent(r.market) +
+                              '?venue=hyperliquid&from=' +
+                              encodeURIComponent(from) +
+                              '&to=' +
+                              encodeURIComponent(to),
+                          )
+                        }
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            router.push(
+                              '/traders/markets/' +
+                                encodeURIComponent(r.market) +
+                                '?venue=hyperliquid&from=' +
+                                encodeURIComponent(from) +
+                                '&to=' +
+                                encodeURIComponent(to),
+                            );
                           }
-                        >
-                          {t(('sentiment.' + r.sentiment) as never)}
-                        </span>
-                      </TableCell>
-                      <TableCell>{formatUsd(r.notional_long) ?? '—'}</TableCell>
-                      <TableCell>{formatUsd(r.notional_short) ?? '—'}</TableCell>
-                      <TableCell>{formatInteger(r.traders_long) ?? '—'}</TableCell>
-                      <TableCell>{formatInteger(r.traders_short) ?? '—'}</TableCell>
-                      <TableCell>{formatUsd(r.pnl_profit) ?? '—'}</TableCell>
-                      <TableCell>{formatUsd(r.pnl_loss) ?? '—'}</TableCell>
-                    </TableRow>
-                  ))}
+                        }}
+                        aria-label={t('viewMarket', { market: r.market })}
+                      >
+                        <TableCell>
+                          <span className="inline-flex items-center gap-1.5">
+                            <AssetIcon
+                              symbol={r.market}
+                              logoUrl={r.logo_url}
+                              category={r.asset_category}
+                              size={14}
+                              loading="lazy"
+                            />
+                            {stripDexPrefix(r.market)}
+                            {r.market.toUpperCase().startsWith('XYZ:') && (
+                              <span className="bg-foreground/10 shrink-0 rounded px-1 text-[8px] font-medium tracking-wide uppercase">
+                                {t('treemap.tradfi')}
+                              </span>
+                            )}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <span
+                            className={
+                              r.sentiment === 'very_bullish' ||
+                              r.sentiment === 'bullish' ||
+                              r.sentiment === 'slightly_bullish'
+                                ? 'text-emerald-600 dark:text-emerald-400'
+                                : r.sentiment === 'very_bearish' ||
+                                    r.sentiment === 'bearish' ||
+                                    r.sentiment === 'slightly_bearish'
+                                  ? 'text-rose-600 dark:text-rose-400'
+                                  : 'text-muted-foreground'
+                            }
+                          >
+                            {t(('sentiment.' + r.sentiment) as never)}
+                          </span>
+                        </TableCell>
+                        <TableCell>{formatUsd(r.notional_long) ?? '—'}</TableCell>
+                        <TableCell>{formatUsd(r.notional_short) ?? '—'}</TableCell>
+                        <TableCell>{formatInteger(r.traders_long) ?? '—'}</TableCell>
+                        <TableCell>{formatInteger(r.traders_short) ?? '—'}</TableCell>
+                        <TableCell>{formatUsd(r.pnl_profit) ?? '—'}</TableCell>
+                        <TableCell>{formatUsd(r.pnl_loss) ?? '—'}</TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
               <div className="flex items-center justify-between text-sm">
