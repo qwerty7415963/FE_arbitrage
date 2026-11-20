@@ -957,3 +957,4 @@ reviewing diffs â€” never blindly.
 - 2026-11-19: Custom thin scrollbar (CSS-only, auto-show on overflow): 6px trackless, muted thumb → green on hover, Firefox + WebKit, reduced-motion. Visual baselines regenerated.
 - 2026-11-20: Market detail redesign: custom date-range picker (day+hour+minute), sortable table headers, tape/ledger layout, formatPrice, compact OI.
 - 2026-11-20: Market snapshot ribbon cleanup: removed the average leverage row, fixed the em-dash glyph, long/short ratio now renders a single em dash when open notional is zero, and the tracked-wallets tooltip is localized. Unit: market-detail-page (3 tests, incl. no leverage row and zero-notional ratio empty state).
+- 2026-11-20: Scanner redesign: command bar + ledger table + quick presets + full pagination (command bar, row click, page size, First/Last). Tests: scanner-command-bar (5), trader-table, trader-scanner-page.

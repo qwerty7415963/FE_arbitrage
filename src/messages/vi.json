@@ -592,7 +592,16 @@
         "30d": "30D",
         "90d": "90D"
       }
-    }
+    },
+    "updated": "Da cap nhat",
+    "refresh": "Lam moi",
+    "savedViews": "Luot xem da luu",
+    "selectedCount": "{count} da chon",
+    "rangeOf": "{start}–{end} trong {total}",
+    "pageSize": "Kich thuoc trang",
+    "clearAll": "Xoa tat ca",
+    "filtersCount": "{count} bo loc",
+    "noTradersHint": "Thu dieu chinh bo loc hoac dat lai."
   },
   "settings": {
     "title": "Cài đặt"

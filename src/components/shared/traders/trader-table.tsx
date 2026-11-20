@@ -31,7 +31,7 @@ import type {
 } from '@/types/trader';
 import { DEFAULT_TRADER_PERIOD } from '@/types/trader';
 import { fetchTraderDetail } from '@/services/traders';
-import { ArrowDownIcon, ArrowUpDownIcon, ArrowUpIcon } from 'lucide-react';
+import { ArrowDownIcon, ArrowUpDownIcon, ArrowUpIcon, EyeIcon, UserPlusIcon } from 'lucide-react';
 import { CopyAddress } from './copy-address';
 
 export const NULL_DISPLAY = '—';
@@ -151,23 +151,26 @@ export function TraderTable({
   return (
     <div className="overflow-x-auto">
       <Table>
-        <TableHeader>
+        <TableHeader className="bg-card sticky top-0 z-10">
           <TableRow>
             {selectable && (
-              <TableHead>
+              <TableHead className="bg-card">
                 <input
                   type="checkbox"
                   aria-label={t('selectAll')}
                   checked={allSelected}
                   onChange={toggleAll}
+                  onClick={(e) => e.stopPropagation()}
                   className="h-4 w-4"
                 />
               </TableHead>
             )}
-            <TableHead className="w-10 text-right tabular-nums">
+            <TableHead className="bg-card w-10 text-right tabular-nums">
               <span className="sr-only">{t('colRank')}</span>
             </TableHead>
-            <TableHead className="bg-background sticky left-0">{t('colTrader')}</TableHead>
+            <TableHead className="bg-card sticky left-0 border-r shadow-sm">
+              {t('colTrader')}
+            </TableHead>
             {SORTABLE_COLUMNS.filter((c) => c.key !== 'last_trade').map((c) =>
               sortableHead(c.key, t(c.labelKey)),
             )}
@@ -186,6 +189,8 @@ export function TraderTable({
             return (
               <TableRow
                 key={`${row.venue}:${row.wallet_address}`}
+                className={cn('group hover:bg-muted/40 cursor-pointer transition-colors')}
+                onClick={() => onView?.(row)}
                 onMouseEnter={() => {
                   if (!qc) return;
                   const wallet = row.wallet_address.toLowerCase();
@@ -203,34 +208,29 @@ export function TraderTable({
                       aria-label={t('selectRow', { address: row.wallet_address })}
                       checked={selectedAddresses.includes(row.wallet_address)}
                       onChange={() => toggleOne(row.wallet_address)}
+                      onClick={(e) => e.stopPropagation()}
                       className="h-4 w-4"
                     />
                   </TableCell>
                 )}
                 <TableCell className="text-right tabular-nums">{index + 1}</TableCell>
-                <TableCell className="bg-background sticky left-0">
+                <TableCell className="bg-card sticky left-0 border-r shadow-sm">
                   {row.display_name && <div className="font-medium">{row.display_name}</div>}
                   <CopyAddress address={row.wallet_address} />
                   <div className="mt-1 flex flex-wrap items-center gap-1">
-                    <span className="bg-muted text-foreground rounded px-1.5 py-0.5 text-xs font-medium capitalize">
-                      {row.venue}
-                    </span>
                     <span
-                      className={cn(
-                        'rounded px-1.5 py-0.5 text-xs font-medium',
-                        STATUS_CLASSES[row.data_status],
-                      )}
+                      role="img"
+                      className={cn('text-xs', STATUS_CLASSES[row.data_status])}
                       title={statusLabel}
                       aria-label={statusLabel}
                     >
-                      <span aria-hidden="true">● </span>
-                      {statusLabel}
+                      <span aria-hidden="true">●</span>
                     </span>
                   </div>
                 </TableCell>
                 <TableCell
                   className={cn(
-                    'text-right font-mono tabular-nums',
+                    'text-right tabular-nums',
                     (pnl ?? 0) >= 0 ? 'text-primary' : 'text-destructive',
                   )}
                 >
@@ -238,49 +238,57 @@ export function TraderTable({
                     ? NULL_DISPLAY
                     : `${pnl > 0 ? '+' : ''}${formatUsd(pnl)}`}
                 </TableCell>
-                <TableCell className="text-right font-mono tabular-nums">
+                <TableCell className="text-right tabular-nums">
                   {display(formatSignedPercent(row.roi))}
                 </TableCell>
-                <TableCell className="text-right font-mono tabular-nums">
+                <TableCell className="text-right tabular-nums">
                   {display(formatPercent(row.win_rate))}
                 </TableCell>
-                <TableCell className="text-right font-mono tabular-nums">
+                <TableCell className="text-right tabular-nums">
                   {display(formatUsd(row.volume))}
                 </TableCell>
-                <TableCell className="text-right font-mono tabular-nums">
+                <TableCell className="text-right tabular-nums">
                   {display(formatInteger(row.trade_count))}
                 </TableCell>
-                <TableCell className="text-right font-mono tabular-nums">
+                <TableCell className="text-muted-foreground text-right tabular-nums">
                   {display(formatDecimal(row.profit_factor))}
                 </TableCell>
-                <TableCell className="text-right font-mono tabular-nums">
+                <TableCell className="text-muted-foreground text-right tabular-nums">
                   {display(formatPercent(longWr))} / {display(formatPercent(shortWr))}
                 </TableCell>
                 <TableCell
-                  className="text-right font-mono text-xs tabular-nums"
+                  className="text-right text-xs tabular-nums"
                   title={formatDateTimeUtc(row.last_trade_at) ?? undefined}
                 >
                   {display(formatRelativeTime(row.last_trade_at))}
                 </TableCell>
                 {(onView || onAdd) && (
-                  <TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
                     <div className="flex gap-1">
                       {onView && (
                         <button
                           type="button"
-                          className="rounded px-2 py-1 text-xs hover:underline"
-                          onClick={() => onView(row)}
+                          className="hover:bg-muted rounded p-1 opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100"
+                          aria-label={t('viewDetail')}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onView(row);
+                          }}
                         >
-                          {t('viewDetail')}
+                          <EyeIcon className="h-4 w-4" aria-hidden />
                         </button>
                       )}
                       {onAdd && (
                         <button
                           type="button"
-                          className="rounded px-2 py-1 text-xs hover:underline"
-                          onClick={() => onAdd(row)}
+                          className="hover:bg-muted rounded p-1 opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100"
+                          aria-label={t('addToGroup')}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onAdd(row);
+                          }}
                         >
-                          {t('addToGroup')}
+                          <UserPlusIcon className="h-4 w-4" aria-hidden />
                         </button>
                       )}
                     </div>

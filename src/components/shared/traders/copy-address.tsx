@@ -34,7 +34,10 @@ export function CopyAddress({ address, short = true }: CopyAddressProps) {
         aria-label={t('copyAddress')}
         title={t('copyAddress')}
         className="text-muted-foreground hover:text-foreground rounded p-0.5"
-        onClick={handleCopy}
+        onClick={(e) => {
+          e.stopPropagation();
+          void handleCopy();
+        }}
       >
         {copied ? (
           <CheckIcon className="h-3.5 w-3.5" aria-hidden />

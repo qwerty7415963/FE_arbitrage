@@ -592,7 +592,16 @@
         "30d": "30D",
         "90d": "90D"
       }
-    }
+    },
+    "updated": "Updated",
+    "refresh": "Refresh",
+    "savedViews": "Saved views",
+    "selectedCount": "{count} selected",
+    "rangeOf": "{start}–{end} of {total}",
+    "pageSize": "Page size",
+    "clearAll": "Clear all",
+    "filtersCount": "{count} filters",
+    "noTradersHint": "Try adjusting filters or reset."
   },
   "settings": {
     "title": "Settings"

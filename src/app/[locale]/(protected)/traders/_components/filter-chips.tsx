@@ -70,10 +70,11 @@ export function deriveActiveFilters(
 export interface FilterChipsProps {
   draft: FilterDraft;
   onRemove: (key: MetricFilterKey) => void;
+  onClearAll?: () => void;
   disabled?: boolean;
 }
 
-export function FilterChips({ draft, onRemove, disabled }: FilterChipsProps) {
+export function FilterChips({ draft, onRemove, onClearAll, disabled }: FilterChipsProps) {
   const t = useTranslations('traders');
   const chips = deriveActiveFilters(draft, (key) => t(key), t('filterSheet.lastTradeLabel'));
   if (chips.length === 0) return null;
@@ -107,6 +108,16 @@ export function FilterChips({ draft, onRemove, disabled }: FilterChipsProps) {
         >
           {t('filterChips.more', { count: overflow })}
         </span>
+      )}
+      {onClearAll && (
+        <button
+          type="button"
+          className="text-muted-foreground hover:text-foreground text-xs underline disabled:pointer-events-none disabled:opacity-50"
+          disabled={disabled}
+          onClick={onClearAll}
+        >
+          {t('clearAll')}
+        </button>
       )}
     </div>
   );

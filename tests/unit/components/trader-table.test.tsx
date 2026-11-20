@@ -68,7 +68,7 @@ describe('TraderTable', () => {
     const lastTrade = screen.getByText('1d ago');
     expect(lastTrade).toBeInTheDocument();
     expect(lastTrade).toHaveAttribute('title', '2026-09-30 12:00:00 UTC');
-    expect(screen.getByText('Ready')).toBeInTheDocument();
+    expect(screen.getByLabelText('Ready')).toBeInTheDocument();
   });
 
   it('renders dashes for null metrics', () => {

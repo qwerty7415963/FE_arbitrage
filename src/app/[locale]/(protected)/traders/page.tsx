@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import { Suspense, useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
@@ -22,11 +22,18 @@ import {
   type FilterDraft,
   type MetricFilterKey,
 } from '@/lib/trader-filter-draft';
-import { ScannerHeader } from './_components/scanner-header';
+import { ScannerCommandBar } from './_components/scanner-command-bar';
 import { FilterSheet } from './_components/filter-sheet';
 import { FilterChips } from './_components/filter-chips';
+import { deriveActiveFilters } from './_components/filter-chips';
 import { TraderTable } from '@/components/shared/traders/trader-table';
 import { AddToTraderGroupModal } from '@/components/shared/traders/add-to-trader-group-modal';
+import {
+  getSavedSearchesSnapshot,
+  getServerSavedSearchesSnapshot,
+  sanitizeTraderSearchQuery,
+  subscribeSavedSearches,
+} from '@/lib/trader-saved-searches';
 import { Pagination } from '@/components/shared/pagination';
 import {
   DEFAULT_SORT_BY,
@@ -84,6 +91,9 @@ function ScannerContent() {
   const [currentPage, setCurrentPage] = useState<number>(
     () => parseTraderSearchParams(searchParams).page ?? 1,
   );
+  const [pageSize, setPageSize] = useState<number>(
+    () => parseTraderSearchParams(searchParams).limit ?? SCANNER_PAGE_SIZE,
+  );
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [rows, setRows] = useState<PeriodMetrics[]>([]);
@@ -95,6 +105,11 @@ function ScannerContent() {
   const [addOpen, setAddOpen] = useState(false);
   const [addMembers, setAddMembers] = useState<MemberInput[]>([]);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const savedSearches = useSyncExternalStore(
+    subscribeSavedSearches,
+    getSavedSearchesSnapshot,
+    getServerSavedSearchesSnapshot,
+  );
 
   const abortRef = useRef<AbortController | null>(null);
   const requestIdRef = useRef(0);
@@ -182,11 +197,11 @@ function ScannerContent() {
       ...draftToQuery(form),
       sortBy,
       sortDirection,
-      limit: SCANNER_PAGE_SIZE,
+      limit: pageSize,
       page: currentPage,
       ...overrides,
     }),
-    [form, sortBy, sortDirection, currentPage],
+    [form, sortBy, sortDirection, currentPage, pageSize],
   );
 
   const commitDraft = useCallback(
@@ -196,14 +211,14 @@ function ScannerContent() {
         ...draftToQuery(nextDraft),
         sortBy,
         sortDirection,
-        limit: SCANNER_PAGE_SIZE,
+        limit: pageSize,
         page: 1,
       };
       setCurrentPage(1);
       syncUrl(query);
       void runSearch(query);
     },
-    [sortBy, sortDirection, syncUrl, runSearch],
+    [sortBy, sortDirection, pageSize, syncUrl, runSearch],
   );
 
   const applyDraft = commitDraft;
@@ -227,14 +242,14 @@ function ScannerContent() {
         ...draftToQuery(next),
         sortBy,
         sortDirection,
-        limit: SCANNER_PAGE_SIZE,
+        limit: pageSize,
         page: 1,
       };
       setCurrentPage(1);
       syncUrl(query);
       void runSearch(query);
     },
-    [form, sortBy, sortDirection, syncUrl, runSearch],
+    [form, sortBy, sortDirection, pageSize, syncUrl, runSearch],
   );
 
   const handleSortChange = useCallback(
@@ -262,10 +277,33 @@ function ScannerContent() {
     [currentPage, totalPages, effectiveQuery, syncUrl, runSearch],
   );
 
+  const handlePageSizeChange = useCallback(
+    (size: number) => {
+      setPageSize(size);
+      setCurrentPage(1);
+      const query: TraderSearchQuery = {
+        ...draftToQuery(form),
+        sortBy,
+        sortDirection,
+        limit: size,
+        page: 1,
+      };
+      syncUrl(query);
+      void runSearch(query);
+    },
+    [form, sortBy, sortDirection, syncUrl, runSearch],
+  );
+
   const handleRetry = useCallback(() => {
     const last = lastRequestRef.current;
     if (last) void runSearch(last.query);
   }, [runSearch]);
+
+  const handleRefresh = useCallback(() => {
+    const last = lastRequestRef.current;
+    if (last) void runSearch(last.query);
+    else void runSearch(effectiveQuery({ page: currentPage }));
+  }, [runSearch, effectiveQuery, currentPage]);
 
   const handleReset = useCallback(() => {
     abortRef.current?.abort();
@@ -282,10 +320,10 @@ function ScannerContent() {
       ...draftToQuery(nextForm),
       sortBy: DEFAULT_SORT_BY,
       sortDirection: DEFAULT_SORT_DIRECTION,
-      limit: SCANNER_PAGE_SIZE,
+      limit: pageSize,
       page: 1,
     });
-  }, [syncUrl, runSearch]);
+  }, [pageSize, syncUrl, runSearch]);
 
   const handleApplySavedSearch = useCallback(
     (savedQuery: TraderSearchQuery) => {
@@ -298,7 +336,7 @@ function ScannerContent() {
         ...draftToQuery(nextForm),
         sortBy: rest.sortBy ?? DEFAULT_SORT_BY,
         sortDirection: rest.sortDirection ?? DEFAULT_SORT_DIRECTION,
-        limit: SCANNER_PAGE_SIZE,
+        limit: pageSize,
         page: 1,
       };
       setForm(nextForm);
@@ -308,7 +346,7 @@ function ScannerContent() {
       syncUrl(query);
       void runSearch(query);
     },
-    [syncUrl, runSearch],
+    [pageSize, syncUrl, runSearch],
   );
 
   // Restore state on back/forward navigation (FE-025): the URL is the external
@@ -324,6 +362,9 @@ function ScannerContent() {
       const nextSortBy = parsed.sortBy ?? DEFAULT_SORT_BY;
       const nextDirection = parsed.sortDirection ?? DEFAULT_SORT_DIRECTION;
       const nextPage = parsed.page ?? 1;
+      const nextPageSize =
+        parsed.limit && [20, 50, 100].includes(parsed.limit) ? parsed.limit : pageSize;
+      setPageSize(nextPageSize);
       setSortBy(nextSortBy);
       setSortDirection(nextDirection);
       setCurrentPage(nextPage);
@@ -331,11 +372,11 @@ function ScannerContent() {
         ...draftToQuery(draftFromQuery(base)),
         sortBy: nextSortBy,
         sortDirection: nextDirection,
-        limit: SCANNER_PAGE_SIZE,
+        limit: nextPageSize,
         page: nextPage,
       });
     },
-    [runSearch],
+    [pageSize, runSearch],
   );
 
   const urlString = searchParams.toString();
@@ -377,9 +418,21 @@ function ScannerContent() {
     ? t('resultsPaged', { current: currentPage, total: totalPages, count: total })
     : null;
 
+  const filtersCount = deriveActiveFilters(
+    form,
+    (key) => t(key),
+    t('filterSheet.lastTradeLabel'),
+  ).length;
+
+  const savedViews = savedSearches.map((search) => ({
+    name: search.name,
+    onApply: () => handleApplySavedSearch(sanitizeTraderSearchQuery(search.query)),
+  }));
+
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4 lg:p-6">
-      <ScannerHeader
+    <div className="flex flex-1 flex-col gap-4">
+      <ScannerCommandBar
+        title={t('title')}
         period={form.period}
         onPeriodChange={handlePeriodChange}
         venue={form.venue}
@@ -387,6 +440,9 @@ function ScannerContent() {
         filtersOpen={filtersOpen}
         onToggleFilters={() => setFiltersOpen((open) => !open)}
         disabled={isSearching}
+        refresh={handleRefresh}
+        filtersCount={filtersCount}
+        savedViews={savedViews}
       />
 
       <div id="scanner-metric-filters">
@@ -403,7 +459,12 @@ function ScannerContent() {
         />
       </div>
 
-      <FilterChips draft={form} onRemove={handleRemoveMetricFilter} disabled={isSearching} />
+      <FilterChips
+        draft={form}
+        onRemove={handleRemoveMetricFilter}
+        onClearAll={handleResetFilters}
+        disabled={isSearching}
+      />
 
       {error && (
         <div className="bg-destructive/10 text-destructive rounded-md p-3 text-sm">
@@ -416,21 +477,26 @@ function ScannerContent() {
         </div>
       )}
 
-      {hasSearched && (
+      {hasSearched && isSearching && rows.length > 0 && (
         <div className="flex items-center justify-end gap-2">
-          {isSearching && rows.length > 0 && (
-            <span className="text-muted-foreground inline-flex items-center text-sm">
-              <Loader2Icon className="mr-1 h-3 w-3 animate-spin" />
-              {t('updating')}
-            </span>
-          )}
-          <Button
-            size="sm"
-            onClick={() => openAddForAddresses(selected)}
-            disabled={selected.length === 0}
-          >
+          <span className="text-muted-foreground inline-flex items-center text-sm">
+            <Loader2Icon className="mr-1 h-3 w-3 animate-spin" />
+            {t('updating')}
+          </span>
+        </div>
+      )}
+
+      {selected.length > 0 && (
+        <div className="bg-muted/30 flex flex-wrap items-center gap-2 rounded-md border p-2 max-sm:fixed max-sm:inset-x-0 max-sm:bottom-0 max-sm:z-30 max-sm:rounded-none max-sm:border-t">
+          <span className="text-sm font-medium">
+            {t('selectedCount', { count: selected.length })}
+          </span>
+          <Button size="sm" onClick={() => openAddForAddresses(selected)}>
             <PlusIcon className="mr-2 h-4 w-4" />
-            {t('addToGroup')} ({selected.length})
+            {t('addToGroup')}
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => setSelected([])}>
+            {t('clearAll')}
           </Button>
         </div>
       )}
@@ -459,7 +525,10 @@ function ScannerContent() {
             <Pagination
               currentPage={currentPage}
               totalPages={totalPages}
+              total={total}
+              pageSize={pageSize}
               onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
               disabled={isSearching}
             />
           </>
