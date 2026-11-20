@@ -58,7 +58,7 @@
 | `lib/trader-validation.ts`                                                                | `tests/unit/lib/trader-validation.test.ts`                 | 13      | âœ…    |
 | `lib/trader-format.ts`                                                                    | `tests/unit/lib/trader-format.test.ts`                     | 21      | âœ…    |
 | `lib/trader-url-state.ts`                                                                 | `tests/unit/lib/trader-url-state.test.ts`                  | 10      | âœ…    |
-| `components/shared/pagination.tsx`                                                        | `tests/unit/components/pagination.test.tsx`                | 5       | âœ…    |
+| `components/shared/pagination.tsx`                                                        | `tests/unit/components/pagination.test.tsx`                | 7       | âœ…    |
 | `lib/trader-filter-draft.ts`                                                              | `tests/unit/lib/trader-filter-draft.test.ts`               | 9       | âœ…    |
 | `components/funding-table.tsx` (7 columns incl. Symbol)                                   | `tests/unit/components/funding-table.test.tsx`             | 27      | âœ…    |
 | `lib/funding-format.ts`                                                                   | `tests/unit/lib/funding-format.test.ts`                    | 16      | âœ…    |
@@ -470,7 +470,7 @@
 | Page 1 of 1 fallback          | "Page 1 of 1 Â· 1 results" when no meta       |
 | restores ?page=3              | Deep link searches with page:3                |
 
-#### `components/shared/pagination.tsx` (5 tests)
+#### `components/shared/pagination.tsx` (7 tests)
 
 | Test                         | Description                         |
 | ---------------------------- | ----------------------------------- |
@@ -479,6 +479,8 @@
 | ellipsis for long ranges     | 10 pages collapse with â€¦          |
 | prev/next disabled at bounds | First/last page edge states         |
 | disabled while loading       | All buttons disabled                |
+| range thousands + en dash    | "Showing 1–20 of 10,539" (no u2013) |
+| page size select labelled    | "Page size" combobox reports 50     |
 
 #### `traders/[address]/page.tsx` trader detail (10 tests, reskin â€” live, no sync)
 
@@ -697,12 +699,12 @@
 
 ### Accessibility / Keyboard / Visual / Performance
 
-| ID   | File                    | Coverage                                                                                                                                                                                                                                                                                                                                                                     |
-| ---- | ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| A1-9 | `accessibility.spec.ts` | axe wcag2a+aa: scanner (default/results/error), detail, groups+dialog, add modal, open filter sheet Ã—2 locales + active chip                                                                                                                                                                                                                                                |
-| K1-5 | `keyboard.spec.ts`      | Tab order, Enter-to-sort, focus trap + Escape, filter sheet Escape + focus return, narrow scroll                                                                                                                                                                                                                                                                             |
-| V1-9 | `visual.spec.ts`        | Baselines (frozen clock): scanner Ã—4, filter sheet open (whole-page viewport, not `fullPage`; sheet portals to `<body>`), detail, groups, narrow Ã—2 â€” STALE after numbered pagination (Load more gone, `resultsPaged` copy): `scanner-results.png` + `scanner-results-narrow.png` (+ `scanner-default.png` count copy) need per-image review before `--update-snapshots` |
-| P1-3 | `performance.spec.ts`   | Numbered page (20 rows, Page 1 of 5) <15s, slow-search keeps rows, 500-member group pages                                                                                                                                                                                                                                                                                    |
+| ID   | File                    | Coverage                                                                                                                                                                                                                 |
+| ---- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| A1-9 | `accessibility.spec.ts` | axe wcag2a+aa: scanner (default/results/error), detail, groups+dialog, add modal, open filter sheet Ã—2 locales + active chip                                                                                            |
+| K1-5 | `keyboard.spec.ts`      | Tab order, Enter-to-sort, focus trap + Escape, filter sheet Escape + focus return, narrow scroll                                                                                                                         |
+| V1-9 | `visual.spec.ts`        | Baselines (frozen clock): scanner Ã—4, filter sheet open (whole-page viewport, not `fullPage`; sheet portals to `<body>`), detail, groups, narrow Ã—2 â€” baselines regenerated 2026-11-20 after the pagination redesign |
+| P1-3 | `performance.spec.ts`   | Numbered page (20 rows, Page 1 of 5) <15s, slow-search keeps rows, 500-member group pages                                                                                                                                |
 
 ---
 
@@ -958,3 +960,4 @@ reviewing diffs â€” never blindly.
 - 2026-11-20: Market detail redesign: custom date-range picker (day+hour+minute), sortable table headers, tape/ledger layout, formatPrice, compact OI.
 - 2026-11-20: Market snapshot ribbon cleanup: removed the average leverage row, fixed the em-dash glyph, long/short ratio now renders a single em dash when open notional is zero, and the tracked-wallets tooltip is localized. Unit: market-detail-page (3 tests, incl. no leverage row and zero-notional ratio empty state).
 - 2026-11-20: Scanner redesign: command bar + ledger table + quick presets + full pagination (command bar, row click, page size, First/Last). Tests: scanner-command-bar (5), trader-table, trader-scanner-page.
+- 2026-11-20: Scanner pagination redesign: readable h-7 controls, page size select beside the controls, "Showing" label with thousands-separated range (fixes literal u2013), page numbers hidden below sm, formatted result count. Unit pagination 5 -> 7 tests; scanner visual baselines regenerated (scanner-default/results/error/sheet-open/results-narrow).

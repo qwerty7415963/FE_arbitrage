@@ -21,6 +21,7 @@ import { useBucketWallets } from '@/hooks/use-bucket-wallets';
 import { useBucketMarkets } from '@/hooks/use-bucket-markets';
 import { formatUsd, formatPercent, formatInteger } from '@/lib/trader-format';
 import { AssetIcon } from '@/components/shared/asset-icon';
+import { Pagination } from '@/components/shared/pagination';
 import { stripDexPrefix } from '@/lib/asset-meta';
 import { ArrowDownIcon, ArrowUpDownIcon, ArrowUpIcon } from 'lucide-react';
 import type { BucketDetail, BucketKind, BucketMarketRow, BucketWalletRow } from '@/types/trader';
@@ -293,27 +294,13 @@ export function BucketTables(props: BucketTablesProps) {
                   ))}
                 </TableBody>
               </Table>
-              <div className="flex items-center justify-between text-sm">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={(walletMeta.page ?? 1) <= 1}
-                  onClick={() => setWalletPage((p) => Math.max(1, p - 1))}
-                >
-                  {t('bucketDetail.prev')}
-                </Button>
-                <span>
-                  {walletMeta.page ?? 1} / {walletMeta.total_pages ?? 1}
-                </span>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={!(walletMeta.has_more ?? false)}
-                  onClick={() => setWalletPage((p) => p + 1)}
-                >
-                  {t('bucketDetail.next')}
-                </Button>
-              </div>
+              <Pagination
+                currentPage={walletMeta.page ?? walletPage}
+                totalPages={walletMeta.total_pages ?? 1}
+                onPageChange={setWalletPage}
+                disabled={wallets.isLoading}
+                pageSize={20}
+              />
             </>
           )}
         </div>
@@ -473,27 +460,13 @@ export function BucketTables(props: BucketTablesProps) {
                   })}
                 </TableBody>
               </Table>
-              <div className="flex items-center justify-between text-sm">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={(marketMeta.page ?? 1) <= 1}
-                  onClick={() => setMarketPage((p) => Math.max(1, p - 1))}
-                >
-                  {t('bucketDetail.prev')}
-                </Button>
-                <span>
-                  {marketMeta.page ?? 1} / {marketMeta.total_pages ?? 1}
-                </span>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={!(marketMeta.has_more ?? false)}
-                  onClick={() => setMarketPage((p) => p + 1)}
-                >
-                  {t('bucketDetail.next')}
-                </Button>
-              </div>
+              <Pagination
+                currentPage={marketMeta.page ?? marketPage}
+                totalPages={marketMeta.total_pages ?? 1}
+                onPageChange={setMarketPage}
+                disabled={markets.isLoading}
+                pageSize={20}
+              />
             </>
           )}
         </div>

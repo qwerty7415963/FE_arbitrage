@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DateRangePicker } from '@/components/shared/date-range-picker';
+import { Pagination } from '@/components/shared/pagination';
 import {
   Table,
   TableBody,
@@ -46,7 +47,7 @@ export function MarketWalletTable(props: MarketWalletTableProps) {
   const [sort, setSort] = useState(searchParams.get('sort') ?? 'volume');
   const [dir, setDir] = useState(searchParams.get('dir') ?? 'desc');
   const [page, setPage] = useState(Number(searchParams.get('page') ?? '1') || 1);
-  const limit = Number(searchParams.get('limit') ?? '20') || 20;
+  const [limit, setLimit] = useState(Number(searchParams.get('limit') ?? '20') || 20);
 
   const from = props.from ?? searchParams.get('from') ?? undefined;
   const to = props.to ?? searchParams.get('to') ?? undefined;
@@ -74,6 +75,7 @@ export function MarketWalletTable(props: MarketWalletTableProps) {
     sort?: string;
     dir?: string;
     page?: number;
+    limit?: number;
   }) => {
     const params = new URLSearchParams(searchParams.toString());
     const f = next.from ?? from;
@@ -83,6 +85,7 @@ export function MarketWalletTable(props: MarketWalletTableProps) {
     const s = next.sort ?? sort;
     const d = next.dir ?? dir;
     const p = next.page ?? page;
+    const l = next.limit ?? limit;
     if (f) params.set('from', f);
     else params.delete('from');
     if (tt) params.set('to', tt);
@@ -94,12 +97,13 @@ export function MarketWalletTable(props: MarketWalletTableProps) {
     params.set('sort', s);
     params.set('dir', d);
     params.set('page', String(p));
+    params.set('limit', String(l));
     router.replace(`?${params.toString()}`, { scroll: false });
   };
 
   const applyFilters = () => {
     setPage(1);
-    pushParams({ winRateMin, tradesMin, sort, dir, page: 1 });
+    pushParams({ winRateMin, tradesMin, sort, dir, page: 1, limit });
   };
 
   const resetFilters = () => {
@@ -259,35 +263,17 @@ export function MarketWalletTable(props: MarketWalletTableProps) {
               ))}
             </TableBody>
           </Table>
-          <div className="flex items-center justify-between text-sm">
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={(meta.page ?? page) <= 1}
-              onClick={() => {
-                const next = Math.max(1, page - 1);
-                setPage(next);
-                pushParams({ page: next });
-              }}
-            >
-              {t('bucketDetail.prev')}
-            </Button>
-            <span>
-              {meta.page ?? page} / {meta.total_pages ?? 1}
-            </span>
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={!(meta.has_more ?? false)}
-              onClick={() => {
-                const next = page + 1;
-                setPage(next);
-                pushParams({ page: next });
-              }}
-            >
-              {t('bucketDetail.next')}
-            </Button>
-          </div>
+          <Pagination
+            currentPage={meta.page ?? page}
+            totalPages={meta.total_pages ?? 1}
+            onPageChange={setPage}
+            disabled={wallets.isLoading}
+            pageSize={limit}
+            onPageSizeChange={(size) => {
+              setLimit(size);
+              setPage(1);
+            }}
+          />
         </>
       )}
     </div>

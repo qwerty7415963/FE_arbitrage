@@ -599,6 +599,7 @@
     "selectedCount": "{count} selected",
     "rangeOf": "{start}–{end} of {total}",
     "pageSize": "Page size",
+    "paginationShowing": "Showing",
     "clearAll": "Clear all",
     "filtersCount": "{count} filters",
     "noTradersHint": "Try adjusting filters or reset."

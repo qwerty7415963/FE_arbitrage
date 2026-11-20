@@ -415,7 +415,11 @@ function ScannerContent() {
   const showEmpty = hasSearched && !isSearching && rows.length === 0 && !error;
 
   const resultText = hasSearched
-    ? t('resultsPaged', { current: currentPage, total: totalPages, count: total })
+    ? t('resultsPaged', {
+        current: currentPage,
+        total: totalPages,
+        count: total.toLocaleString('en-US'),
+      })
     : null;
 
   const filtersCount = deriveActiveFilters(

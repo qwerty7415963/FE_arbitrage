@@ -599,6 +599,7 @@
     "selectedCount": "{count} da chon",
     "rangeOf": "{start}–{end} trong {total}",
     "pageSize": "Kich thuoc trang",
+    "paginationShowing": "Hiển thị",
     "clearAll": "Xoa tat ca",
     "filtersCount": "{count} bo loc",
     "noTradersHint": "Thu dieu chinh bo loc hoac dat lai."
