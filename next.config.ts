@@ -6,6 +6,7 @@ const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 const backendUrl = process.env.BACKEND_URL || 'http://localhost:8080';
 
 const nextConfig: NextConfig = {
+  output: 'standalone',
   async redirects() {
     return [
       {
