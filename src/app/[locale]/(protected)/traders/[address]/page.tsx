@@ -14,8 +14,8 @@ async function fetchServerData(
     process.env.NEXT_PUBLIC_API_URL ||
     'http://localhost:8080'
   ).replace(/\/$/, '');
-  const detailUrl = `${base}/api/v1/traders/${address}?period=${encodeURIComponent(period)}&sync=1`;
-  const perfUrl = `${base}/api/v1/traders/${address}/performance?period=${encodeURIComponent(period)}&mode=perps&sync=1&series_only=true`;
+  const detailUrl = `${base}/v1/traders/${address}?period=${encodeURIComponent(period)}&sync=1`;
+  const perfUrl = `${base}/v1/traders/${address}/performance?period=${encodeURIComponent(period)}&mode=perps&sync=1&series_only=true`;
   const [detailRes, perfRes] = await Promise.all([
     fetch(detailUrl, { cache: 'no-store' }),
     fetch(perfUrl, { cache: 'no-store' }),

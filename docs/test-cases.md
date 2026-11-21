@@ -168,7 +168,7 @@
 
 | Test                                    | Description                                  |
 | --------------------------------------- | -------------------------------------------- |
-| builds ws url lowercase                 | `ws://host/api/v1/traders/ws?wallet=`        |
+| builds ws url lowercase                 | `ws://host/v1/traders/ws?wallet=`            |
 | uses wss for https                      | `wss://` scheme                              |
 | backoff caps at 30s                     | 1sâ†’2sâ†’4sâ†’â€¦â†’30s                     |
 | legacy activity routes to onFill        | `subscribed` ignored, `activity` validated   |

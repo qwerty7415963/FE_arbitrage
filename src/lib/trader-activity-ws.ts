@@ -59,7 +59,7 @@ export function buildActivityWsUrl(
     }
   }
   base = base.replace(/\/+$/, '');
-  return `${base}/api/v1/traders/ws?wallet=${encodeURIComponent(wallet)}`;
+  return `${base}/v1/traders/ws?wallet=${encodeURIComponent(wallet)}`;
 }
 
 function isDocumentHidden(): boolean {

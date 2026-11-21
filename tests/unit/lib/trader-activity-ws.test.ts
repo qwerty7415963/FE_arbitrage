@@ -67,18 +67,18 @@ const fill = {
 describe('buildActivityWsUrl', () => {
   it('builds a ws url and lowercases the wallet', () => {
     expect(buildActivityWsUrl('0xABCDEF', { protocol: 'http:', host: 'example.com' })).toBe(
-      'ws://example.com/api/v1/traders/ws?wallet=0xabcdef',
+      'ws://example.com/v1/traders/ws?wallet=0xabcdef',
     );
   });
 
   it('uses wss for https locations', () => {
     expect(buildActivityWsUrl('0xabc', { protocol: 'https:', host: 'example.com' })).toBe(
-      'wss://example.com/api/v1/traders/ws?wallet=0xabc',
+      'wss://example.com/v1/traders/ws?wallet=0xabc',
     );
   });
 
   it('uses config default when loc is omitted', () => {
-    expect(buildActivityWsUrl('0xabc')).toBe('ws://localhost:8080/api/v1/traders/ws?wallet=0xabc');
+    expect(buildActivityWsUrl('0xabc')).toBe('ws://localhost:8080/v1/traders/ws?wallet=0xabc');
   });
 });
 
