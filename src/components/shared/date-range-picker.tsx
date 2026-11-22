@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { CalendarIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
@@ -13,9 +13,8 @@ export interface DateRangePickerProps {
   onChange: (range: { from: string; to: string }) => void;
   min?: string;
   max?: string;
+  locale?: string;
 }
-
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 function parseDate(value: string | undefined, fallback: Date): Date {
   if (!value) return new Date(fallback);
@@ -29,12 +28,6 @@ function sameDay(a: Date, b: Date): boolean {
     a.getMonth() === b.getMonth() &&
     a.getDate() === b.getDate()
   );
-}
-
-function formatChip(d: Date): string {
-  const h = String(d.getHours()).padStart(2, '0');
-  const m = String(d.getMinutes()).padStart(2, '0');
-  return `${MONTHS[d.getMonth()]} ${d.getDate()}, ${h}:${m}`;
 }
 
 function startOfMonth(d: Date): Date {
@@ -60,8 +53,28 @@ function buildMonthCells(month: Date): (Date | null)[] {
   return cells;
 }
 
-export function DateRangePicker({ from, to, onChange, min, max }: DateRangePickerProps) {
+export function DateRangePicker({
+  from,
+  to,
+  onChange,
+  min,
+  max,
+  locale: localeProp,
+}: DateRangePickerProps) {
   const t = useTranslations('traders');
+  const defaultLocale = useLocale();
+  const locale = localeProp ?? defaultLocale;
+  const monthNames = Array.from({ length: 12 }, (_, i) =>
+    new Intl.DateTimeFormat(locale, { month: 'short' }).format(new Date(2020, i, 1)),
+  );
+  const weekdayNames = Array.from({ length: 7 }, (_, i) =>
+    new Intl.DateTimeFormat(locale, { weekday: 'short' }).format(new Date(2020, 0, 5 + i)),
+  );
+  const formatChipLocal = (d: Date) => {
+    const h = String(d.getHours()).padStart(2, '0');
+    const m = String(d.getMinutes()).padStart(2, '0');
+    return `${monthNames[d.getMonth()]} ${d.getDate()}, ${h}:${m}`;
+  };
   const now = new Date();
   const [open, setOpen] = useState(false);
   const [draftFrom, setDraftFrom] = useState<Date>(() =>
@@ -156,18 +169,18 @@ export function DateRangePicker({ from, to, onChange, min, max }: DateRangePicke
         <div className="flex items-center justify-between">
           <button
             type="button"
-            aria-label="Previous month"
+            aria-label={t('dateRange.previousMonth')}
             className="hover:bg-muted rounded p-1"
             onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))}
           >
             <ChevronLeftIcon className="h-4 w-4" />
           </button>
           <span className="text-sm font-medium">
-            {MONTHS[month.getMonth()]} {month.getFullYear()}
+            {monthNames[month.getMonth()]} {month.getFullYear()}
           </span>
           <button
             type="button"
-            aria-label="Next month"
+            aria-label={t('dateRange.nextMonth')}
             className="hover:bg-muted rounded p-1"
             onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))}
           >
@@ -175,7 +188,7 @@ export function DateRangePicker({ from, to, onChange, min, max }: DateRangePicke
           </button>
         </div>
         <div className="grid grid-cols-7 gap-1 text-center text-xs">
-          {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((d) => (
+          {weekdayNames.map((d) => (
             <span key={d} className="text-muted-foreground font-medium">
               {d}
             </span>
@@ -214,9 +227,9 @@ export function DateRangePicker({ from, to, onChange, min, max }: DateRangePicke
         </div>
         <div className="flex items-center gap-2">
           <label className="flex flex-col text-xs">
-            <span className="text-muted-foreground">HH</span>
+            <span className="text-muted-foreground">{t('dateRange.hour')}</span>
             <select
-              aria-label={`${target} hour`}
+              aria-label={`${target} ${t('dateRange.hour')}`}
               className="border-input bg-background h-9 rounded-md border px-2 text-sm"
               value={selected.getHours()}
               onChange={(e) => setTime(target, 'h', Number(e.target.value))}
@@ -229,9 +242,9 @@ export function DateRangePicker({ from, to, onChange, min, max }: DateRangePicke
             </select>
           </label>
           <label className="flex flex-col text-xs">
-            <span className="text-muted-foreground">MM</span>
+            <span className="text-muted-foreground">{t('dateRange.minute')}</span>
             <select
-              aria-label={`${target} minute`}
+              aria-label={`${target} ${t('dateRange.minute')}`}
               className="border-input bg-background h-9 rounded-md border px-2 text-sm"
               value={selected.getMinutes()}
               onChange={(e) => setTime(target, 'm', Number(e.target.value))}
@@ -256,7 +269,7 @@ export function DateRangePicker({ from, to, onChange, min, max }: DateRangePicke
       <PopoverTrigger className="bg-card inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm">
         <CalendarIcon className="h-4 w-4" />
         <span>
-          {formatChip(fromDate)} → {formatChip(toDate)}
+          {formatChipLocal(fromDate)} → {formatChipLocal(toDate)}
         </span>
         <ChevronDownIcon className="h-4 w-4" />
       </PopoverTrigger>

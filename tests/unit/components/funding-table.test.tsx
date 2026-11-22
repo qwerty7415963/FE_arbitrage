@@ -1,5 +1,16 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import type { ReactNode } from 'react';
+import { NextIntlClientProvider } from 'next-intl';
+import enMessages from '@/messages/en.json';
+
+function withIntl(ui: ReactNode) {
+  return (
+    <NextIntlClientProvider locale="en" messages={enMessages}>
+      {ui}
+    </NextIntlClientProvider>
+  );
+}
 import { FundingTable } from '@/app/[locale]/(public)/funding-arbitrage/funding-table';
 import type { ArbitragePair } from '@/types/funding-arbitrage';
 
@@ -36,19 +47,19 @@ const createPair = (tokenOverrides: Record<string, unknown>[] = []): ArbitragePa
 describe('FundingTable', () => {
   describe('empty state', () => {
     it('renders empty message when pairs is empty', () => {
-      render(<FundingTable pairs={[]} />);
+      render(withIntl(<FundingTable pairs={[]} />));
       expect(screen.getByText('No arbitrage opportunities found')).toBeInTheDocument();
     });
 
     it('does not render table when empty', () => {
-      const { container } = render(<FundingTable pairs={[]} />);
+      const { container } = render(withIntl(<FundingTable pairs={[]} />));
       expect(container.querySelector('table')).toBeNull();
     });
   });
 
   describe('flattenPairs', () => {
     it('single pair with 1 token renders 1 row', () => {
-      const { container } = render(<FundingTable pairs={[createPair()]} />);
+      const { container } = render(withIntl(<FundingTable pairs={[createPair()]} />));
       const bodyRows = container.querySelectorAll('tbody tr');
       expect(bodyRows).toHaveLength(1);
     });
@@ -61,7 +72,7 @@ describe('FundingTable', () => {
           { symbol: 'SOL-USDT', instrument_id: 'sol-usdt' },
         ]),
       ];
-      const { container } = render(<FundingTable pairs={pairs} />);
+      const { container } = render(withIntl(<FundingTable pairs={pairs} />));
       const bodyRows = container.querySelectorAll('tbody tr');
       expect(bodyRows).toHaveLength(3);
     });
@@ -75,13 +86,13 @@ describe('FundingTable', () => {
       pairs[0].venue_b = { id: 'v2', code: 'OKX', name: 'OKX' };
       pairs[1].venue_a = { id: 'v1', code: 'BINANCE', name: 'Binance' };
       pairs[1].venue_b = { id: 'v3', code: 'BYBIT', name: 'Bybit' };
-      const { container } = render(<FundingTable pairs={pairs} />);
+      const { container } = render(withIntl(<FundingTable pairs={pairs} />));
       const bodyRows = container.querySelectorAll('tbody tr');
       expect(bodyRows).toHaveLength(2);
     });
 
     it('adds venue names from pair to each row', () => {
-      render(<FundingTable pairs={[createPair()]} />);
+      render(withIntl(<FundingTable pairs={[createPair()]} />));
       expect(screen.getByText('Binance')).toBeInTheDocument();
       expect(screen.getByText('OKX')).toBeInTheDocument();
     });
@@ -94,7 +105,7 @@ describe('FundingTable', () => {
           venue_b: { id: 'v3', code: 'BYBIT', name: 'Bybit' },
         },
       ];
-      const { container } = render(<FundingTable pairs={pairs} />);
+      const { container } = render(withIntl(<FundingTable pairs={pairs} />));
       expect(container.querySelectorAll('tbody tr')).toHaveLength(1);
     });
 
@@ -106,18 +117,18 @@ describe('FundingTable', () => {
           tokens: null,
         },
       ];
-      render(<FundingTable pairs={pairs} />);
+      render(withIntl(<FundingTable pairs={pairs} />));
       expect(screen.getByText('No arbitrage opportunities found')).toBeInTheDocument();
     });
 
     it('renders empty state when pairs is undefined', () => {
-      render(<FundingTable pairs={undefined} />);
+      render(withIntl(<FundingTable pairs={undefined} />));
       expect(screen.getByText('No arbitrage opportunities found')).toBeInTheDocument();
     });
 
     it('falls back to placeholder when venue names missing', () => {
       const pairs = [{ tokens: [createToken()] }];
-      const { container } = render(<FundingTable pairs={pairs} />);
+      const { container } = render(withIntl(<FundingTable pairs={pairs} />));
       expect(container.textContent).toContain('—');
     });
   });
@@ -125,35 +136,35 @@ describe('FundingTable', () => {
   describe('formatPercent', () => {
     it('formats integer to 2 decimal places', () => {
       const { container } = render(
-        <FundingTable pairs={[createPair([{ price_spread_percent: 10 }])]} />,
+        withIntl(<FundingTable pairs={[createPair([{ price_spread_percent: 10 }])]} />),
       );
       expect(container.textContent).toContain('10.00%');
     });
 
     it('formats decimal number', () => {
       const { container } = render(
-        <FundingTable pairs={[createPair([{ price_spread_percent: 10.5 }])]} />,
+        withIntl(<FundingTable pairs={[createPair([{ price_spread_percent: 10.5 }])]} />),
       );
       expect(container.textContent).toContain('10.50%');
     });
 
     it('formats small number', () => {
       const { container } = render(
-        <FundingTable pairs={[createPair([{ price_spread_percent: 0.01 }])]} />,
+        withIntl(<FundingTable pairs={[createPair([{ price_spread_percent: 0.01 }])]} />),
       );
       expect(container.textContent).toContain('0.01%');
     });
 
     it('formats zero', () => {
       const { container } = render(
-        <FundingTable pairs={[createPair([{ price_spread_percent: 0 }])]} />,
+        withIntl(<FundingTable pairs={[createPair([{ price_spread_percent: 0 }])]} />),
       );
       expect(container.textContent).toContain('0.00%');
     });
 
     it('formats negative number', () => {
       const { container } = render(
-        <FundingTable pairs={[createPair([{ price_spread_percent: -5.3 }])]} />,
+        withIntl(<FundingTable pairs={[createPair([{ price_spread_percent: -5.3 }])]} />),
       );
       expect(container.textContent).toContain('-5.30%');
     });
@@ -161,7 +172,7 @@ describe('FundingTable', () => {
 
   describe('table headers', () => {
     it('renders all 7 column headers in order', () => {
-      const { container } = render(<FundingTable pairs={[createPair()]} />);
+      const { container } = render(withIntl(<FundingTable pairs={[createPair()]} />));
       const headers = ['Symbol', 'Pair', 'Funding', 'Funding Spread', 'APR', 'OI', 'Price Spread'];
       const headCells = container.querySelectorAll('thead th');
       expect(headCells).toHaveLength(headers.length);
@@ -173,14 +184,18 @@ describe('FundingTable', () => {
 
   describe('symbol column', () => {
     it('renders base asset from symbol', () => {
-      const { container } = render(<FundingTable pairs={[createPair([{ symbol: 'DOT-PERP' }])]} />);
+      const { container } = render(
+        withIntl(<FundingTable pairs={[createPair([{ symbol: 'DOT-PERP' }])]} />),
+      );
       const row = container.querySelector('tbody tr');
       const symbolCell = row?.querySelectorAll('td')[0];
       expect(symbolCell).toHaveTextContent('DOT');
     });
 
     it('falls back to placeholder when symbol missing', () => {
-      const { container } = render(<FundingTable pairs={[createPair([{ symbol: '' }])]} />);
+      const { container } = render(
+        withIntl(<FundingTable pairs={[createPair([{ symbol: '' }])]} />),
+      );
       const row = container.querySelector('tbody tr');
       const symbolCell = row?.querySelectorAll('td')[0];
       expect(symbolCell?.textContent).toBe('—');
@@ -188,13 +203,15 @@ describe('FundingTable', () => {
 
     it('pair column shows venue names only', () => {
       const { container } = render(
-        <FundingTable
-          pairs={[
-            createPair([
-              { long_venue_id: 'v1', venue_a_symbol: 'ERA-USD', venue_b_symbol: 'ERAUSDT' },
-            ]),
-          ]}
-        />,
+        withIntl(
+          <FundingTable
+            pairs={[
+              createPair([
+                { long_venue_id: 'v1', venue_a_symbol: 'ERA-USD', venue_b_symbol: 'ERAUSDT' },
+              ]),
+            ]}
+          />,
+        ),
       );
       const row = container.querySelector('tbody tr');
       const pairCell = row?.querySelectorAll('td')[1];
@@ -208,7 +225,7 @@ describe('FundingTable', () => {
   describe('Funding Spread color logic', () => {
     it('positive spread shows primary color', () => {
       const { container } = render(
-        <FundingTable pairs={[createPair([{ rate_1h_percent: 10.5 }])]} />,
+        withIntl(<FundingTable pairs={[createPair([{ rate_1h_percent: 10.5 }])]} />),
       );
       const row = container.querySelector('tbody tr');
       const cell = row?.querySelectorAll('td')[3];
@@ -217,7 +234,7 @@ describe('FundingTable', () => {
 
     it('negative spread shows destructive color', () => {
       const { container } = render(
-        <FundingTable pairs={[createPair([{ rate_1h_percent: -5.3 }])]} />,
+        withIntl(<FundingTable pairs={[createPair([{ rate_1h_percent: -5.3 }])]} />),
       );
       const row = container.querySelector('tbody tr');
       const cell = row?.querySelectorAll('td')[3];
@@ -225,7 +242,9 @@ describe('FundingTable', () => {
     });
 
     it('zero spread shows destructive color', () => {
-      const { container } = render(<FundingTable pairs={[createPair([{ rate_1h_percent: 0 }])]} />);
+      const { container } = render(
+        withIntl(<FundingTable pairs={[createPair([{ rate_1h_percent: 0 }])]} />),
+      );
       const row = container.querySelector('tbody tr');
       const cell = row?.querySelectorAll('td')[3];
       expect(cell?.className).toContain('text-destructive');
@@ -235,19 +254,21 @@ describe('FundingTable', () => {
   describe('long-first ordering', () => {
     it('shows long venue funding and OI first when venue A is long', () => {
       const { container } = render(
-        <FundingTable
-          pairs={[
-            createPair([
-              {
-                long_venue_id: 'v1',
-                venue_a_funding_rate: '0.00012',
-                venue_b_funding_rate: '-0.00003',
-                venue_a_oi: '1000000',
-                venue_b_oi: '500000',
-              },
-            ]),
-          ]}
-        />,
+        withIntl(
+          <FundingTable
+            pairs={[
+              createPair([
+                {
+                  long_venue_id: 'v1',
+                  venue_a_funding_rate: '0.00012',
+                  venue_b_funding_rate: '-0.00003',
+                  venue_a_oi: '1000000',
+                  venue_b_oi: '500000',
+                },
+              ]),
+            ]}
+          />,
+        ),
       );
       const row = container.querySelector('tbody tr');
       const fundingLines = row?.querySelectorAll('td')[2].querySelectorAll('div');
@@ -262,19 +283,21 @@ describe('FundingTable', () => {
 
     it('shows long venue funding and OI first when venue B is long', () => {
       const { container } = render(
-        <FundingTable
-          pairs={[
-            createPair([
-              {
-                long_venue_id: 'v2',
-                venue_a_funding_rate: '0.00012',
-                venue_b_funding_rate: '-0.00003',
-                venue_a_oi: '1000000',
-                venue_b_oi: '500000',
-              },
-            ]),
-          ]}
-        />,
+        withIntl(
+          <FundingTable
+            pairs={[
+              createPair([
+                {
+                  long_venue_id: 'v2',
+                  venue_a_funding_rate: '0.00012',
+                  venue_b_funding_rate: '-0.00003',
+                  venue_a_oi: '1000000',
+                  venue_b_oi: '500000',
+                },
+              ]),
+            ]}
+          />,
+        ),
       );
       const row = container.querySelector('tbody tr');
       const fundingLines = row?.querySelectorAll('td')[2].querySelectorAll('div');
@@ -290,7 +313,7 @@ describe('FundingTable', () => {
 
   describe('funding rates monospace', () => {
     it('renders funding rate with font-mono class', () => {
-      const { container } = render(<FundingTable pairs={[createPair()]} />);
+      const { container } = render(withIntl(<FundingTable pairs={[createPair()]} />));
       const monoCells = container.querySelectorAll('.font-mono');
       expect(monoCells.length).toBeGreaterThan(0);
     });
@@ -303,7 +326,7 @@ describe('FundingTable', () => {
       ];
       pairs[0].venue_a = { id: 'v1', code: 'BINANCE', name: 'Binance' };
       pairs[0].venue_b = { id: 'v2', code: 'EXTENDED', name: 'Extended' };
-      render(<FundingTable pairs={pairs} />);
+      render(withIntl(<FundingTable pairs={pairs} />));
       expect(screen.getByText('Binance')).toBeInTheDocument();
       expect(screen.getByText('Extended')).toBeInTheDocument();
     });
@@ -327,7 +350,7 @@ describe('FundingTable', () => {
           },
         ]),
       ];
-      render(<FundingTable pairs={pairs} />);
+      render(withIntl(<FundingTable pairs={pairs} />));
       expect(screen.getAllByText('BTC-USDT').length).toBeGreaterThan(0);
       expect(screen.getAllByText('ETH-USDT').length).toBeGreaterThan(0);
     });

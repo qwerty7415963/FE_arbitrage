@@ -167,7 +167,7 @@ export function MarketWalletTable(props: MarketWalletTableProps) {
           }}
         />
         <label className="flex flex-col text-xs">
-          <span className="text-muted-foreground">Win rate min</span>
+          <span className="text-muted-foreground">{t('winRateMin')}</span>
           <Input
             type="number"
             value={winRateMin}
@@ -176,7 +176,7 @@ export function MarketWalletTable(props: MarketWalletTableProps) {
           />
         </label>
         <label className="flex flex-col text-xs">
-          <span className="text-muted-foreground">Trades min</span>
+          <span className="text-muted-foreground">{t('tradesMin')}</span>
           <Input
             type="number"
             value={tradesMin}
@@ -211,30 +211,30 @@ export function MarketWalletTable(props: MarketWalletTableProps) {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Address</TableHead>
-                <TableHead>Cohort</TableHead>
-                <TableHead>Bias</TableHead>
+                <TableHead>{t('address')}</TableHead>
+                <TableHead>{t('cohort')}</TableHead>
+                <TableHead>{t('bias')}</TableHead>
                 <TableHead aria-sort={ariaSort('volume')}>
                   <button type="button" onClick={() => toggleSort('volume')}>
-                    Volume {sortIcon('volume')}
+                    {t('volume')} {sortIcon('volume')}
                   </button>
                 </TableHead>
                 <TableHead aria-sort={ariaSort('trades')}>
                   <button type="button" onClick={() => toggleSort('trades')}>
-                    Trades {sortIcon('trades')}
+                    {t('tradeCount')} {sortIcon('trades')}
                   </button>
                 </TableHead>
                 <TableHead aria-sort={ariaSort('win_rate')}>
                   <button type="button" onClick={() => toggleSort('win_rate')}>
-                    Win rate {sortIcon('win_rate')}
+                    {t('winRate')} {sortIcon('win_rate')}
                   </button>
                 </TableHead>
                 <TableHead aria-sort={ariaSort('realized_pnl')}>
                   <button type="button" onClick={() => toggleSort('realized_pnl')}>
-                    Realized PnL {sortIcon('realized_pnl')}
+                    {t('realizedPnl')} {sortIcon('realized_pnl')}
                   </button>
                 </TableHead>
-                <TableHead>Last trade</TableHead>
+                <TableHead>{t('lastTrade')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

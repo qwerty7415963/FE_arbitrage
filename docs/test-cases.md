@@ -962,3 +962,6 @@ reviewing diffs â€” never blindly.
 - 2026-11-20: Scanner redesign: command bar + ledger table + quick presets + full pagination (command bar, row click, page size, First/Last). Tests: scanner-command-bar (5), trader-table, trader-scanner-page.
 - 2026-11-20: Scanner pagination redesign: readable h-7 controls, page size select beside the controls, "Showing" label with thousands-separated range (fixes literal u2013), page numbers hidden below sm, formatted result count. Unit pagination 5 -> 7 tests; scanner visual baselines regenerated (scanner-default/results/error/sheet-open/results-narrow).
 - 2026-11-20: Added Dockerfile and standalone output for Dokploy deployment (Option C): next.config.ts output: 'standalone', Dockerfile multi-stage, .dockerignore.
+- 2026-11-22: i18n Method B: language switcher, Accept-Language, fundingArbitrage namespace, message parity, trader-format locale params, error mapping.
+- 2026-11-22: Phase 3 i18n: funding-arbitrage/shared UI hardcoded strings fixed, locale-aware formatting, error code mapping, RSC metadata. Tests: 606 unit passed; E2E specified 24 passed.
+- 2026-11-22: Phase 4 i18n: message parity + duplicate key checks, error mapping tests, locale-aware formatting tests, funding i18n tests, language switcher E2E, docs/i18n.md.

@@ -55,6 +55,7 @@ export function Pagination({
   onPageSizeChange,
 }: PaginationProps) {
   const t = useTranslations('traders');
+  const tc = useTranslations('common');
 
   if (totalPages <= 1 && !onPageSizeChange) return null;
 
@@ -63,7 +64,7 @@ export function Pagination({
 
   return (
     <nav
-      aria-label="Pagination"
+      aria-label={tc('pagination')}
       className="flex flex-col gap-3 border-t pt-3 sm:flex-row sm:items-center sm:justify-between"
     >
       <div className="flex flex-wrap items-center gap-2">
@@ -89,7 +90,7 @@ export function Pagination({
             size="sm"
             onClick={() => onPageChange(1)}
             disabled={disabled || currentPage <= 1}
-            aria-label="First page"
+            aria-label={tc('firstPage')}
           >
             <ChevronsLeftIcon className="h-4 w-4" />
           </Button>
@@ -98,7 +99,7 @@ export function Pagination({
             size="sm"
             onClick={() => onPageChange(currentPage - 1)}
             disabled={disabled || currentPage <= 1}
-            aria-label="Previous page"
+            aria-label={tc('previousPage')}
           >
             <ChevronLeftIcon className="h-4 w-4" />
           </Button>
@@ -121,7 +122,7 @@ export function Pagination({
                   className="min-w-8 justify-center"
                   onClick={() => onPageChange(page)}
                   disabled={disabled}
-                  aria-label={`Page ${page}`}
+                  aria-label={`${tc('page')} ${page}`}
                   aria-current={page === currentPage ? 'page' : undefined}
                 >
                   {page}
@@ -135,7 +136,7 @@ export function Pagination({
             size="sm"
             onClick={() => onPageChange(currentPage + 1)}
             disabled={disabled || currentPage >= totalPages}
-            aria-label="Next page"
+            aria-label={tc('nextPage')}
           >
             <ChevronRightIcon className="h-4 w-4" />
           </Button>
@@ -144,7 +145,7 @@ export function Pagination({
             size="sm"
             onClick={() => onPageChange(totalPages)}
             disabled={disabled || currentPage >= totalPages}
-            aria-label="Last page"
+            aria-label={tc('lastPage')}
           >
             <ChevronsRightIcon className="h-4 w-4" />
           </Button>

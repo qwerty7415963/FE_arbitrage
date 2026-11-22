@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 import enMessages from '@/messages/en.json';
+import viMessages from '@/messages/vi.json';
 import { BucketHeader } from '@/app/[locale]/(protected)/traders/overview/[kind]/[bucket]/_components/bucket-header';
 
 vi.mock('@/i18n/navigation', () => ({
@@ -32,7 +33,11 @@ describe('BucketHeader', () => {
   });
 
   it('strips vi locale prefix from backHref', () => {
-    renderHeader({ backHref: '/vi/traders/overview' });
+    render(
+      <NextIntlClientProvider locale="vi" messages={viMessages}>
+        <BucketHeader bucket="profitable" backHref="/vi/traders/overview" />
+      </NextIntlClientProvider>,
+    );
     expect(screen.getByRole('link').getAttribute('href')).toBe('/traders/overview');
   });
 

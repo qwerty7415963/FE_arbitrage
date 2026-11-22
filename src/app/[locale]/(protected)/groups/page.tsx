@@ -6,6 +6,7 @@ import { Link } from '@/i18n/navigation';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ApiError } from '@/infrastructure/api-client';
+import { mapErrorCode } from '@/lib/error-mapping';
 import { listTraderGroups, updateTraderGroup } from '@/services/traders';
 import type { TraderGroup } from '@/types/trader';
 import { useTelegramStatus } from '@/hooks/use-telegram';
@@ -19,6 +20,7 @@ import { DeleteGroupDialog } from './_components/delete-group-dialog';
 export default function GroupsPage() {
   const t = useTranslations('groups');
   const tCommon = useTranslations('common');
+  const te = useTranslations();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const setConnectModalOpen = useAuthStore((s) => s.setConnectModalOpen);
   const telegramStatus = useTelegramStatus({ enabled: isAuthenticated });
@@ -47,8 +49,8 @@ export default function GroupsPage() {
   const errorMessage =
     error instanceof ApiError && error.status === 403
       ? t('forbidden')
-      : error instanceof Error
-        ? error.message
+      : error instanceof ApiError
+        ? te(mapErrorCode(error.code), { defaultValue: te('errors.unknown') })
         : t('unknownError');
 
   useEffect(() => {
@@ -178,7 +180,7 @@ export default function GroupsPage() {
                                     prev.map((g) => (g.id === updated.id ? updated : g)),
                                   );
                                 } catch (err) {
-                                  setError(err instanceof Error ? err.message : t('unknownError'));
+                                  setError(err);
                                 }
                               }}
                             />

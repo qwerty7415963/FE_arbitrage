@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
 import {
   activitySideTone,
   deriveWinRate,
@@ -10,6 +10,7 @@ import {
   formatPercent,
   formatPrice,
   formatRelativeTime,
+  formatRelativeTimeLocalized,
   formatSignedPct,
   formatSignedPercent,
   formatSignedUsd,
@@ -82,6 +83,34 @@ describe('formatRelativeTime', () => {
     expect(formatRelativeTime(null, now)).toBeNull();
     expect(formatRelativeTime('garbage', now)).toBeNull();
     expect(formatRelativeTime('2026-10-02T12:00:00Z', now)).toBe('just now');
+  });
+});
+
+describe('formatRelativeTimeLocalized', () => {
+  const now = new Date('2026-10-01T12:00:00Z').getTime();
+  beforeEach(() => {
+    vi.spyOn(Date, 'now').mockReturnValue(now);
+  });
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('formats buckets in English', () => {
+    expect(formatRelativeTimeLocalized('2026-10-01T11:59:30Z', 'en')).toBe('now');
+    expect(formatRelativeTimeLocalized('2026-10-01T11:55:00Z', 'en')).toBe('5 minutes ago');
+    expect(formatRelativeTimeLocalized('2026-10-01T09:00:00Z', 'en')).toBe('3 hours ago');
+    expect(formatRelativeTimeLocalized('2026-09-30T12:00:00Z', 'en')).toBe('yesterday');
+    expect(formatRelativeTimeLocalized('2026-09-29T12:00:00Z', 'en')).toBe('2 days ago');
+  });
+
+  it('handles missing and invalid input', () => {
+    expect(formatRelativeTimeLocalized(null, 'en')).toBeNull();
+    expect(formatRelativeTimeLocalized('garbage', 'en')).toBeNull();
+    expect(formatRelativeTimeLocalized('2026-10-02T12:00:00Z', 'en')).toBe('now');
+  });
+
+  it('localizes in Vietnamese', () => {
+    expect(formatRelativeTimeLocalized('2026-10-01T11:55:00Z', 'vi')).toBe('5 phút trước');
   });
 });
 
@@ -188,6 +217,20 @@ describe('shortAddress', () => {
 
   it('passes short strings through', () => {
     expect(shortAddress('0x1234')).toBe('0x1234');
+  });
+});
+
+describe('locale-aware formatting', () => {
+  const now = new Date('2026-10-01T12:00:00Z').getTime();
+
+  it('accepts a locale in formatRelativeTime without changing output', () => {
+    expect(formatRelativeTime('2026-10-01T11:59:30Z', now, 'vi')).toBe('just now');
+    expect(formatRelativeTime('2026-10-01T11:55:00Z', now, 'en')).toBe('5m ago');
+  });
+
+  it('accepts a locale in formatDateTimeUtc without changing output', () => {
+    expect(formatDateTimeUtc('2026-09-30T12:00:00Z', 'vi')).toBe('2026-09-30 12:00:00 UTC');
+    expect(formatDateTimeUtc('2026-09-30T12:00:00Z', 'en')).toBe('2026-09-30 12:00:00 UTC');
   });
 });
 

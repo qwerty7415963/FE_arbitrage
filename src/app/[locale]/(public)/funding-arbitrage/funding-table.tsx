@@ -9,6 +9,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import type { ArbitrageToken, ArbitragePair } from '@/types/funding-arbitrage';
+import { useTranslations } from 'next-intl';
 import { AssetIcon } from '@/components/shared/asset-icon';
 import { stripDexPrefix } from '@/lib/asset-meta';
 import {
@@ -52,12 +53,11 @@ function flattenPairs(pairs: ArbitragePair[] | undefined | null): (ArbitrageToke
 }
 
 export function FundingTable({ pairs }: FundingTableProps) {
+  const t = useTranslations('fundingArbitrage');
   const rows = flattenPairs(pairs);
 
   if (rows.length === 0) {
-    return (
-      <div className="text-muted-foreground py-8 text-center">No arbitrage opportunities found</div>
-    );
+    return <div className="text-muted-foreground py-8 text-center">{t('empty')}</div>;
   }
 
   return (
@@ -65,13 +65,13 @@ export function FundingTable({ pairs }: FundingTableProps) {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Symbol</TableHead>
-            <TableHead>Pair</TableHead>
-            <TableHead>Funding</TableHead>
-            <TableHead>Funding Spread</TableHead>
-            <TableHead>APR</TableHead>
-            <TableHead>OI</TableHead>
-            <TableHead>Price Spread</TableHead>
+            <TableHead>{t('headers.symbol')}</TableHead>
+            <TableHead>{t('headers.pair')}</TableHead>
+            <TableHead>{t('headers.funding')}</TableHead>
+            <TableHead>{t('headers.fundingSpread')}</TableHead>
+            <TableHead>{t('headers.apr')}</TableHead>
+            <TableHead>{t('headers.oi')}</TableHead>
+            <TableHead>{t('headers.priceSpread')}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -118,12 +118,12 @@ export function FundingTable({ pairs }: FundingTableProps) {
                 <TableCell>
                   <div className="flex items-center gap-1.5">
                     <span className="inline-block h-2 w-2 rounded-sm bg-emerald-500" />
-                    <span className="text-emerald-500">LONG</span>
+                    <span className="text-emerald-500">{t('long')}</span>
                     <span>{longVenueName}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span className="inline-block h-2 w-2 rounded-sm bg-rose-500" />
-                    <span className="text-rose-500">SHORT</span>
+                    <span className="text-rose-500">{t('short')}</span>
                     <span>{shortVenueName}</span>
                   </div>
                 </TableCell>

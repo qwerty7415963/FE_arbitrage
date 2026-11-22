@@ -148,7 +148,8 @@ export const useAuthStore = create<AuthState>()(
             set({ isConnecting: false, error: null });
             return;
           }
-          const message = error instanceof Error ? error.message : 'Failed to connect wallet';
+          const CONNECT_WALLET_FAILED = 'Failed to connect wallet';
+          const message = error instanceof Error ? error.message : CONNECT_WALLET_FAILED;
           set({ isConnecting: false, error: message });
           // Do not rethrow: callers use `void connectWallet()`; unhandled rejections
           // surface as runtime overlays. The error is stored in state instead.

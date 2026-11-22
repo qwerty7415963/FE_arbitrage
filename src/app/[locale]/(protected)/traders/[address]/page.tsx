@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import { getTranslations } from 'next-intl/server';
 import { Skeleton } from '@/components/ui/skeleton';
 import { isValidWalletAddress } from '@/lib/trader-validation';
 import { DEFAULT_TRADER_PERIOD, type TraderDetail, type TraderPeriod } from '@/types/trader';
@@ -8,6 +9,7 @@ import type { PerformanceSnapshot } from '@/types/trader';
 async function fetchServerData(
   address: string,
   period: TraderPeriod,
+  locale: string,
 ): Promise<{ detail: TraderDetail; performance: PerformanceSnapshot | null }> {
   const base = (
     process.env.API_INTERNAL_URL ||
@@ -17,17 +19,17 @@ async function fetchServerData(
   const detailUrl = `${base}/v1/traders/${address}?period=${encodeURIComponent(period)}&sync=1`;
   const perfUrl = `${base}/v1/traders/${address}/performance?period=${encodeURIComponent(period)}&mode=perps&sync=1&series_only=true`;
   const [detailRes, perfRes] = await Promise.all([
-    fetch(detailUrl, { cache: 'no-store' }),
-    fetch(perfUrl, { cache: 'no-store' }),
+    fetch(detailUrl, { cache: 'no-store', headers: { 'Accept-Language': locale } }),
+    fetch(perfUrl, { cache: 'no-store', headers: { 'Accept-Language': locale } }),
   ]);
   if (!detailRes.ok || !perfRes.ok) {
-    throw new Error(`server fetch failed: ${detailRes.status}/${perfRes.status}`);
+    throw new Error('SERVER_FETCH_FAILED');
   }
   const detailJson = await detailRes.json().catch(() => ({}));
   const perfJson = await perfRes.json().catch(() => ({}));
   const detail = (detailJson?.data ?? detailJson) as TraderDetail;
   const performance = (perfJson?.data ?? perfJson ?? null) as PerformanceSnapshot | null;
-  if (!detail) throw new Error('no detail data');
+  if (!detail) throw new Error('NO_DETAIL_DATA');
   return { detail, performance };
 }
 
@@ -38,7 +40,8 @@ export default async function TraderDetailPage({
   params: Promise<{ locale: string; address: string }>;
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-  const { address: rawAddress } = await params;
+  const { address: rawAddress, locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'common' });
   const sp = await searchParams;
   const periodRaw = typeof sp?.period === 'string' ? sp.period : DEFAULT_TRADER_PERIOD;
   const period = (periodRaw as TraderPeriod) || DEFAULT_TRADER_PERIOD;
@@ -52,7 +55,7 @@ export default async function TraderDetailPage({
   let initialPerformance: PerformanceSnapshot | null = null;
   let failed = false;
   try {
-    const data = await fetchServerData(address.toLowerCase(), period);
+    const data = await fetchServerData(address.toLowerCase(), period, locale);
     initialDetail = data.detail;
     initialPerformance = data.performance;
   } catch {
@@ -66,7 +69,7 @@ export default async function TraderDetailPage({
   return (
     <Suspense
       fallback={
-        <div className="flex flex-col gap-4 p-4 lg:p-6" role="status" aria-label="Loading">
+        <div className="flex flex-col gap-4 p-4 lg:p-6" role="status" aria-label={t('loading')}>
           <Skeleton className="h-40 w-full rounded-xl" />
           <Skeleton className="h-10 w-full" />
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">

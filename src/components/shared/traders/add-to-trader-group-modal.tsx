@@ -53,6 +53,7 @@ export function AddToTraderGroupModal({
   onSuccess,
 }: AddToTraderGroupModalProps) {
   const t = useTranslations('groups');
+  const te = useTranslations();
   const [tab, setTab] = useState<'search' | 'paste'>('search');
   const [groups, setGroups] = useState<TraderGroup[]>([]);
   const [selectedGroupId, setSelectedGroupId] = useState<string | undefined>(defaultGroupId);
@@ -122,7 +123,7 @@ export function AddToTraderGroupModal({
       if (err instanceof ApiError && err.code === GROUP_DUPLICATE_CODE) {
         setError(t('duplicateName'));
       } else {
-        setError(err instanceof Error ? err.message : t('unknownError'));
+        setError(err instanceof Error ? te('errors.unknown') : t('unknownError'));
       }
     } finally {
       setIsCreating(false);
@@ -147,7 +148,7 @@ export function AddToTraderGroupModal({
       setAdded(res.added);
       onSuccess?.();
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('unknownError'));
+      setError(err instanceof Error ? te('errors.unknown') : t('unknownError'));
     } finally {
       setIsSubmitting(false);
     }

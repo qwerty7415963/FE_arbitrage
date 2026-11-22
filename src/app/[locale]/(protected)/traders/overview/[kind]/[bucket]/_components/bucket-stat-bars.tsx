@@ -1,6 +1,6 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import type { BucketDetail, BucketNotionalSplit, BucketPnlSplit } from '@/types/trader';
 
 export interface BucketStatBarsProps {
@@ -9,17 +9,17 @@ export interface BucketStatBarsProps {
   notionalSplit?: BucketNotionalSplit;
 }
 
-function fmt(n: number) {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(n);
-}
-
 export function BucketStatBars(props: BucketStatBarsProps) {
   const t = useTranslations('traders.bucketDetail');
+  const locale = useLocale();
   const detail = props.detail;
+  function fmt(n: number) {
+    return new Intl.NumberFormat(locale, {
+      style: 'currency',
+      currency: 'USD',
+      maximumFractionDigits: 0,
+    }).format(n);
+  }
   const pnl = props.pnlSplit ??
     detail?.pnl_split ?? { pct_profit: 0, pct_loss: 0, usd_profit: 0, usd_loss: 0 };
   const notional = props.notionalSplit ?? detail?.notional_split ?? { long_usd: 0, short_usd: 0 };

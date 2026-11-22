@@ -6,6 +6,7 @@ import { MenuIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { ConnectWalletButton } from '@/components/shared/auth/connect-wallet-button';
+import { LanguageSwitcher } from '@/components/shared/language-switcher';
 
 export function Header() {
   const { toggleSidebar } = useAppStore();
@@ -32,6 +33,7 @@ export function Header() {
         </Link>
 
         <div className="ml-auto hidden lg:flex">
+          <LanguageSwitcher />
           <ConnectWalletButton />
         </div>
       </div>

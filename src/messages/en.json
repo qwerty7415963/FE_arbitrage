@@ -13,7 +13,22 @@
     "menu": "Menu",
     "sessionExpired": "Your session has expired. Reconnect your wallet to continue.",
     "reconnect": "Reconnect wallet",
-    "dismiss": "Dismiss"
+    "dismiss": "Dismiss",
+    "language": "Language",
+    "close": "Close",
+    "description": "Arbitrage Trading Platform",
+    "pagination": "Pagination",
+    "firstPage": "First page",
+    "previousPage": "Previous page",
+    "nextPage": "Next page",
+    "lastPage": "Last page",
+    "total": "TOTAL",
+    "page": "Page",
+    "previousMonth": "Previous month",
+    "nextMonth": "Next month"
+  },
+  "auth": {
+    "connectFailed": "Failed to connect wallet"
   },
   "navigation": {
     "fundingArbitrage": "Funding Arbitrage",
@@ -23,10 +38,6 @@
     "logout": "Logout",
     "overview": "Overview"
   },
-  "auth": {
-    "validationError": "Invalid data",
-    "unknownError": "An error occurred, please try again"
-  },
   "wallet": {
     "connect": "Connect Wallet",
     "connecting": "Connecting...",
@@ -35,67 +46,6 @@
     "connectToStart": "Connect your wallet to start trading",
     "connectRequiredTitle": "Connect wallet required",
     "connectRequiredSubtitle": "This action requires a connected wallet. Connect to continue."
-  },
-  "wallets": {
-    "title": "Wallet Scanner",
-    "resultCount": "{count} wallets found",
-    "addToGroup": "Add to group ({count})",
-    "scanning": "Scanning...",
-    "authRequired": "Authentication required. Connect your wallet to continue.",
-    "unknownError": "An error occurred, please try again",
-    "invalidNumber": "Filter value must be a valid number",
-    "minGreaterThanMax": "Min must be less than or equal to max",
-    "outOfRange": "Filter value is outside the allowed range",
-    "dex": "DEX",
-    "allDexs": "All DEXs",
-    "selectAll": "Select all",
-    "menuClear": "Clear",
-    "search": "Search",
-    "searchPlaceholder": "address or tag",
-    "timeframe": "Timeframe",
-    "sort": "Sort",
-    "order": "Order",
-    "metric": "Metric",
-    "operator": "Operator",
-    "min": "Min",
-    "max": "Max",
-    "value": "Value",
-    "addFilter": "Filter",
-    "scan": "Scan",
-    "clear": "Clear",
-    "removeFilter": "Remove filter",
-    "fieldLabels": {
-      "pnl": "PnL",
-      "roi": "ROI",
-      "win_rate": "Win Rate",
-      "volume": "Volume",
-      "trade_count": "Trades",
-      "avg_position": "Avg Position",
-      "avg_leverage": "Avg Leverage",
-      "long_short_ratio": "Long/Short Ratio",
-      "last_active": "Last Active",
-      "profit_factor": "Profit Factor",
-      "max_drawdown": "Max Drawdown",
-      "avg_hold_time": "Avg Hold Time",
-      "liquidations": "Liquidations"
-    },
-    "operatorLabels": {
-      "gt": "Greater than",
-      "gte": "Greater than or equal",
-      "lt": "Less than",
-      "lte": "Less than or equal",
-      "between": "Between"
-    },
-    "orderLabels": {
-      "desc": "Descending",
-      "asc": "Ascending"
-    },
-    "savedSearches": "Saved searches",
-    "savedSearchesLocalNote": "Stored on this device only",
-    "saveSearch": "Save search",
-    "saveSearchPlaceholder": "Search name",
-    "saveSearchNameRequired": "Enter a name",
-    "deleteSavedSearch": "Delete {name}"
   },
   "groups": {
     "title": "Groups",
@@ -158,6 +108,8 @@
   },
   "traders": {
     "title": "Trader Scanner",
+    "sparkline": "sparkline",
+    "sparklineEmpty": "sparkline empty",
     "venue": "Venue",
     "period": "Period",
     "roi": "ROI",
@@ -544,7 +496,10 @@
         "market": "Market",
         "other": "Other",
         "tradfi": "TradFi",
-        "realizedPnl": "Realized PnL"
+        "realizedPnl": "Realized PnL",
+        "notional": "Notional",
+        "traders": "Traders",
+        "source": "Source"
       },
       "tables": {
         "wallets": "Wallets",
@@ -591,7 +546,11 @@
         "7d": "7D",
         "30d": "30D",
         "90d": "90D"
-      }
+      },
+      "previousMonth": "Previous month",
+      "nextMonth": "Next month",
+      "hour": "Hour",
+      "minute": "Minute"
     },
     "updated": "Updated",
     "refresh": "Refresh",
@@ -602,7 +561,14 @@
     "paginationShowing": "Showing",
     "clearAll": "Clear all",
     "filtersCount": "{count} filters",
-    "noTradersHint": "Try adjusting filters or reset."
+    "noTradersHint": "Try adjusting filters or reset.",
+    "total": "TOTAL",
+    "address": "Address",
+    "cohort": "Cohort",
+    "bias": "Bias",
+    "realizedPnl": "Realized PnL",
+    "winRateMin": "Win rate min",
+    "tradesMin": "Trades min"
   },
   "settings": {
     "title": "Settings"
@@ -630,5 +596,67 @@
     "sessionExpired": "Your session has expired. Reconnect your wallet to manage notifications.",
     "reconnect": "Reconnect wallet",
     "relink": "Link another account"
+  },
+  "errors": {
+    "network": "Network error",
+    "timeout": "Request timed out",
+    "aborted": "Request aborted",
+    "unknown": "An error occurred",
+    "sessionExpired": "Session expired",
+    "AUTH-001": "Invalid credentials",
+    "AUTH-003": "Invalid token",
+    "AUTH-004": "Refresh token revoked",
+    "AUTH-005": "Forbidden",
+    "AUTH-006": "Account disabled",
+    "COMMON-901": "Internal server error",
+    "COMMON-902": "Validation failed",
+    "COMMON-903": "Not found",
+    "GROUP-001": "Group not found",
+    "GROUP-002": "Group already exists",
+    "GROUP-003": "Group forbidden",
+    "TELEGRAM-001": "Wallet cap exceeded",
+    "INVALID_FILTER": "Invalid filter"
+  },
+  "fundingArbitrage": {
+    "title": "Funding Arbitrage",
+    "search": "Search",
+    "venues": "Venues",
+    "selectVenues": "Select venues",
+    "venueCount": "{count} venues",
+    "oneVenue": "1 venue",
+    "allVenues": "All venues",
+    "clear": "Clear",
+    "selectAll": "Select All",
+    "headers": {
+      "symbol": "Symbol",
+      "pair": "Pair",
+      "funding": "Funding",
+      "fundingSpread": "Funding Spread",
+      "apr": "APR",
+      "oi": "OI",
+      "priceSpread": "Price Spread"
+    },
+    "long": "LONG",
+    "short": "SHORT",
+    "empty": "No arbitrage opportunities found",
+    "failedVenues": "Failed to load venues",
+    "selectAtLeast": "Select at least 2 venues",
+    "failedFetch": "Failed to fetch data",
+    "loading": "Loading...",
+    "venuesRange": "Venues (2-10)",
+    "sort": {
+      "rate8h": "Rate 8h ↓",
+      "rate1h": "Rate 1h ↓",
+      "apr": "APR ↓",
+      "spread": "Spread ↓"
+    },
+    "noOpportunities": "No arbitrage opportunities found",
+    "fundingRate": "Funding Rate",
+    "fundingSpreadLabel": "Funding Spread",
+    "aprLabel": "APR",
+    "filters": "Filters",
+    "sortBy": "Sort by",
+    "error": "Failed to load data",
+    "retry": "Retry"
   }
 }

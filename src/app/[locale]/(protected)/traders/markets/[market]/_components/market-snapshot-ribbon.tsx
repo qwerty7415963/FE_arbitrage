@@ -64,9 +64,9 @@ export function MarketSnapshotRibbon(props: MarketSnapshotRibbonProps) {
     <div data-testid="market-snapshot-ribbon" className="bg-card rounded-xl border p-4">
       <div className="grid grid-cols-4 gap-2">
         <div />
-        <div className="text-muted-foreground text-xs font-medium">LONG</div>
-        <div className="text-muted-foreground text-xs font-medium">SHORT</div>
-        <div className="text-muted-foreground text-xs font-medium">TOTAL</div>
+        <div className="text-muted-foreground text-xs font-medium">{t('long')}</div>
+        <div className="text-muted-foreground text-xs font-medium">{t('short')}</div>
+        <div className="text-muted-foreground text-xs font-medium">{t('total')}</div>
         {rows.map((r) => (
           <React.Fragment key={r.label}>
             <div className="text-muted-foreground text-xs">{r.label}</div>

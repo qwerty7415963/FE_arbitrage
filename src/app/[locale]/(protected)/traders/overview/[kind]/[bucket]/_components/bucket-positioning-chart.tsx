@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { cn } from 'cn';
 import type {
   BucketDetail,
@@ -33,7 +33,6 @@ const PLOT_WIDTH = CHART_WIDTH - PAD_LEFT - PAD_RIGHT;
 const PLOT_HEIGHT = CHART_HEIGHT - PAD_TOP - PAD_BOTTOM;
 const PLOT_BOTTOM = PAD_TOP + PLOT_HEIGHT;
 const RANGES: BucketRange[] = ['24H', '7D', '30D'];
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const SENTIMENTS: OverviewSentiment[] = [
   'very_bullish',
   'bullish',
@@ -69,11 +68,12 @@ function parseTime(value: string): number {
   return Number.isNaN(parsed) ? 0 : parsed;
 }
 
-function formatDateLabel(value: string): string {
+function formatDateLabel(value: string, locale: string): string {
   const parsed = Date.parse(value);
   if (Number.isNaN(parsed)) return value;
   const date = new Date(parsed);
-  return `${MONTHS[date.getUTCMonth()]} ${date.getUTCDate()}`;
+  const month = new Intl.DateTimeFormat(locale, { month: 'short', timeZone: 'UTC' }).format(date);
+  return `${month} ${date.getUTCDate()}`;
 }
 
 function tickIndexes(length: number, count: number): number[] {
@@ -91,6 +91,7 @@ function humanizeBucket(value: string): string {
 export function BucketPositioningChart(props: BucketPositioningChartProps) {
   const t = useTranslations('traders.bucketDetail');
   const tOverview = useTranslations('traders.overview');
+  const locale = useLocale();
   const positioning =
     props.positioning ?? props.series ?? props.data ?? props.detail?.positioning ?? [];
   const rawPoints: BucketPositioningPoint[] = Array.isArray(positioning) ? positioning : [];
@@ -124,7 +125,7 @@ export function BucketPositioningChart(props: BucketPositioningChartProps) {
   const sentiment = String(props.detail?.sentiment ?? 'neutral');
   const sentimentLabel = SENTIMENTS.includes(sentiment as OverviewSentiment)
     ? tOverview(('sentiment.' + sentiment) as never)
-    : sentiment.replace(/_/g, ' ');
+    : sentiment.replace(/_/g, ' '); // fallback: sentiment value not in known set, humanize snake_case
   const bucketName = humanizeBucket(props.bucket ?? props.detail?.bucket_id ?? '');
   const title = bucketName ? t('chart.positioningTitle', { bucket: bucketName }) : t('chart.title');
 
@@ -290,7 +291,7 @@ export function BucketPositioningChart(props: BucketPositioningChartProps) {
               r={10}
               tabIndex={0}
               role="button"
-              aria-label={`${formatDateLabel(points[index].t)} ${(
+              aria-label={`${formatDateLabel(points[index].t, locale)} ${(
                 points[index].long_pct * 100
               ).toFixed(1)}%`}
               className="fill-transparent focus:outline-none"
@@ -327,7 +328,7 @@ export function BucketPositioningChart(props: BucketPositioningChartProps) {
               fontSize="10"
               className="fill-muted-foreground"
             >
-              {formatDateLabel(points[pointIndex].t)}
+              {formatDateLabel(points[pointIndex].t, locale)}
             </text>
           ))}
 
@@ -348,7 +349,7 @@ export function BucketPositioningChart(props: BucketPositioningChartProps) {
                 fontSize="10"
                 className="fill-foreground font-medium"
               >
-                {formatDateLabel(tooltip.t)}
+                {formatDateLabel(tooltip.t, locale)}
               </text>
               <text x={tooltipX + 6} y={tooltipY + 28} fontSize="10" className="fill-emerald-500">
                 {`${t('statBars.long')} ${(tooltip.long * 100).toFixed(1)}%`}

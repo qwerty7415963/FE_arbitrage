@@ -9,6 +9,12 @@ import {
 } from '@/lib/token';
 import * as authService from '@/services/auth';
 
+const MSG_SESSION_EXPIRED = 'Session expired';
+const MSG_UNKNOWN = 'An error occurred';
+const MSG_ABORTED = 'Request aborted';
+const MSG_TIMEOUT = 'Request timed out';
+const MSG_NETWORK = 'Network error';
+
 export class ApiError extends Error {
   constructor(
     public status: number,
@@ -19,6 +25,14 @@ export class ApiError extends Error {
     super(message);
     this.name = 'ApiError';
   }
+}
+
+function getRequestLocale(): string {
+  if (typeof document === 'undefined') return 'vi';
+  const lang = document.documentElement?.lang;
+  if (lang) return lang;
+  const match = document.cookie.match(/(?:^|;\s*)NEXT_LOCALE=([^;]+)/);
+  return match ? decodeURIComponent(match[1]) : 'vi';
 }
 
 interface RequestOptions extends RequestInit {
@@ -50,6 +64,7 @@ export async function apiClient<T>(endpoint: string, options: RequestOptions = {
 
   const headers = new Headers(fetchOptions.headers);
   headers.set('Content-Type', 'application/json');
+  headers.set('Accept-Language', getRequestLocale());
 
   if (auth && token) {
     headers.set('Authorization', `Bearer ${token}`);
@@ -101,7 +116,7 @@ export async function apiClient<T>(endpoint: string, options: RequestOptions = {
           processQueue(refreshError as Error, null);
           clearTokens();
           emitUnauthorized();
-          throw new ApiError(401, 'UNAUTHORIZED', 'Session expired', requestId);
+          throw new ApiError(401, 'UNAUTHORIZED', MSG_SESSION_EXPIRED, requestId);
         } finally {
           isRefreshing = false;
         }
@@ -115,7 +130,7 @@ export async function apiClient<T>(endpoint: string, options: RequestOptions = {
       throw new ApiError(
         response.status,
         errorBody.error?.code || 'UNKNOWN_ERROR',
-        errorBody.error?.message || 'An error occurred',
+        errorBody.error?.message || MSG_UNKNOWN,
         requestId,
       );
     }
@@ -135,12 +150,12 @@ export async function apiClient<T>(endpoint: string, options: RequestOptions = {
 
     if (error instanceof DOMException && error.name === 'AbortError') {
       if (userSignal?.aborted) {
-        throw new ApiError(499, 'ABORTED', 'Request aborted', requestId);
+        throw new ApiError(499, 'ABORTED', MSG_ABORTED, requestId);
       }
-      throw new ApiError(408, 'TIMEOUT', 'Request timed out', requestId);
+      throw new ApiError(408, 'TIMEOUT', MSG_TIMEOUT, requestId);
     }
 
-    throw new ApiError(500, 'NETWORK_ERROR', 'Network error', requestId);
+    throw new ApiError(500, 'NETWORK_ERROR', MSG_NETWORK, requestId);
   }
 }
 
@@ -152,6 +167,7 @@ export async function apiClientNoAuth<T>(
 
   const headers = new Headers(fetchOptions.headers);
   headers.set('Content-Type', 'application/json');
+  headers.set('Accept-Language', getRequestLocale());
 
   const requestId = crypto.randomUUID();
   headers.set('X-Request-ID', requestId);
@@ -173,7 +189,7 @@ export async function apiClientNoAuth<T>(
       throw new ApiError(
         response.status,
         errorBody.error?.code || 'UNKNOWN_ERROR',
-        errorBody.error?.message || 'An error occurred',
+        errorBody.error?.message || MSG_UNKNOWN,
         requestId,
       );
     }
@@ -187,9 +203,9 @@ export async function apiClientNoAuth<T>(
     }
 
     if (error instanceof DOMException && error.name === 'AbortError') {
-      throw new ApiError(408, 'TIMEOUT', 'Request timed out', requestId);
+      throw new ApiError(408, 'TIMEOUT', MSG_TIMEOUT, requestId);
     }
 
-    throw new ApiError(500, 'NETWORK_ERROR', 'Network error', requestId);
+    throw new ApiError(500, 'NETWORK_ERROR', MSG_NETWORK, requestId);
   }
 }

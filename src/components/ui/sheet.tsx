@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { Dialog as SheetPrimitive } from '@base-ui/react/dialog';
+import { useTranslations } from 'next-intl';
 import { cn } from 'cn';
 
 import { Button } from '@/components/ui/button';
@@ -53,6 +54,7 @@ function SheetContent({
    */
   showOverlay?: boolean;
 }) {
+  const t = useTranslations('common');
   return (
     <SheetPortal>
       {showOverlay && <SheetOverlay />}
@@ -72,7 +74,7 @@ function SheetContent({
             render={<Button variant="ghost" className="absolute top-3 right-3" size="icon-sm" />}
           >
             <XIcon />
-            <span className="sr-only">Close</span>
+            <span className="sr-only">{t('close')}</span>
           </SheetPrimitive.Close>
         )}
       </SheetPrimitive.Popup>

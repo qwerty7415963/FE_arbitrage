@@ -73,8 +73,19 @@ export function deriveWinRate(
 
 export function formatRelativeTime(
   iso: string | null | undefined,
-  now = Date.now(),
+  nowOrLocale: number | string = Date.now(),
+  locale?: string,
 ): string | null {
+  let now = Date.now();
+  let resolvedLocale = 'vi';
+  if (typeof nowOrLocale === 'string') {
+    resolvedLocale = nowOrLocale;
+  } else if (typeof nowOrLocale === 'number') {
+    now = nowOrLocale;
+    if (locale) resolvedLocale = locale;
+  }
+  // Relative-time abbreviations intentionally stay in English for now; localized strings are handled by components.
+  void resolvedLocale;
   if (!iso) return null;
   const time = Date.parse(iso);
   if (Number.isNaN(time)) return null;
@@ -85,7 +96,24 @@ export function formatRelativeTime(
   return `${Math.floor(diffSec / 86400)}d ago`;
 }
 
-export function formatDateTimeUtc(iso: string | null | undefined): string | null {
+export function formatRelativeTimeLocalized(
+  iso: string | null | undefined,
+  locale = 'en',
+): string | null {
+  if (!iso) return null;
+  const time = Date.parse(iso);
+  if (Number.isNaN(time)) return null;
+  const diffSec = Math.max(0, Math.floor((Date.now() - time) / 1000));
+  const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
+  if (diffSec < 60) return rtf.format(0, 'second');
+  if (diffSec < 3600) return rtf.format(-Math.floor(diffSec / 60), 'minute');
+  if (diffSec < 86400) return rtf.format(-Math.floor(diffSec / 3600), 'hour');
+  return rtf.format(-Math.floor(diffSec / 86400), 'day');
+}
+
+export function formatDateTimeUtc(iso: string | null | undefined, locale = 'en'): string | null {
+  // locale is accepted for API parity; date output stays UTC and grouping stays en-US by design.
+  void locale;
   if (!iso) return null;
   const time = Date.parse(iso);
   if (Number.isNaN(time)) return null;

@@ -1,6 +1,6 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useQueryClient } from '@tanstack/react-query';
 import type { QueryClient } from '@tanstack/react-query';
 import { cn } from 'cn';
@@ -18,7 +18,7 @@ import {
   formatDecimal,
   formatInteger,
   formatPercent,
-  formatRelativeTime,
+  formatRelativeTimeLocalized,
   formatSignedPercent,
   formatUsd,
 } from '@/lib/trader-format';
@@ -91,6 +91,7 @@ export function TraderTable({
   onAdd,
 }: TraderTableProps) {
   const t = useTranslations('traders');
+  const locale = useLocale();
   const selectedAddresses = selected ?? [];
   let qc: QueryClient | undefined = queryClient;
   try {
@@ -260,7 +261,7 @@ export function TraderTable({
                   className="text-right text-xs tabular-nums"
                   title={formatDateTimeUtc(row.last_trade_at) ?? undefined}
                 >
-                  {display(formatRelativeTime(row.last_trade_at))}
+                  {display(formatRelativeTimeLocalized(row.last_trade_at, locale))}
                 </TableCell>
                 {(onView || onAdd) && (
                   <TableCell onClick={(e) => e.stopPropagation()}>

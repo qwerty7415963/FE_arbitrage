@@ -300,7 +300,7 @@ export function BucketTreemap(props: BucketTreemapProps) {
     }
     const sentimentLabel = SENTIMENTS.includes(sentimentRaw as OverviewSentiment)
       ? tOverview(('sentiment.' + sentimentRaw) as never)
-      : sentimentRaw.replace(/_/g, ' ');
+      : sentimentRaw.replace(/_/g, ' '); // fallback: sentiment value not in known set, humanize snake_case
     const area = rect.w * rect.h;
     const tradfi = marketFull.toUpperCase().startsWith('XYZ:');
     const display = it.isOther ? t('treemap.other') : stripDexPrefix(marketFull);
@@ -325,7 +325,7 @@ export function BucketTreemap(props: BucketTreemapProps) {
   });
 
   const tooltip = (tile: TileData) =>
-    `${tile.market} — notional ${formatUsd(tile.notional) ?? tile.notional}, ${marketsSource === 'trades' ? t('treemap.realizedPnl') : t('treemap.upnl')} ${signedUsd(tile.upnl)}, ${tile.sentimentLabel}, traders ${tile.traders} (source: ${marketsSource})`;
+    `${tile.market} — ${t('treemap.notional')} ${formatUsd(tile.notional) ?? tile.notional}, ${marketsSource === 'trades' ? t('treemap.realizedPnl') : t('treemap.upnl')} ${signedUsd(tile.upnl)}, ${tile.sentimentLabel}, ${t('treemap.traders')} ${tile.traders} (${t('treemap.source')}: ${marketsSource})`;
 
   const hasSize = containerWidth > 0 && containerHeight > 0;
 

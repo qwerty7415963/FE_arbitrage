@@ -1,4 +1,5 @@
 import { getRequestConfig } from 'next-intl/server';
+import { setRequestLocale } from 'next-intl/server';
 import { locales, type Locale } from '@/config/i18n';
 
 export default getRequestConfig(async ({ requestLocale }) => {
@@ -7,6 +8,8 @@ export default getRequestConfig(async ({ requestLocale }) => {
   if (!locale || !locales.includes(locale as Locale)) {
     locale = 'vi';
   }
+
+  setRequestLocale(locale);
 
   return {
     locale,

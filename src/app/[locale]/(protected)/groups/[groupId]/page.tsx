@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ApiError } from '@/infrastructure/api-client';
+import { mapErrorCode } from '@/lib/error-mapping';
 import {
   getTraderGroup,
   listGroupMembers,
@@ -34,6 +35,7 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
   const t = useTranslations('groups');
   const tt = useTranslations('traders');
   const tc = useTranslations('common');
+  const te = useTranslations();
   const router = useRouter();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const setConnectModalOpen = useAuthStore((s) => s.setConnectModalOpen);
@@ -134,19 +136,17 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
         ? t('forbidden')
         : groupError.status === 404
           ? t('notFound')
-          : groupError.message
-      : groupError instanceof Error || typeof groupError === 'string'
-        ? typeof groupError === 'string'
-          ? groupError
-          : groupError.message
+          : te(mapErrorCode(groupError.code), { defaultValue: te('errors.unknown') })
+      : typeof groupError === 'string'
+        ? groupError
         : t('unknownError');
 
   const membersErrorMessage =
-    membersError instanceof Error || typeof membersError === 'string'
-      ? typeof membersError === 'string'
+    membersError instanceof ApiError
+      ? te(mapErrorCode(membersError.code), { defaultValue: te('errors.unknown') })
+      : typeof membersError === 'string'
         ? membersError
-        : membersError.message
-      : t('unknownError');
+        : t('unknownError');
 
   async function handleToggleNotify(next: boolean) {
     if (!group) return;
@@ -155,7 +155,7 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
       const updated = await updateTraderGroup(group.id, { notify_enabled: next });
       setGroup(updated);
     } catch (err) {
-      setGroupError(err instanceof Error ? err.message : t('unknownError'));
+      setGroupError(err);
     }
   }
 
@@ -168,7 +168,7 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
       fetchMembers();
       fetchGroup();
     } catch (err) {
-      setMembersError(err instanceof Error ? err.message : t('unknownError'));
+      setMembersError(err);
     }
   }
 
@@ -200,7 +200,7 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
       cancelEdit();
       fetchMembers();
     } catch (err) {
-      setMembersError(err instanceof Error ? err.message : t('unknownError'));
+      setMembersError(err);
     } finally {
       setIsSavingEdit(false);
     }

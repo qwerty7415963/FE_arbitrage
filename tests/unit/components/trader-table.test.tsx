@@ -65,7 +65,7 @@ describe('TraderTable', () => {
     expect(screen.getByText('1,234')).toBeInTheDocument();
     expect(screen.getByText('1.86')).toBeInTheDocument();
     expect(screen.getByText('70.00% / 25.00%')).toBeInTheDocument();
-    const lastTrade = screen.getByText('1d ago');
+    const lastTrade = screen.getByText('yesterday');
     expect(lastTrade).toBeInTheDocument();
     expect(lastTrade).toHaveAttribute('title', '2026-09-30 12:00:00 UTC');
     expect(screen.getByLabelText('Ready')).toBeInTheDocument();

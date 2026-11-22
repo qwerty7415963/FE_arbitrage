@@ -30,6 +30,7 @@ export function DeleteGroupDialog({
   onSuccess,
 }: DeleteGroupDialogProps) {
   const t = useTranslations('groups');
+  const te = useTranslations();
   const [error, setError] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -43,7 +44,7 @@ export function DeleteGroupDialog({
       onSuccess(group.id);
       onOpenChange(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('unknownError'));
+      setError(err instanceof Error ? te('errors.unknown') : t('unknownError'));
     } finally {
       setIsDeleting(false);
     }

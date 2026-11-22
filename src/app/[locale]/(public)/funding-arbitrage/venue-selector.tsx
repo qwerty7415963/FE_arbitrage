@@ -12,6 +12,7 @@ import {
 import type { Venue } from '@/types/funding-arbitrage';
 import { ChevronDownIcon, CheckIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useTranslations } from 'next-intl';
 
 interface VenueSelectorProps {
   venues: Venue[];
@@ -21,6 +22,7 @@ interface VenueSelectorProps {
 }
 
 export function VenueSelector({ venues, selected, onChange, disabled }: VenueSelectorProps) {
+  const t = useTranslations('fundingArbitrage');
   const toggle = (id: string) => {
     if (selected.includes(id)) {
       onChange(selected.filter((v) => v !== id));
@@ -41,10 +43,10 @@ export function VenueSelector({ venues, selected, onChange, disabled }: VenueSel
 
   const label =
     selected.length === 0
-      ? 'Select venues'
+      ? t('selectVenues')
       : selected.length === 1
-        ? '1 venue'
-        : `${selected.length} venues`;
+        ? t('oneVenue')
+        : t('venueCount', { count: selected.length });
 
   return (
     <DropdownMenu>
@@ -56,15 +58,15 @@ export function VenueSelector({ venues, selected, onChange, disabled }: VenueSel
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-64">
         <DropdownMenuGroup>
-          <DropdownMenuLabel>Venues (2-10)</DropdownMenuLabel>
+          <DropdownMenuLabel>{t('venuesRange')}</DropdownMenuLabel>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <div className="flex gap-1 px-1.5 py-1">
           <Button variant="ghost" size="sm" onClick={selectAll} className="h-6 text-xs">
-            Select All
+            {t('selectAll')}
           </Button>
           <Button variant="ghost" size="sm" onClick={clearAll} className="h-6 text-xs">
-            Clear
+            {t('clear')}
           </Button>
         </div>
         <DropdownMenuSeparator />

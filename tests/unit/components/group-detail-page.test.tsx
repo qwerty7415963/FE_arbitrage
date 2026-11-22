@@ -253,6 +253,6 @@ describe('GroupDetailPage', () => {
       }),
     );
     await user.click(screen.getByRole('button', { name: 'Save' }));
-    expect(await screen.findByText('boom')).toBeInTheDocument();
+    expect(await screen.findByText('An error occurred, please try again')).toBeInTheDocument();
   });
 });

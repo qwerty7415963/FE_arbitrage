@@ -9,6 +9,8 @@ import { useAuthGate } from '@/hooks/use-auth-gate';
 import { useAuthStore } from '@/lib/stores/auth';
 import { ConnectWalletButton } from '@/components/shared/auth/connect-wallet-button';
 import type { TelegramLinkResponse } from '@/services/telegram';
+import { ApiError } from '@/infrastructure/api-client';
+import { mapErrorCode } from '@/lib/error-mapping';
 import {
   Dialog,
   DialogContent,
@@ -21,6 +23,7 @@ export default function SettingsPage() {
   const t = useTranslations('settings');
   const tn = useTranslations('notifications');
   const tc = useTranslations('common');
+  const te = useTranslations();
   const locale = useLocale();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const setConnectModalOpen = useAuthStore((s) => s.setConnectModalOpen);
@@ -48,9 +51,13 @@ export default function SettingsPage() {
       setLinkData(data);
       setModalOpen(true);
     } catch (err) {
-      setConnectError(err instanceof Error ? err.message : tn('error'));
+      setConnectError(
+        err instanceof ApiError
+          ? te(mapErrorCode(err.code), { defaultValue: te('errors.unknown') })
+          : te('errors.unknown'),
+      );
     }
-  }, [linkMutation, locale, tn]);
+  }, [linkMutation, locale, te]);
 
   const handleRelink = useCallback(async () => {
     setConnectError(null);
@@ -60,9 +67,13 @@ export default function SettingsPage() {
       setLinkData(data);
       setModalOpen(true);
     } catch (err) {
-      setConnectError(err instanceof Error ? err.message : tn('error'));
+      setConnectError(
+        err instanceof ApiError
+          ? te(mapErrorCode(err.code), { defaultValue: te('errors.unknown') })
+          : te('errors.unknown'),
+      );
     }
-  }, [unlinkMutation, linkMutation, locale, tn]);
+  }, [unlinkMutation, linkMutation, locale, te]);
 
   useEffect(() => {
     if (!modalOpen) return;

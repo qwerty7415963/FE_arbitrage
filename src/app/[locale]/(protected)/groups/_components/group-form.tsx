@@ -30,6 +30,7 @@ const GROUP_DUPLICATE_CODE = 'GROUP-002';
 
 export function GroupForm({ open, onOpenChange, group, onSuccess }: GroupFormProps) {
   const t = useTranslations('groups');
+  const te = useTranslations();
   const [name, setName] = useState(group?.name ?? '');
   const [description, setDescription] = useState(group?.description ?? '');
   const [error, setError] = useState<string | null>(null);
@@ -75,7 +76,7 @@ export function GroupForm({ open, onOpenChange, group, onSuccess }: GroupFormPro
       if (err instanceof ApiError && err.code === GROUP_DUPLICATE_CODE) {
         setError(t('duplicateName'));
       } else if (err instanceof Error) {
-        setError(err.message);
+        setError(te('errors.unknown'));
       } else {
         setError(t('unknownError'));
       }

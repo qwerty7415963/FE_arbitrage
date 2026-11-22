@@ -1,4 +1,7 @@
+'use client';
+
 import { useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import type { OverviewPoint } from '@/types/trader';
 
 export interface OverviewSparklineProps {
@@ -16,6 +19,7 @@ export function OverviewSparkline({
   className,
   color = 'currentColor',
 }: OverviewSparklineProps) {
+  const t = useTranslations('traders');
   const points = useMemo(() => {
     if (!series || series.length === 0) return '';
     const values = series.map((p) => p.v);
@@ -39,7 +43,7 @@ export function OverviewSparkline({
         viewBox={`0 0 ${width} ${height}`}
         className={className}
         role="img"
-        aria-label="sparkline empty"
+        aria-label={t('sparklineEmpty')}
         data-testid="overview-sparkline"
       >
         <line
@@ -62,7 +66,7 @@ export function OverviewSparkline({
       viewBox={`0 0 ${width} ${height}`}
       className={className}
       role="img"
-      aria-label="sparkline"
+      aria-label={t('sparkline')}
       data-testid="overview-sparkline"
     >
       <polyline points={points} fill="none" stroke={color} strokeWidth={1.5} />

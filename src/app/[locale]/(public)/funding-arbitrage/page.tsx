@@ -5,23 +5,24 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Loader2Icon } from 'lucide-react';
 import { useAuthStore } from '@/lib/stores/auth';
+import { useTranslations } from 'next-intl';
 import { getVenues, getFundingArbitrage } from '@/services/funding-arbitrage';
 import type { Venue, ArbitragePair, SortOption } from '@/types/funding-arbitrage';
 import { VenueSelector } from './venue-selector';
 import { FundingTable } from './funding-table';
 import { Pagination } from '@/components/shared/pagination';
 
-const SORT_OPTIONS: { value: SortOption; label: string }[] = [
-  { value: 'rate_8h_desc', label: 'Rate 8h ↓' },
-  { value: 'rate_1h_desc', label: 'Rate 1h ↓' },
-  { value: 'apr_desc', label: 'APR ↓' },
-  { value: 'spread_desc', label: 'Spread ↓' },
-];
-
 const PAGE_SIZE = 10;
 
 export default function FundingArbitragePage() {
   const { address, isAuthenticated } = useAuthStore();
+  const t = useTranslations('fundingArbitrage');
+  const sortOptions: { value: SortOption; label: string }[] = [
+    { value: 'rate_8h_desc', label: t('sort.rate8h') },
+    { value: 'rate_1h_desc', label: t('sort.rate1h') },
+    { value: 'apr_desc', label: t('sort.apr') },
+    { value: 'spread_desc', label: t('sort.spread') },
+  ];
 
   const [venues, setVenues] = useState<Venue[]>([]);
   const [selectedVenueIds, setSelectedVenueIds] = useState<string[]>([]);
@@ -39,18 +40,18 @@ export default function FundingArbitragePage() {
         const data = await getVenues();
         setVenues(data);
       } catch {
-        setError('Failed to load venues');
+        setError(t('failedVenues'));
       } finally {
         setIsLoadingVenues(false);
       }
     }
     loadVenues();
-  }, []);
+  }, [t]);
 
   const fetchData = useCallback(
     async (page: number) => {
       if (selectedVenueIds.length < 2) {
-        setError('Select at least 2 venues');
+        setError(t('selectAtLeast'));
         return;
       }
 
@@ -66,13 +67,13 @@ export default function FundingArbitragePage() {
         setPairs(result.data.pairs ?? []);
         setTotalPages(result.meta.total_pages ?? 1);
         setCurrentPage(result.meta.page ?? page);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch data');
+      } catch {
+        setError(t('failedFetch'));
       } finally {
         setIsLoadingData(false);
       }
     },
-    [selectedVenueIds, sort],
+    [selectedVenueIds, sort, t],
   );
 
   const handleSearch = useCallback(() => {
@@ -89,7 +90,7 @@ export default function FundingArbitragePage() {
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 lg:p-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Funding Arbitrage</h1>
+        <h1 className="text-2xl font-bold">{t('title')}</h1>
         {isAuthenticated && address && (
           <span className="text-muted-foreground text-sm">
             {address.slice(0, 6)}...{address.slice(-4)}
@@ -110,7 +111,7 @@ export default function FundingArbitragePage() {
           onChange={(e) => setSort(e.target.value as SortOption)}
           className="border-input bg-background text-foreground h-8 rounded-lg border px-2 text-sm"
         >
-          {SORT_OPTIONS.map((opt) => (
+          {sortOptions.map((opt) => (
             <option key={opt.value} value={opt.value}>
               {opt.label}
             </option>
@@ -119,14 +120,14 @@ export default function FundingArbitragePage() {
 
         <Button onClick={handleSearch} disabled={isLoadingData || selectedVenueIds.length < 2}>
           {isLoadingData ? <Loader2Icon className="mr-2 h-4 w-4 animate-spin" /> : null}
-          Search
+          {t('search')}
         </Button>
       </div>
 
       {error && <div className="text-destructive text-sm">{error}</div>}
 
       {isLoadingData && pairs.length === 0 ? (
-        <div className="flex flex-col gap-2 py-12" role="status" aria-label="Loading...">
+        <div className="flex flex-col gap-2 py-12" role="status" aria-label={t('loading')}>
           <Skeleton className="h-4 w-full" />
           <Skeleton className="h-4 w-full" />
           <Skeleton className="h-4 w-full" />

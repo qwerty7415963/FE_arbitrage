@@ -5,6 +5,12 @@ export default createMiddleware({
   locales,
   defaultLocale,
   localePrefix: 'always',
+  localeCookie: {
+    name: 'NEXT_LOCALE',
+    maxAge: 31536000,
+    sameSite: 'lax',
+    path: '/',
+  },
 });
 
 export const config = {

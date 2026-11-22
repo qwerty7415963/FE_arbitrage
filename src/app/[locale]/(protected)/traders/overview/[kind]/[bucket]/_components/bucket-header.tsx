@@ -1,6 +1,6 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { ArrowLeftIcon } from 'lucide-react';
 import { cn } from 'cn';
 import { Link } from '@/i18n/navigation';
@@ -27,6 +27,7 @@ const RANGES: BucketRange[] = ['24H', '7D', '30D'];
 export function BucketHeader(props: BucketHeaderProps) {
   const t = useTranslations('traders.bucketDetail');
   const tOverview = useTranslations('traders.overview');
+  const locale = useLocale();
   const detail = props.detail ?? null;
   const bucketId = props.bucket ?? props.bucketId ?? props.id ?? detail?.bucket_id ?? '';
   const bucketLabelKey = 'bucketLabels.' + bucketId;
@@ -42,7 +43,7 @@ export function BucketHeader(props: BucketHeaderProps) {
   const sentiment = props.sentiment ?? detail?.sentiment ?? 'neutral';
   const walletCount = props.walletCount ?? props.wallet_count ?? detail?.wallet_count ?? 0;
   const backHref =
-    (props.backHref ?? '/traders/overview').replace(/^\/(vi|en)(?=\/|$)/, '') ||
+    (props.backHref ?? '/traders/overview').replace(new RegExp(`^/${locale}(?=/|$)`), '') ||
     '/traders/overview';
   const range = String(props.range ?? '30D');
 
