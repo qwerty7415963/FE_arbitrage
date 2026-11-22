@@ -499,7 +499,9 @@
         "realizedPnl": "Realized PnL",
         "notional": "Notional",
         "traders": "Traders",
-        "source": "Source"
+        "source": "Source",
+        "sourcePositions": "positions",
+        "sourceTrades": "trades"
       },
       "tables": {
         "wallets": "Wallets",

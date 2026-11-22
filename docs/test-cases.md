@@ -965,3 +965,5 @@ reviewing diffs â€” never blindly.
 - 2026-11-22: i18n Method B: language switcher, Accept-Language, fundingArbitrage namespace, message parity, trader-format locale params, error mapping.
 - 2026-11-22: Phase 3 i18n: funding-arbitrage/shared UI hardcoded strings fixed, locale-aware formatting, error code mapping, RSC metadata. Tests: 606 unit passed; E2E specified 24 passed.
 - 2026-11-22: Phase 4 i18n: message parity + duplicate key checks, error mapping tests, locale-aware formatting tests, funding i18n tests, language switcher E2E, docs/i18n.md.
+- 2026-11-22: Bucket i18n fix: VI labels for wallet count, bucket labels, stat bars, chart, treemap, columns, market detail, profit factor, sparkline, funding columns; component title/source label logic; stat bars en-US formatting.
+- 2026-11-22: Wallet live regression L8: late empty-error trades bootstrap/refetch keeps cached REST rows; unit tests in use-trader-trades.test.tsx and E2E wallet-live.spec.ts.

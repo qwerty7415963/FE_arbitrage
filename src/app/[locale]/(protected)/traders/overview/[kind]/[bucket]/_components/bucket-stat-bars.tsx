@@ -1,6 +1,6 @@
 'use client';
 
-import { useLocale, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import type { BucketDetail, BucketNotionalSplit, BucketPnlSplit } from '@/types/trader';
 
 export interface BucketStatBarsProps {
@@ -11,10 +11,9 @@ export interface BucketStatBarsProps {
 
 export function BucketStatBars(props: BucketStatBarsProps) {
   const t = useTranslations('traders.bucketDetail');
-  const locale = useLocale();
   const detail = props.detail;
   function fmt(n: number) {
-    return new Intl.NumberFormat(locale, {
+    return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
       maximumFractionDigits: 0,

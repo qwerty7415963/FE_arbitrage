@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { NextIntlClientProvider } from 'next-intl';
 import enMessages from '@/messages/en.json';
+import viMessages from '@/messages/vi.json';
 import { BucketTables } from '@/app/[locale]/(protected)/traders/overview/[kind]/[bucket]/_components/bucket-tables';
 import type { BucketWalletRow } from '@/types/trader';
 import { useBucketWallets } from '@/hooks/use-bucket-wallets';
@@ -167,5 +168,34 @@ describe('BucketTables', () => {
       'aria-sort',
       'none',
     );
+  });
+
+  it('renders VI labels', () => {
+    vi.mocked(useBucketWallets).mockReturnValue({
+      data: {
+        data: [makeRow({ cohort: 'whale' })],
+        meta: { page: 1, total: 1, total_pages: 1, limit: 20, has_more: false },
+      },
+      isLoading: false,
+      isError: false,
+      isFetching: false,
+      refetch: vi.fn(),
+    } as never);
+    vi.mocked(useBucketMarkets).mockReturnValue({
+      data: { data: [], meta: { page: 1, total: 0, total_pages: 1, limit: 20, has_more: false } },
+      isLoading: false,
+      isError: false,
+      isFetching: false,
+      refetch: vi.fn(),
+    } as never);
+    render(
+      <NextIntlClientProvider locale="vi" messages={viMessages}>
+        <BucketTables kind="pnl" bucket="profitable" />
+      </NextIntlClientProvider>,
+    );
+    expect(screen.getByText(/^Ví/)).toBeInTheDocument();
+    expect(screen.getByText(/^Thị trường/)).toBeInTheDocument();
+    expect(screen.getByText('Vốn')).toBeInTheDocument();
+    expect(screen.getByText('Cá voi')).toBeInTheDocument();
   });
 });

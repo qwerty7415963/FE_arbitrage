@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useTraderTrades } from '@/hooks/use-trader-trades';
 import { fetchTraderActivity } from '@/services/traders';
@@ -129,5 +129,74 @@ describe('useTraderTrades (contract v1.2 live)', () => {
     await waitFor(() => expect(fetchTraderActivity).toHaveBeenCalledTimes(1));
     expect(vi.mocked(subscribeWalletLive)).toHaveBeenCalledTimes(1);
     expect(vi.mocked(subscribeWalletLive).mock.calls[0][0]).toBe(WALLET_LOWER);
+  });
+
+  it('ignores an empty error trades bootstrap after REST rows are loaded', async () => {
+    vi.mocked(fetchTraderActivity).mockResolvedValueOnce(page1);
+    vi.mocked(subscribeWalletLive).mockImplementation(() => vi.fn());
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const localWrapper = ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+    const { result } = renderHook(() => useTraderTrades(WALLET), { wrapper: localWrapper });
+
+    await waitFor(() => expect(result.current.trades).toHaveLength(1));
+    await waitFor(() => expect(subscribeWalletLive).toHaveBeenCalledTimes(1));
+
+    const handlers = vi.mocked(subscribeWalletLive).mock.calls[0][2] as {
+      onBootstrap?: (channel: string, data: unknown) => void;
+    };
+
+    act(() => {
+      handlers.onBootstrap?.('trades', {
+        rows: [],
+        next_cursor: null,
+        has_more: false,
+        counts: { win: 0, loss: 0, long: 0, short: 0, total: 0 },
+        data_status: 'error',
+        as_of: null,
+        partial: true,
+      });
+    });
+
+    const cached = queryClient.getQueryData<{ pages: ActivityPage[] }>([
+      'trader-trades',
+      WALLET_LOWER,
+      'closed_at',
+      'desc',
+      'all',
+      'all',
+      20,
+    ]);
+    expect(cached?.pages[0]?.rows).toHaveLength(1);
+    expect(result.current.trades).toHaveLength(1);
+    expect(result.current.trades[0].market).toBe('BTC');
+    expect(result.current.counts).toEqual(page1.counts);
+  });
+
+  it('keeps cached trades when a refetch returns an empty error page', async () => {
+    const emptyErrorPage: ActivityPage = {
+      rows: [],
+      next_cursor: null,
+      has_more: false,
+      counts: { win: 0, loss: 0, long: 0, short: 0, total: 0 },
+      data_status: 'error',
+      as_of: null,
+      partial: true,
+    };
+    vi.mocked(fetchTraderActivity)
+      .mockResolvedValueOnce(page1)
+      .mockResolvedValueOnce(emptyErrorPage);
+    const { result } = renderHook(() => useTraderTrades(WALLET), { wrapper });
+
+    await waitFor(() => expect(result.current.trades).toHaveLength(1));
+    act(() => {
+      result.current.refetch();
+    });
+    await waitFor(() => expect(fetchTraderActivity).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(result.current.trades).toHaveLength(1));
+
+    expect(result.current.counts).toEqual(page1.counts);
+    expect(result.current.dataStatus).toBe('ready');
   });
 });

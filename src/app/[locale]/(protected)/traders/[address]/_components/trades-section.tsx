@@ -66,6 +66,7 @@ export function TradesSection({ walletAddress, enabled = true }: TradesSectionPr
     refetch,
     hasMore,
     isFetchingNextPage,
+    dataStatus,
     asOf,
     partial,
   } = useTraderTrades(walletAddress, { sort, dir, result, side, enabled });
@@ -137,7 +138,7 @@ export function TradesSection({ walletAddress, enabled = true }: TradesSectionPr
   return (
     <section aria-label={t('tabTrades')} className="flex flex-col gap-3">
       <p className="text-muted-foreground text-xs">
-        {t('statusReady')}
+        {dataStatus === 'error' ? t('statusError') : t('statusReady')}
         {asOf && ` · ${t('asOf', { time: formatRelativeTime(asOf) ?? '' })}`}
         {partial && ` · ${t('partialData')}`}
       </p>

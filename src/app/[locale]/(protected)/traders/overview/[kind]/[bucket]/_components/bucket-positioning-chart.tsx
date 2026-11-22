@@ -126,7 +126,12 @@ export function BucketPositioningChart(props: BucketPositioningChartProps) {
   const sentimentLabel = SENTIMENTS.includes(sentiment as OverviewSentiment)
     ? tOverview(('sentiment.' + sentiment) as never)
     : sentiment.replace(/_/g, ' '); // fallback: sentiment value not in known set, humanize snake_case
-  const bucketName = humanizeBucket(props.bucket ?? props.detail?.bucket_id ?? '');
+  const bucketId = props.bucket ?? props.detail?.bucket_id ?? '';
+  const translated = bucketId ? tOverview(('bucketLabels.' + bucketId) as never) : '';
+  const bucketName =
+    translated && translated !== 'traders.overview.bucketLabels.' + bucketId
+      ? translated
+      : humanizeBucket(bucketId);
   const title = bucketName ? t('chart.positioningTitle', { bucket: bucketName }) : t('chart.title');
 
   const hasPoints = points.length > 0;

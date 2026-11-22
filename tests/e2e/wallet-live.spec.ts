@@ -347,6 +347,34 @@ test.describe('Wallet live (contract v1.2 wallet.* envelope)', () => {
     expect(counters.activity).toBe(before);
   });
 
+  test('L8 late empty error trades bootstrap keeps REST rows', async ({ page }) => {
+    const counters: Counters = { activity: 0, positions: 0, syncPosts: 0 };
+    await seedAuthAndWs(page);
+    await mockLiveWallet(page, counters);
+    await page.goto(`/en/traders/${WALLET}?tab=trades`);
+    const panel = page.locator('#wallet-panel-trades');
+    await expect(panel.getByText('BTC').first()).toBeVisible();
+
+    await broadcast(page, {
+      type: 'wallet.bootstrap.trades',
+      data: {
+        rows: [],
+        next_cursor: null,
+        has_more: false,
+        counts: { win: 0, loss: 0, long: 0, short: 0, total: 0 },
+        data_status: 'error',
+        as_of: null,
+        partial: true,
+      },
+    });
+
+    await expect(panel.getByText('BTC').first()).toBeVisible();
+    await expect(panel.getByText('+$1,470')).toBeVisible();
+    await expect(panel.getByText('-$12.5')).toBeVisible();
+    expect(counters.activity).toBe(1);
+    expect(counters.syncPosts).toBe(0);
+  });
+
   test('L7 vietnamese locale renders asOf and funding labels', async ({ page }) => {
     const counters: Counters = { activity: 0, positions: 0, syncPosts: 0 };
     await seedAuthAndWs(page);

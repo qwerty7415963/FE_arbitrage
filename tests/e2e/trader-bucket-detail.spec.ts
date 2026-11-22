@@ -238,6 +238,22 @@ test.describe('Trader Bucket Detail', () => {
     );
   });
 
+  test('renders VI labels on /vi route', async ({ page }) => {
+    await seedAuth(page);
+    await mockBucketDetail(page);
+    await page.goto('/vi/traders/overview/pnl/profitable');
+
+    const chart = page.getByTestId('bucket-positioning-chart');
+    await expect(chart.getByText('Định vị nhóm Lãi')).toBeVisible();
+    await expect(page.getByTestId('bucket-stat-bars')).toContainText('PnL thực hiện');
+    await expect(page.getByTestId('bucket-stat-bars')).toContainText('Tỷ trọng khối lượng (≈)');
+    await expect(page.getByTestId('bucket-tables')).toContainText('Ví');
+    await expect(page.getByTestId('bucket-tables')).toContainText('Thị trường');
+    await expect(page.getByTestId('bucket-tables')).toContainText('Vốn');
+    await expect(page.getByText('Profitable Positioning')).toHaveCount(0);
+    await expect(page.getByText('VOLUME SPLIT (≈)')).toHaveCount(0);
+  });
+
   test('clicking wallet row navigates to wallet detail and back', async ({ page }) => {
     await seedAuth(page);
     await mockBucketDetail(page);

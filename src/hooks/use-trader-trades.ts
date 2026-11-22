@@ -47,6 +47,12 @@ export interface UseTraderTradesResult {
 
 const EMPTY_COUNTS: ActivityCounts = { win: 0, loss: 0, long: 0, short: 0, total: 0 };
 
+function isErrorEmptyPage(page: ActivityPage | null | undefined): boolean {
+  return (
+    !!page && page.data_status === 'error' && Array.isArray(page.rows) && page.rows.length === 0
+  );
+}
+
 export function useTraderTrades(
   walletAddress: string,
   options: TraderTradesOptions = {},
@@ -66,8 +72,22 @@ export function useTraderTrades(
 
   const query = useInfiniteQuery({
     queryKey,
-    queryFn: ({ pageParam }: { pageParam: string | undefined }) =>
-      fetchTraderActivity(wallet, { sort, dir, result, side, limit, cursor: pageParam }),
+    queryFn: async ({ pageParam }: { pageParam: string | undefined }) => {
+      const res = await fetchTraderActivity(wallet, {
+        sort,
+        dir,
+        result,
+        side,
+        limit,
+        cursor: pageParam,
+      });
+      if (pageParam === undefined && isErrorEmptyPage(res)) {
+        const cached = queryClient.getQueryData<{ pages?: ActivityPage[] }>(queryKey);
+        const first = cached?.pages?.[0];
+        if (first && Array.isArray(first.rows) && first.rows.length > 0) return first;
+      }
+      return res;
+    },
     getNextPageParam: (last) => last?.next_cursor ?? undefined,
     initialPageParam: undefined as string | undefined,
     enabled,
@@ -85,7 +105,19 @@ export function useTraderTrades(
     const unsub = subscribeWalletLive(wallet, ['trades', 'activity'], {
       onBootstrap: (channel, data) => {
         if (channel !== 'trades') return;
+        if (
+          typeof data !== 'object' ||
+          data === null ||
+          !Array.isArray((data as { rows?: unknown }).rows)
+        )
+          return;
         const page = data as ActivityPage;
+        if (isErrorEmptyPage(page)) return;
+        if (page.rows.length === 0) {
+          const cached = queryClient.getQueryData<{ pages?: ActivityPage[] }>(queryKey);
+          const first = cached?.pages?.[0];
+          if (first && Array.isArray(first.rows) && first.rows.length > 0) return;
+        }
         queryClient.setQueryData<{ pages: ActivityPage[]; pageParams: unknown[] }>(queryKey, {
           pages: [page],
           pageParams: [undefined],

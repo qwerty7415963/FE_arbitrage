@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 import enMessages from '@/messages/en.json';
+import viMessages from '@/messages/vi.json';
 import { BucketStatBars } from '@/app/[locale]/(protected)/traders/overview/[kind]/[bucket]/_components/bucket-stat-bars';
 
 describe('BucketStatBars', () => {
@@ -16,5 +17,14 @@ describe('BucketStatBars', () => {
       'title',
       'Estimated from traded volume × long/short order share; not open notional.',
     );
+  });
+
+  it('renders VI volume split label', () => {
+    render(
+      <NextIntlClientProvider locale="vi" messages={viMessages}>
+        <BucketStatBars />
+      </NextIntlClientProvider>,
+    );
+    expect(screen.getByText('Tỷ trọng khối lượng (≈)')).toBeInTheDocument();
   });
 });

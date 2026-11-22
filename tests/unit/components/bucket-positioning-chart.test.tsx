@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 import enMessages from '@/messages/en.json';
+import viMessages from '@/messages/vi.json';
 import { BucketPositioningChart } from '@/app/[locale]/(protected)/traders/overview/[kind]/[bucket]/_components/bucket-positioning-chart';
 import type { BucketDetail } from '@/types/trader';
 
@@ -68,6 +69,16 @@ describe('BucketPositioningChart', () => {
     expect(screen.getByTestId('chart-range-caption')).toHaveTextContent('30D · BULLISH');
     expect(screen.getByTestId('chart-long-caption')).toHaveTextContent('60.0% Long');
     expect(screen.getByTestId('chart-long-caption').className).toContain('text-emerald-500');
+  });
+
+  it('renders VI bucket positioning title', () => {
+    render(
+      <NextIntlClientProvider locale="vi" messages={viMessages}>
+        <BucketPositioningChart detail={makeDetail()} />
+      </NextIntlClientProvider>,
+    );
+
+    expect(screen.getByText('Định vị nhóm Lãi')).toBeInTheDocument();
   });
 
   it('colours the long caption rose when below 50%', () => {

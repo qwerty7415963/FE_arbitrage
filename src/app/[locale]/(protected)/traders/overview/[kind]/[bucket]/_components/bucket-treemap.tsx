@@ -217,6 +217,8 @@ export function BucketTreemap(props: BucketTreemapProps) {
     props.markets ?? props.marketsTop ?? props.data ?? props.detail?.markets_top ?? [];
   const list = Array.isArray(markets) ? markets : [];
   const marketsSource = props.detail?.markets_source ?? 'positions';
+  const sourceLabel =
+    marketsSource === 'trades' ? t('treemap.sourceTrades') : t('treemap.sourcePositions');
 
   const sorted = [...list].sort((a, b) => (b.notional ?? 0) - (a.notional ?? 0));
 
@@ -325,7 +327,7 @@ export function BucketTreemap(props: BucketTreemapProps) {
   });
 
   const tooltip = (tile: TileData) =>
-    `${tile.market} — ${t('treemap.notional')} ${formatUsd(tile.notional) ?? tile.notional}, ${marketsSource === 'trades' ? t('treemap.realizedPnl') : t('treemap.upnl')} ${signedUsd(tile.upnl)}, ${tile.sentimentLabel}, ${t('treemap.traders')} ${tile.traders} (${t('treemap.source')}: ${marketsSource})`;
+    `${tile.market} — ${t('treemap.notional')} ${formatUsd(tile.notional) ?? tile.notional}, ${marketsSource === 'trades' ? t('treemap.realizedPnl') : t('treemap.upnl')} ${signedUsd(tile.upnl)}, ${tile.sentimentLabel}, ${t('treemap.traders')} ${tile.traders} (${t('treemap.source')}: ${sourceLabel})`;
 
   const hasSize = containerWidth > 0 && containerHeight > 0;
 
