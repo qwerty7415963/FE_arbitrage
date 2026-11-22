@@ -134,3 +134,36 @@
     transition: none;
   }
 }
+
+:root {
+  --landing-surface: #0b100d;
+  --landing-surface-2: #0f1512;
+  --landing-border: #2a302d;
+  --landing-ink: #e9efea;
+  --landing-muted: #8a9b93;
+  --landing-accent: #55d396;
+  --landing-positive: #55d396;
+  --landing-negative: #ef4444;
+  --landing-ribbon: #55d396;
+  --landing-ribbon-soft: rgba(85, 211, 150, 0.16);
+  --landing-grid: rgba(42, 48, 45, 0.6);
+}
+
+@keyframes landing-ticker {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.landing-ticker-track {
+  animation: landing-ticker 28s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-ticker-track {
+    animation: none;
+  }
+}

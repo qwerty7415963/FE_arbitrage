@@ -660,5 +660,116 @@
     "sortBy": "Sort by",
     "error": "Failed to load data",
     "retry": "Retry"
+  },
+  "landing": {
+    "metaTitle": "HyperScan AI",
+    "metaDescription": "Arbitrage intelligence. Read the wallet before the trade, catch the spread before it closes.",
+    "nav": {
+      "scanner": "Scanner",
+      "funding": "Funding",
+      "howItWorks": "How it works",
+      "faq": "FAQ"
+    },
+    "hero": {
+      "eyebrow": "Signal desk",
+      "title": "Read the wallet before the trade. Catch the spread before it closes.",
+      "subcopy": "Read trader wallets, compare multi-venue funding data, and get alerts with freshness limits. Illustrative only, not investment advice.",
+      "primaryCta": "Open Trader Scanner",
+      "secondaryCta": "View Funding Arbitrage"
+    },
+    "liveDesk": {
+      "title": "Live desk",
+      "label": "Illustrative data",
+      "dossierTitle": "Wallet dossier",
+      "dossierBody": "Sample wallet: win rate, funding net, open positions. Illustrative, not real data."
+    },
+    "ticker": {
+      "s1": "BTC spread +0.012% • Hyperliquid/Binance",
+      "s2": "ETH funding -0.008% • Extended/Variational",
+      "s3": "SOL spread +0.021% • Hyperliquid/Extended",
+      "s4": "Trader 0x12…ab win rate 68%",
+      "s5": "Telegram alert: funding spike",
+      "s6": "30D history • multi-venue"
+    },
+    "productDemo": {
+      "title": "Product demo",
+      "scannerTitle": "Scanner table fragment",
+      "fundingTitle": "Funding spread fragment"
+    },
+    "features": {
+      "title": "Feature ledger",
+      "scanner": {
+        "title": "Scanner",
+        "copy": "Scan traders by ROI, win rate, volume, and funding net."
+      },
+      "funding": {
+        "title": "Funding",
+        "copy": "Compare funding spreads across multiple venues to find arbitrage."
+      },
+      "alerts": {
+        "title": "Alerts",
+        "copy": "Get Telegram alerts when spreads or wallets change."
+      }
+    },
+    "howItWorks": {
+      "title": "How it works",
+      "step1Title": "Scan wallets",
+      "step1Copy": "Enter a wallet address to see positions, fills, and funding net.",
+      "step2Title": "Measure spread",
+      "step2Copy": "Compare funding rates across venues to find open spreads.",
+      "step3Title": "Get alerts",
+      "step3Copy": "Set Telegram alerts for spreads or wallets you track."
+    },
+    "metrics": {
+      "history30d": "30D history",
+      "multiVenue": "Multi-venue",
+      "realtime": "Real-time updates via WebSocket",
+      "telegram": "Telegram alerts"
+    },
+    "provenance": {
+      "title": "Provenance and limits",
+      "readOnly": "Read-only",
+      "readOnlyCopy": "Displays data only; no order placement or account control.",
+      "noCustody": "No custody",
+      "noCustodyCopy": "HyperScan does not hold funds or keys.",
+      "freshness": "Freshness limits",
+      "freshnessCopy": "Live wallet updates via WebSocket; funding data has staleness limits.",
+      "history": "Historical periods",
+      "historyCopy": "Historical periods 1D / 7D / 30D / ALL."
+    },
+    "whatItIs": {
+      "title": "What it is / what it isn't",
+      "isTitle": "What it is",
+      "isntTitle": "What it isn't",
+      "is1": "Tracks trader wallets and multi-venue funding data.",
+      "is2": "Shows spreads and alerts with freshness limits.",
+      "is3": "Read-only, no custody.",
+      "isnt1": "Does not execute trades or hold funds.",
+      "isnt2": "Not investment advice.",
+      "isnt3": "No guaranteed profit."
+    },
+    "faq": {
+      "title": "FAQ",
+      "q1": "What is HyperScan AI?",
+      "a1": "A tool to track trader wallets and funding spread arbitrage.",
+      "q2": "Is the data real-time?",
+      "a2": "Live wallet updates via WebSocket; funding data has staleness limits.",
+      "q3": "Do I need to connect a wallet?",
+      "a3": "Not required to view the scanner and funding. Read-only, no custody.",
+      "q4": "Where are alerts sent?",
+      "a4": "Via Telegram.",
+      "q5": "Is this investment advice?",
+      "a5": "No. Illustrative only, not investment advice.",
+      "q6": "Does HyperScan execute trades or hold funds?",
+      "a6": "No. HyperScan does not execute trades or hold funds; it provides data and alerts."
+    },
+    "finalCta": {
+      "title": "Start scanning",
+      "copy": "Open Trader Scanner or view Funding Arbitrage now.",
+      "secondary": "View trader overview"
+    },
+    "footer": {
+      "disclaimer": "Not investment advice."
+    }
   }
 }

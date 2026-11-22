@@ -660,5 +660,116 @@
     "sortBy": "Sắp xếp theo",
     "error": "Tải dữ liệu thất bại",
     "retry": "Thử lại"
+  },
+  "landing": {
+    "metaTitle": "HyperScan AI",
+    "metaDescription": "Arbitrage intelligence. Đọc ví trước khi vào lệnh, bắt spread trước khi nó đóng.",
+    "nav": {
+      "scanner": "Scanner",
+      "funding": "Funding",
+      "howItWorks": "Cách hoạt động",
+      "faq": "FAQ"
+    },
+    "hero": {
+      "eyebrow": "Signal desk",
+      "title": "Đọc ví trước khi vào lệnh. Bắt spread trước khi nó đóng.",
+      "subcopy": "Theo dõi ví trader, so sánh dữ liệu funding nhiều venue và nhận alert với giới hạn độ tươi. Chỉ mang tính minh họa, không phải lời khuyên đầu tư.",
+      "primaryCta": "Mở Trader Scanner",
+      "secondaryCta": "Xem Funding Arbitrage"
+    },
+    "liveDesk": {
+      "title": "Live desk",
+      "label": "Dữ liệu minh họa",
+      "dossierTitle": "Wallet dossier",
+      "dossierBody": "Ví mẫu: win rate, funding net, vị thế đang mở. Minh họa, không phải dữ liệu thật."
+    },
+    "ticker": {
+      "s1": "BTC spread +0.012% • Hyperliquid/Binance",
+      "s2": "ETH funding -0.008% • Extended/Variational",
+      "s3": "SOL spread +0.021% • Hyperliquid/Extended",
+      "s4": "Trader 0x12…ab win rate 68%",
+      "s5": "Telegram alert: funding spike",
+      "s6": "30D history • multi-venue"
+    },
+    "productDemo": {
+      "title": "Product demo",
+      "scannerTitle": "Scanner table fragment",
+      "fundingTitle": "Funding spread fragment"
+    },
+    "features": {
+      "title": "Feature ledger",
+      "scanner": {
+        "title": "Scanner",
+        "copy": "Quét trader theo ROI, win rate, volume và funding net."
+      },
+      "funding": {
+        "title": "Funding",
+        "copy": "So sánh funding spread giữa nhiều venue, tìm cơ hội arbitrage."
+      },
+      "alerts": {
+        "title": "Alerts",
+        "copy": "Nhận alert qua Telegram khi spread hoặc ví thay đổi."
+      }
+    },
+    "howItWorks": {
+      "title": "Cách hoạt động",
+      "step1Title": "Quét ví",
+      "step1Copy": "Nhập địa chỉ ví, xem vị thế, fills và funding net.",
+      "step2Title": "Đo spread",
+      "step2Copy": "So sánh funding rate giữa các venue, tìm spread đang mở.",
+      "step3Title": "Nhận alert",
+      "step3Copy": "Đặt alert Telegram cho spread hoặc ví bạn theo dõi."
+    },
+    "metrics": {
+      "history30d": "30D history",
+      "multiVenue": "Multi-venue",
+      "realtime": "Real-time updates via WebSocket",
+      "telegram": "Telegram alerts"
+    },
+    "provenance": {
+      "title": "Nguồn gốc và giới hạn",
+      "readOnly": "Chỉ đọc",
+      "readOnlyCopy": "Chỉ hiển thị dữ liệu; không đặt lệnh hay điều khiển tài khoản.",
+      "noCustody": "Không lưu ký",
+      "noCustodyCopy": "HyperScan không nắm giữ tài sản hay khóa.",
+      "freshness": "Giới hạn độ tươi",
+      "freshnessCopy": "Cập nhật ví trực tiếp qua WebSocket; dữ liệu funding có giới hạn độ tươi.",
+      "history": "Kỳ lịch sử",
+      "historyCopy": "Kỳ lịch sử 1D / 7D / 30D / ALL."
+    },
+    "whatItIs": {
+      "title": "Nó là gì / không phải gì",
+      "isTitle": "Là gì",
+      "isntTitle": "Không phải gì",
+      "is1": "Theo dõi ví trader và dữ liệu funding nhiều venue.",
+      "is2": "Hiển thị spread và alert với giới hạn độ tươi.",
+      "is3": "Chỉ đọc, không lưu ký.",
+      "isnt1": "Không thực thi lệnh hay nắm giữ tài sản.",
+      "isnt2": "Không phải lời khuyên đầu tư.",
+      "isnt3": "Không đảm bảo lợi nhuận."
+    },
+    "faq": {
+      "title": "FAQ",
+      "q1": "HyperScan AI là gì?",
+      "a1": "Công cụ theo dõi ví trader và funding spread arbitrage.",
+      "q2": "Dữ liệu có thời gian thực không?",
+      "a2": "Cập nhật ví trực tiếp qua WebSocket; dữ liệu funding có giới hạn độ tươi.",
+      "q3": "Có cần kết nối ví không?",
+      "a3": "Không bắt buộc để xem scanner và funding. Chế độ chỉ đọc không lưu ký.",
+      "q4": "Alert gửi qua đâu?",
+      "a4": "Qua Telegram.",
+      "q5": "Dữ liệu có phải lời khuyên đầu tư không?",
+      "a5": "Không. Chỉ mang tính minh họa, không phải lời khuyên đầu tư.",
+      "q6": "HyperScan có thực thi lệnh hoặc nắm giữ tài sản không?",
+      "a6": "Không. HyperScan không thực thi lệnh hay nắm giữ tài sản; chỉ cung cấp dữ liệu và alert."
+    },
+    "finalCta": {
+      "title": "Bắt đầu quét",
+      "copy": "Mở Trader Scanner hoặc xem Funding Arbitrage ngay.",
+      "secondary": "Xem tổng quan trader"
+    },
+    "footer": {
+      "disclaimer": "Không phải lời khuyên đầu tư."
+    }
   }
 }

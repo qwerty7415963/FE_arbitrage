@@ -967,3 +967,16 @@ reviewing diffs â€” never blindly.
 - 2026-11-22: Phase 4 i18n: message parity + duplicate key checks, error mapping tests, locale-aware formatting tests, funding i18n tests, language switcher E2E, docs/i18n.md.
 - 2026-11-22: Bucket i18n fix: VI labels for wallet count, bucket labels, stat bars, chart, treemap, columns, market detail, profit factor, sparkline, funding columns; component title/source label logic; stat bars en-US formatting.
 - 2026-11-22: Wallet live regression L8: late empty-error trades bootstrap/refetch keeps cached REST rows; unit tests in use-trader-trades.test.tsx and E2E wallet-live.spec.ts.
+- 2026-11-22: Marketing landing revised to hybrid Linear restraint + Hyperliquid ticker: spread ribbon device, market ticker, product demo split, provenance strip, what it is/isn't, feature ledger, how it works, metric band, FAQ, final CTA. Semantic landing tokens in globals.css. Tests: landing-page (2), landing.spec.ts (2).
+
+### Landing page (marketing)
+
+- Unit: tests/unit/components/landing-page.test.tsx — h1 text, CTA hrefs, no connect wallet, FAQ heading (vi/en).
+- E2E: tests/e2e/landing.spec.ts — title contains HyperScan AI, h1 text, CTA hrefs, no connect wallet button, FAQ visible (/vi, /en).
+
+### Brand logo
+
+- Unit: src/components/shared/brand/logo.tsx exports Logo and LogoMark with size/variant props and accessible aria-label.
+- Assets: public/logo.svg wordmark "HyperScan AI", public/logo-mark.svg monogram H with spread ribbon, public/favicon.svg.
+- Marketing layout uses Logo in header/footer instead of text-only.
+- SEO: src/app/[locale]/(marketing)/opengraph-image.tsx renders brand, title, description via next/og.
