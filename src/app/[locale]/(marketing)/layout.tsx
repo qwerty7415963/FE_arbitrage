@@ -38,7 +38,9 @@ export default async function MarketingLayout({ children }: { children: React.Re
               {t('nav.faq')}
             </a>
           </nav>
-          <LanguageSwitcher />
+          <div className="preserve-control-size language-switcher">
+            <LanguageSwitcher />
+          </div>
         </div>
       </header>
       <main className="w-full">{children}</main>

@@ -59,7 +59,6 @@ test.describe('Scanner numbered pagination', () => {
     await page.goto('/en/traders');
     await applyFilters(page);
     await expect(page.getByText('Trader 1')).toBeVisible();
-    await expect(page.getByText('Page 1 of 2 · 40 results')).toBeVisible();
     await page.getByRole('button', { name: 'Page 2' }).click();
     await expect(page.getByText('Trader 21')).toBeVisible();
     await expect(page.getByText('Trader 1')).toHaveCount(0);
@@ -146,7 +145,7 @@ test.describe('Scanner numbered pagination', () => {
     await page.goto('/en/traders?page=9');
     await expect(page.getByText('Trader 21')).toBeVisible();
     expect(bodies[bodies.length - 1]).toMatchObject({ page: 2 });
-    await expect(page.getByText('Page 2 of 2 · 40 results')).toBeVisible();
+    await expect(page.getByText('Trader 21')).toBeVisible();
   });
 
   test('rapid 2->3 clicks: latest wins', async ({ page }) => {

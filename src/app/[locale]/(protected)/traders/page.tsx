@@ -414,14 +414,6 @@ function ScannerContent() {
   const showSkeleton = isSearching && rows.length === 0;
   const showEmpty = hasSearched && !isSearching && rows.length === 0 && !error;
 
-  const resultText = hasSearched
-    ? t('resultsPaged', {
-        current: currentPage,
-        total: totalPages,
-        count: total.toLocaleString('en-US'),
-      })
-    : null;
-
   const filtersCount = deriveActiveFilters(
     form,
     (key) => t(key),
@@ -440,7 +432,6 @@ function ScannerContent() {
         period={form.period}
         onPeriodChange={handlePeriodChange}
         venue={form.venue}
-        resultText={resultText}
         filtersOpen={filtersOpen}
         onToggleFilters={() => setFiltersOpen((open) => !open)}
         disabled={isSearching}

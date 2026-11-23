@@ -8,7 +8,6 @@ import enMessages from '@/messages/en.json';
 function renderBar(props: Partial<React.ComponentProps<typeof ScannerCommandBar>> = {}) {
   const defaultProps: React.ComponentProps<typeof ScannerCommandBar> = {
     title: 'Trader Scanner',
-    resultText: null,
     refresh: vi.fn(),
     filtersOpen: false,
     onToggleFilters: vi.fn(),
@@ -27,10 +26,9 @@ function renderBar(props: Partial<React.ComponentProps<typeof ScannerCommandBar>
 }
 
 describe('ScannerCommandBar', () => {
-  it('renders title and result text with aria-live', () => {
-    renderBar({ resultText: 'Page 1 of 1 · 1 results' });
+  it('renders title', () => {
+    renderBar();
     expect(screen.getByRole('heading', { name: 'Trader Scanner' })).toBeInTheDocument();
-    expect(screen.getByText('Page 1 of 1 · 1 results')).toHaveAttribute('aria-live', 'polite');
   });
 
   it('shows filters badge count', () => {

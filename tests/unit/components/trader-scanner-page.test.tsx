@@ -139,7 +139,6 @@ describe('TradersScannerPage', () => {
       expect.anything(),
     );
     expect(await screen.findByText('0xaaaa...aaaa')).toBeInTheDocument();
-    expect(screen.getByText('Page 1 of 1 · 1 results')).toBeInTheDocument();
     expect(nav.push).toHaveBeenCalledWith(expect.stringContaining('roi_min=30'), expect.anything());
     expect(window.sessionStorage.getItem('trader.last-scan.v1')).toContain('roi_min=30');
   });
@@ -211,7 +210,6 @@ describe('TradersScannerPage', () => {
     );
     expect(await screen.findByText('0xbbbb...bbbb')).toBeInTheDocument();
     expect(screen.queryByText('0xaaaa...aaaa')).not.toBeInTheDocument();
-    expect(screen.getByText('Page 2 of 2 · 2 results')).toBeInTheDocument();
   });
 
   it('sends no request when clicking the current page', async () => {
@@ -334,7 +332,6 @@ describe('TradersScannerPage', () => {
     renderPage();
     expect(await screen.findByText('No traders found')).toBeInTheDocument();
     expect(screen.queryByText('An error occurred, please try again')).not.toBeInTheDocument();
-    expect(screen.getByText('Page 1 of 1 · 0 results')).toBeInTheDocument();
   });
 
   it('empty-state reset re-runs the default search', async () => {
@@ -397,27 +394,6 @@ describe('TradersScannerPage', () => {
       expect.objectContaining({ period: '7D' }),
       expect.anything(),
     );
-  });
-
-  it('hien Page X of Y khi co total_pages', async () => {
-    const user = userEvent.setup();
-    vi.mocked(searchTraders).mockResolvedValue({
-      data: [ROW_A, ROW_B],
-      meta: { page: 2, total: 40, total_pages: 20 },
-    });
-    renderPage();
-    await screen.findByText('0xaaaa...aaaa');
-    await applyFilters(user);
-    expect(await screen.findByText('Page 2 of 20 · 40 results')).toBeInTheDocument();
-  });
-
-  it('giữ nhãn Page 1 of 1 khi khong co phan trang', async () => {
-    const user = userEvent.setup();
-    vi.mocked(searchTraders).mockResolvedValue({ data: [ROW_A], meta: {} });
-    renderPage();
-    await screen.findByText('0xaaaa...aaaa');
-    await applyFilters(user);
-    expect(await screen.findByText('Page 1 of 1 · 1 results')).toBeInTheDocument();
   });
 
   it('restores page 3 from the URL and searches with it', async () => {

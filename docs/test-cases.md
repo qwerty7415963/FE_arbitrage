@@ -466,8 +466,6 @@
 | reset re-runs default search  | Form, rows, bare URL, re-fetch page:1         |
 | URL restore + auto-search     | Params â†’ form + search                      |
 | ignores ?group_id=            | Param stripped, search without groupId        |
-| Page X of Y count             | "Page 2 of 20 Â· 40 results"                  |
-| Page 1 of 1 fallback          | "Page 1 of 1 Â· 1 results" when no meta       |
 | restores ?page=3              | Deep link searches with page:3                |
 
 #### `components/shared/pagination.tsx` (7 tests)

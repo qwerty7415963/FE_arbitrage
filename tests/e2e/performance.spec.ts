@@ -100,7 +100,7 @@ test.describe('Performance smoke', () => {
     await page.goto('/en/traders');
     const started = Date.now();
     await applyFilters(page);
-    await expect(page.getByText('Page 1 of 5 · 100 results')).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('tbody tr')).toHaveCount(20, { timeout: 15000 });
     const elapsed = Date.now() - started;
     expect(elapsed).toBeLessThan(15000);
     await expect(page.locator('tbody tr')).toHaveCount(20);

@@ -19,7 +19,6 @@ export interface SavedView {
 
 export interface ScannerCommandBarProps {
   title: string;
-  resultText: string | null;
   refresh: () => void;
   filtersOpen: boolean;
   onToggleFilters: () => void;
@@ -34,7 +33,6 @@ export interface ScannerCommandBarProps {
 
 export function ScannerCommandBar({
   title,
-  resultText,
   refresh,
   filtersOpen,
   onToggleFilters,
@@ -52,11 +50,6 @@ export function ScannerCommandBar({
       <div className="flex flex-col gap-3">
         <div className="flex items-center gap-2">
           <h1 className="text-xl font-semibold">{title}</h1>
-          {resultText && (
-            <span className="text-muted-foreground text-sm" aria-live="polite">
-              {resultText}
-            </span>
-          )}
           <div className="flex-1" />
           <Button
             variant="ghost"

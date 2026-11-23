@@ -167,3 +167,23 @@
     animation: none;
   }
 }
+
+/* App density: 16px default -> 15px at default browser size. */
+html {
+  font-size: 93.75%;
+}
+
+/* Header controls keep their original 16px-based sizing. */
+.preserve-control-size button {
+  font-size: 14px;
+  height: 32px;
+}
+.preserve-control-size .language-switcher button,
+.preserve-control-size.language-switcher button {
+  font-size: 12.8px;
+  height: 28px;
+}
+.preserve-control-size button svg {
+  width: 16px;
+  height: 16px;
+}

@@ -32,8 +32,10 @@ export function Header() {
           <span className="text-lg font-semibold">{t('appName')}</span>
         </Link>
 
-        <div className="ml-auto hidden lg:flex">
-          <LanguageSwitcher />
+        <div className="preserve-control-size ml-auto hidden lg:flex">
+          <div className="language-switcher">
+            <LanguageSwitcher />
+          </div>
           <ConnectWalletButton />
         </div>
       </div>
