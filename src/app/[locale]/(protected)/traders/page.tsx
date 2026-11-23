@@ -490,7 +490,7 @@ function ScannerContent() {
       )}
 
       <div className={filtersOpen ? 'gap-4 lg:grid lg:grid-cols-[minmax(0,1fr)_320px]' : ''}>
-        <div className="flex min-w-0 flex-col gap-4">
+        <div className={`flex min-w-0 flex-col gap-4${selected.length > 0 ? 'pb-24' : ''}`}>
           <FilterChips
             draft={form}
             onRemove={handleRemoveMetricFilter}
@@ -519,7 +519,11 @@ function ScannerContent() {
           )}
 
           {selected.length > 0 && (
-            <div className="bg-muted/30 flex flex-wrap items-center gap-2 rounded-md border p-2 max-sm:fixed max-sm:inset-x-0 max-sm:bottom-0 max-sm:z-30 max-sm:rounded-none max-sm:border-t">
+            <div
+              role="status"
+              aria-live="polite"
+              className="bg-popover/95 fixed bottom-4 left-1/2 z-40 flex max-w-[calc(100vw-2rem)] -translate-x-1/2 flex-wrap items-center justify-center gap-2 rounded-full border px-3 py-2 shadow-lg backdrop-blur max-sm:right-0 max-sm:bottom-0 max-sm:left-0 max-sm:max-w-none max-sm:translate-x-0 max-sm:justify-between max-sm:rounded-none max-sm:border-x-0 max-sm:border-b-0"
+            >
               <span className="text-sm font-medium">
                 {t('selectedCount', { count: selected.length })}
               </span>

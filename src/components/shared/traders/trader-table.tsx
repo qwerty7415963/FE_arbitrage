@@ -90,6 +90,7 @@ export function TraderTable({
 }: TraderTableProps) {
   const t = useTranslations('traders');
   const selectedAddresses = selected ?? [];
+  const selectionActive = (selected ?? []).length > 0;
   let qc: QueryClient | undefined = queryClient;
   try {
     // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -225,7 +226,12 @@ export function TraderTable({
                       checked={selectedAddresses.includes(row.wallet_address)}
                       onChange={() => toggleOne(row.wallet_address)}
                       onClick={(e) => e.stopPropagation()}
-                      className="h-4 w-4 md:opacity-0 md:group-hover:opacity-100 md:focus-within:opacity-100 md:focus:opacity-100"
+                      className={cn(
+                        'h-4 w-4',
+                        selectionActive || selectedAddresses.includes(row.wallet_address)
+                          ? 'opacity-100'
+                          : 'md:opacity-0 md:group-hover:opacity-100 md:focus-within:opacity-100 md:focus:opacity-100',
+                      )}
                     />
                   </TableCell>
                 )}
@@ -239,20 +245,21 @@ export function TraderTable({
                       {row.display_name && (
                         <div className="truncate font-bold">{row.display_name}</div>
                       )}
-                      <div className="text-muted-foreground">
+                      <div className="text-muted-foreground flex items-center gap-1.5 whitespace-nowrap">
                         <CopyAddress address={row.wallet_address} />
+                        <span
+                          role="img"
+                          className={cn(
+                            'shrink-0 text-xs leading-none',
+                            STATUS_CLASSES[row.data_status],
+                          )}
+                          title={statusLabel}
+                          aria-label={statusLabel}
+                        >
+                          <span aria-hidden="true">●</span>
+                        </span>
                       </div>
                     </div>
-                  </div>
-                  <div className="mt-1 flex flex-wrap items-center gap-1">
-                    <span
-                      role="img"
-                      className={cn('text-xs', STATUS_CLASSES[row.data_status])}
-                      title={statusLabel}
-                      aria-label={statusLabel}
-                    >
-                      <span aria-hidden="true">●</span>
-                    </span>
                   </div>
                 </TableCell>
                 <TableCell

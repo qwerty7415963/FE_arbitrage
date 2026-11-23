@@ -160,4 +160,25 @@ describe('TraderTable', () => {
     const pfHeader = screen.getByRole('columnheader', { name: 'PF' });
     expect(pfHeader.className).toMatch('text-right');
   });
+
+  it('shows opacity-100 on all row checkboxes when one row is selected', () => {
+    const second = { ...row, wallet_address: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb' };
+    renderTable({
+      selectable: true,
+      selected: [row.wallet_address],
+      onSelect: vi.fn(),
+      rows: [row, second],
+    });
+    const checkedBox = screen.getByRole('checkbox', { name: `Select ${row.wallet_address}` });
+    const otherBox = screen.getByRole('checkbox', { name: `Select ${second.wallet_address}` });
+    expect(checkedBox).toHaveClass('opacity-100');
+    expect(otherBox).toHaveClass('opacity-100');
+  });
+
+  it('does not show opacity-100 on a row checkbox when selection is empty', () => {
+    renderTable({ selectable: true, selected: [], onSelect: vi.fn() });
+    const box = screen.getByRole('checkbox', { name: `Select ${row.wallet_address}` });
+    expect(box).not.toHaveClass('opacity-100');
+    expect(box.className).toMatch(/md:opacity-0/);
+  });
 });
