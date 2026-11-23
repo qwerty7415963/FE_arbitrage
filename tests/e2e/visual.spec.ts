@@ -97,7 +97,7 @@ test.describe('Visual desktop', () => {
     await page.getByRole('button', { name: 'Filters', exact: true }).click();
     // The sheet is portaled to <body>, so capture the page rather than `main`.
     // Asserting the Apply button settles the 180ms open transition.
-    await expect(page.locator('[data-slot="sheet-content"]')).toBeVisible();
+    await expect(page.locator('#scanner-metric-filters')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Apply', exact: true })).toBeVisible();
     await expect(page.getByText('Smart Money')).toBeVisible();
     await settle(page);

@@ -135,7 +135,7 @@ describe('FilterChips', () => {
   it('re-runs the search when a chip is removed', async () => {
     const user = userEvent.setup();
     renderPage();
-    await user.click(screen.getByRole('button', { name: 'Filters' }));
+    await user.click(screen.getByRole('button', { name: /^Filters/ }));
     await user.type(screen.getByLabelText('ROI from (%)'), '30');
     await user.click(screen.getByRole('button', { name: 'Apply' }));
     await screen.findByText('0xaaaa...aaaa');
@@ -157,13 +157,13 @@ describe('FilterChips', () => {
     await user.click(
       within(screen.getByRole('group', { name: 'Period' })).getByRole('button', { name: '7D' }),
     );
-    await user.click(screen.getByRole('button', { name: 'Filters' }));
+    await user.click(screen.getByRole('button', { name: /^Filters/ }));
     await user.type(screen.getByLabelText('ROI from (%)'), '30');
     await user.click(screen.getByRole('button', { name: 'Apply' }));
     await screen.findByText('0xaaaa...aaaa');
 
     vi.mocked(searchTraders).mockClear();
-    await user.click(screen.getByRole('button', { name: 'Filters' }));
+    await user.click(screen.getByRole('button', { name: /^Filters/ }));
     await user.click(screen.getByRole('button', { name: 'Reset' }));
 
     const lastQuery = vi.mocked(searchTraders).mock.lastCall?.[0];
@@ -175,7 +175,7 @@ describe('FilterChips', () => {
       within(screen.getByRole('group', { name: 'Period' })).getByRole('button', { name: '7D' }),
     ).toHaveAttribute('aria-pressed', 'true');
 
-    await user.click(screen.getByRole('button', { name: 'Filters' }));
+    await user.click(screen.getByRole('button', { name: /^Filters/ }));
     expect(screen.getByLabelText('ROI from (%)')).toHaveValue('');
   });
 });

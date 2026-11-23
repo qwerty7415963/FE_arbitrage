@@ -981,3 +981,16 @@ reviewing diffs â€” never blindly.
 - Marketing layout uses Logo in header/footer instead of text-only.
 - SEO: src/app/[locale]/(marketing)/opengraph-image.tsx renders brand, title, description via next/og.
 - 2026-11-22: Scanner mobile row tap fix: touch-manipulation, keyboard activation, visible action buttons, prefetch guard; E2E scanner-mobile-tap.spec.ts.
+
+## III. Scanner Redesign (UI) — new/updated
+
+| Component              | Test file                                            | Notes                                                   |
+| ---------------------- | ---------------------------------------------------- | ------------------------------------------------------- |
+| LongShortBar           | tests/unit/components/long-short-bar.test.tsx        | split bar, nulls, a11y                                  |
+| ScannerPageHeader      | tests/unit/components/scanner-page-header.test.tsx   | last updated i18n                                       |
+| ScannerBottomBar       | tests/unit/components/scanner-bottom-bar.test.tsx    | showing/no results                                      |
+| Pagination (compact)   | tests/unit/components/pagination.test.tsx            | compact variant                                         |
+| ScannerToolbar         | tests/unit/components/scanner-toolbar.test.tsx       | period/venue/filters/save dialog                        |
+| ScannerFiltersPanel    | tests/unit/components/scanner-filters-panel.test.tsx | docked/sheet, presets, checkbox                         |
+| TraderTable (redesign) | tests/unit/components/trader-table.test.tsx          | columns, split bar, view action                         |
+| Visual snapshots       | tests/e2e/visual.spec.ts                             | scanner default/results/narrow/filters-open regenerated |

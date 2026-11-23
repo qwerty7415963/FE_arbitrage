@@ -17,9 +17,31 @@ export interface PaginationProps {
   pageSize?: number;
   total?: number;
   onPageSizeChange?: (size: number) => void;
+  compact?: boolean;
 }
 
-export function getPageNumbers(current: number, total: number): (number | '...')[] {
+type PageNumbersOption = boolean | { compact?: boolean };
+
+export function getPageNumbers(
+  current: number,
+  total: number,
+  compactOption?: PageNumbersOption,
+): (number | '...')[] {
+  const compact = typeof compactOption === 'boolean' ? compactOption : !!compactOption?.compact;
+
+  if (compact) {
+    if (total <= 5) {
+      return Array.from({ length: total }, (_, i) => i + 1);
+    }
+    if (current <= 3) {
+      return [1, 2, 3, 4, '...', total];
+    }
+    if (current >= total - 2) {
+      return [1, '...', total - 3, total - 2, total - 1, total];
+    }
+    return [1, '...', current - 1, current, current + 1, '...', total];
+  }
+
   if (total <= 7) {
     return Array.from({ length: total }, (_, i) => i + 1);
   }
@@ -53,13 +75,15 @@ export function Pagination({
   disabled,
   pageSize,
   onPageSizeChange,
+  compact = false,
 }: PaginationProps) {
   const t = useTranslations('traders');
   const tc = useTranslations('common');
 
+  if (compact && totalPages <= 1) return null;
   if (totalPages <= 1 && !onPageSizeChange) return null;
 
-  const pages = getPageNumbers(currentPage, totalPages);
+  const pages = getPageNumbers(currentPage, totalPages, compact);
   const safePageSize = pageSize ?? 20;
 
   return (
@@ -68,7 +92,7 @@ export function Pagination({
       className="flex flex-col gap-3 border-t pt-3 sm:flex-row sm:items-center sm:justify-between"
     >
       <div className="flex flex-wrap items-center gap-2">
-        {onPageSizeChange && (
+        {onPageSizeChange && !compact && (
           <select
             aria-label={t('pageSize')}
             value={safePageSize}
@@ -85,15 +109,17 @@ export function Pagination({
         )}
 
         <div className="flex flex-wrap items-center gap-1">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onPageChange(1)}
-            disabled={disabled || currentPage <= 1}
-            aria-label={tc('firstPage')}
-          >
-            <ChevronsLeftIcon className="h-4 w-4" />
-          </Button>
+          {!compact && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onPageChange(1)}
+              disabled={disabled || currentPage <= 1}
+              aria-label={tc('firstPage')}
+            >
+              <ChevronsLeftIcon className="h-4 w-4" />
+            </Button>
+          )}
           <Button
             variant="outline"
             size="sm"
@@ -140,15 +166,17 @@ export function Pagination({
           >
             <ChevronRightIcon className="h-4 w-4" />
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onPageChange(totalPages)}
-            disabled={disabled || currentPage >= totalPages}
-            aria-label={tc('lastPage')}
-          >
-            <ChevronsRightIcon className="h-4 w-4" />
-          </Button>
+          {!compact && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onPageChange(totalPages)}
+              disabled={disabled || currentPage >= totalPages}
+              aria-label={tc('lastPage')}
+            >
+              <ChevronsRightIcon className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       </div>
     </nav>

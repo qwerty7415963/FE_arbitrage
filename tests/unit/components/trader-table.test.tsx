@@ -64,20 +64,26 @@ describe('TraderTable', () => {
     expect(screen.getByText('$2.50M')).toBeInTheDocument();
     expect(screen.getByText('1,234')).toBeInTheDocument();
     expect(screen.getByText('1.86')).toBeInTheDocument();
-    expect(screen.getByText('70.00% / 25.00%')).toBeInTheDocument();
-    const lastTrade = screen.getByText('yesterday');
-    expect(lastTrade).toBeInTheDocument();
-    expect(lastTrade).toHaveAttribute('title', '2026-09-30 12:00:00 UTC');
+    expect(screen.getByText('71% / 29%')).toBeInTheDocument();
     expect(screen.getByLabelText('Ready')).toBeInTheDocument();
   });
 
   it('renders dashes for null metrics', () => {
     renderTable({
-      rows: [{ ...row, profit_factor: null, long_wins: null, short_wins: null, roi: null }],
+      rows: [
+        {
+          ...row,
+          profit_factor: null,
+          long_wins: null,
+          short_wins: null,
+          roi: null,
+          long_count: 0,
+          short_count: 0,
+        },
+      ],
     });
     const cells = screen.getAllByText('—');
     expect(cells.length).toBeGreaterThan(0);
-    expect(screen.getByText((_, el) => el?.textContent === '— / —')).toBeInTheDocument();
   });
 
   it('copies the full address and shows feedback', async () => {
@@ -113,7 +119,7 @@ describe('TraderTable', () => {
     renderTable({ selectable: true, selected: [], onSelect, onView, onAdd });
     await user.click(screen.getByRole('checkbox', { name: `Select ${row.wallet_address}` }));
     expect(onSelect).toHaveBeenCalledWith([row.wallet_address]);
-    await user.click(screen.getByRole('button', { name: 'View detail' }));
+    await user.click(screen.getByRole('button', { name: 'View' }));
     expect(onView).toHaveBeenCalledWith(row);
     await user.click(screen.getByRole('button', { name: 'Add to group' }));
     expect(onAdd).toHaveBeenCalledWith(row);

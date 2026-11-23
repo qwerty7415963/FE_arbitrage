@@ -172,7 +172,7 @@ describe('FilterSheet', () => {
     const user = userEvent.setup();
     render(<Harness initialOpen />);
     const active = screen.getByRole('button', { name: 'Win rate 55%' });
-    const idle = screen.getByRole('button', { name: 'Win rate 50%' });
+    const idle = screen.getByRole('button', { name: 'Win rate 30%' });
     expect(active).toHaveAttribute('aria-pressed', 'false');
     expect(idle).toHaveAttribute('aria-pressed', 'false');
 
@@ -200,9 +200,9 @@ describe('FilterSheet', () => {
     render(<Harness initialOpen />);
     await user.click(screen.getByRole('button', { name: 'Win rate Custom' }));
     expect(screen.getByLabelText('Win rate from (%)')).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Win rate 50%' }));
+    await user.click(screen.getByRole('button', { name: 'Win rate 30%' }));
     expect(screen.queryByLabelText('Win rate from (%)')).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Win rate 50%' })).toHaveAttribute(
+    expect(screen.getByRole('button', { name: 'Win rate 30%' })).toHaveAttribute(
       'aria-pressed',
       'true',
     );
@@ -223,7 +223,7 @@ describe('FilterSheet', () => {
 
   it('renders preset option buttons at sm size', () => {
     render(<Harness initialOpen />);
-    for (const name of ['Win rate 50%', 'Profit factor 1.0', 'Last trade 24 hours']) {
+    for (const name of ['Win rate 30%', 'Profit factor 1.0', 'Last trade 24 hours']) {
       expect(screen.getByRole('button', { name })).toHaveClass('h-7');
     }
   });
