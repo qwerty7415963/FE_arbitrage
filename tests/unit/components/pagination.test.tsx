@@ -83,4 +83,27 @@ describe('Pagination', () => {
     await user.selectOptions(select, '50');
     expect(onPageSizeChange).toHaveBeenCalledWith(50);
   });
+
+  describe('compact', () => {
+    it('hides first/last buttons and page size select', () => {
+      renderPagination({
+        currentPage: 2,
+        totalPages: 5,
+        onPageChange: () => {},
+        onPageSizeChange: () => {},
+        compact: true,
+      });
+      expect(screen.queryByLabelText('First page')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Last page')).not.toBeInTheDocument();
+      expect(screen.queryByRole('combobox', { name: 'Page size' })).not.toBeInTheDocument();
+      expect(screen.getByLabelText('Previous page')).toBeInTheDocument();
+      expect(screen.getByLabelText('Next page')).toBeInTheDocument();
+    });
+
+    it('shows at most 5 numbered pages', () => {
+      renderPagination({ currentPage: 5, totalPages: 10, onPageChange: () => {}, compact: true });
+      const pageButtons = screen.getAllByRole('button', { name: /^Page \d+$/ });
+      expect(pageButtons.length).toBeLessThanOrEqual(5);
+    });
+  });
 });

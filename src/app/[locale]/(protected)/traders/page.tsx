@@ -1,11 +1,12 @@
 'use client';
 
-import { Suspense, useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ApiError } from '@/infrastructure/api-client';
+import { useAuthStore } from '@/lib/stores/auth';
 import { searchTraders } from '@/services/traders';
 import { validateTraderSearch } from '@/lib/trader-validation';
 import {
@@ -22,19 +23,15 @@ import {
   type FilterDraft,
   type MetricFilterKey,
 } from '@/lib/trader-filter-draft';
-import { ScannerCommandBar } from './_components/scanner-command-bar';
-import { FilterSheet } from './_components/filter-sheet';
+import { ScannerPageHeader } from './_components/scanner-page-header';
+import { ScannerToolbar } from './_components/scanner-toolbar';
+import { ScannerBottomBar } from './_components/scanner-bottom-bar';
+import { ScannerFiltersPanel } from './_components/scanner-filters-panel';
 import { FilterChips } from './_components/filter-chips';
 import { deriveActiveFilters } from './_components/filter-chips';
 import { TraderTable } from '@/components/shared/traders/trader-table';
 import { AddToTraderGroupModal } from '@/components/shared/traders/add-to-trader-group-modal';
-import {
-  getSavedSearchesSnapshot,
-  getServerSavedSearchesSnapshot,
-  sanitizeTraderSearchQuery,
-  subscribeSavedSearches,
-} from '@/lib/trader-saved-searches';
-import { Pagination } from '@/components/shared/pagination';
+import { saveSavedSearch } from '@/lib/trader-saved-searches';
 import {
   DEFAULT_SORT_BY,
   DEFAULT_SORT_DIRECTION,
@@ -74,6 +71,7 @@ function ScannerContent() {
   const locale = params.locale;
   const groupParam = searchParams.get('group') ?? undefined;
   const t = useTranslations('traders');
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
   const [form, setForm] = useState<FilterDraft>(() => {
     // The scanner no longer has a group picker: an explicit ?group_id= in a
@@ -96,6 +94,7 @@ function ScannerContent() {
   );
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [rows, setRows] = useState<PeriodMetrics[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
@@ -105,12 +104,17 @@ function ScannerContent() {
   const [addOpen, setAddOpen] = useState(false);
   const [addMembers, setAddMembers] = useState<MemberInput[]>([]);
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const savedSearches = useSyncExternalStore(
-    subscribeSavedSearches,
-    getSavedSearchesSnapshot,
-    getServerSavedSearchesSnapshot,
+  const [isDesktop, setIsDesktop] = useState(
+    () => typeof window !== 'undefined' && window.innerWidth >= 1024,
   );
-
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return;
+    const mq = window.matchMedia('(min-width: 1024px)');
+    const update = () => setIsDesktop(mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, []);
   const abortRef = useRef<AbortController | null>(null);
   const requestIdRef = useRef(0);
   const lastRequestRef = useRef<{ query: TraderSearchQuery } | null>(null);
@@ -177,6 +181,7 @@ function ScannerContent() {
         setTotal(serverTotal);
         setSelected([]);
         setHasSearched(true);
+        setLastUpdated(new Date());
       } catch (err) {
         if (requestIdRef.current !== requestId) return;
         if (err instanceof ApiError && err.code === 'ABORTED') return;
@@ -233,6 +238,24 @@ function ScannerContent() {
   const handleResetFilters = useCallback(() => {
     commitDraft(clearMetricFilters(form));
   }, [commitDraft, form]);
+
+  const handleVenueChange = useCallback(
+    (venue: string) => {
+      const next = { ...form, venue };
+      setForm(next);
+      const query: TraderSearchQuery = {
+        ...draftToQuery(next),
+        sortBy,
+        sortDirection,
+        limit: pageSize,
+        page: 1,
+      };
+      setCurrentPage(1);
+      syncUrl(query);
+      void runSearch(query);
+    },
+    [form, sortBy, sortDirection, pageSize, syncUrl, runSearch],
+  );
 
   const handlePeriodChange = useCallback(
     (period: TraderPeriod) => {
@@ -294,16 +317,18 @@ function ScannerContent() {
     [form, sortBy, sortDirection, syncUrl, runSearch],
   );
 
+  const handleSaveFilter = useCallback(
+    (name: string) => {
+      const currentQuery = lastRequestRef.current?.query ?? effectiveQuery();
+      saveSavedSearch(name, currentQuery);
+    },
+    [effectiveQuery],
+  );
+
   const handleRetry = useCallback(() => {
     const last = lastRequestRef.current;
     if (last) void runSearch(last.query);
   }, [runSearch]);
-
-  const handleRefresh = useCallback(() => {
-    const last = lastRequestRef.current;
-    if (last) void runSearch(last.query);
-    else void runSearch(effectiveQuery({ page: currentPage }));
-  }, [runSearch, effectiveQuery, currentPage]);
 
   const handleReset = useCallback(() => {
     abortRef.current?.abort();
@@ -414,34 +439,44 @@ function ScannerContent() {
   const showSkeleton = isSearching && rows.length === 0;
   const showEmpty = hasSearched && !isSearching && rows.length === 0 && !error;
 
+  const start = total === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+  const end = total === 0 ? 0 : Math.min(currentPage * pageSize, total);
+
+  const resultText = hasSearched
+    ? t('resultsPaged', {
+        current: currentPage,
+        total: totalPages,
+        count: total.toLocaleString('en-US'),
+      })
+    : null;
+
   const filtersCount = deriveActiveFilters(
     form,
     (key) => t(key),
     t('filterSheet.lastTradeLabel'),
   ).length;
 
-  const savedViews = savedSearches.map((search) => ({
-    name: search.name,
-    onApply: () => handleApplySavedSearch(sanitizeTraderSearchQuery(search.query)),
-  }));
-
   return (
     <div className="flex flex-1 flex-col gap-4">
-      <ScannerCommandBar
-        title={t('title')}
+      <ScannerPageHeader title={t('title')} lastUpdated={lastUpdated} locale={locale} />
+
+      <ScannerToolbar
         period={form.period}
         onPeriodChange={handlePeriodChange}
         venue={form.venue}
+        venues={['hyperliquid', 'binance']}
+        onVenueChange={handleVenueChange}
         filtersOpen={filtersOpen}
         onToggleFilters={() => setFiltersOpen((open) => !open)}
-        disabled={isSearching}
-        refresh={handleRefresh}
         filtersCount={filtersCount}
-        savedViews={savedViews}
+        disabled={isSearching}
+        onSaveFilter={handleSaveFilter}
+        resultText={resultText}
       />
 
-      <div id="scanner-metric-filters">
-        <FilterSheet
+      {!isDesktop && (
+        <ScannerFiltersPanel
+          variant="sheet"
           open={filtersOpen}
           onOpenChange={setFiltersOpen}
           draft={form}
@@ -452,92 +487,119 @@ function ScannerContent() {
           sortDirection={sortDirection}
           disabled={isSearching}
         />
-      </div>
+      )}
 
-      <FilterChips
-        draft={form}
-        onRemove={handleRemoveMetricFilter}
-        onClearAll={handleResetFilters}
-        disabled={isSearching}
-      />
+      <div className={filtersOpen ? 'gap-4 lg:grid lg:grid-cols-[minmax(0,1fr)_320px]' : ''}>
+        <div className="flex min-w-0 flex-col gap-4">
+          <FilterChips
+            draft={form}
+            onRemove={handleRemoveMetricFilter}
+            onClearAll={handleResetFilters}
+            disabled={isSearching}
+          />
 
-      {error && (
-        <div className="bg-destructive/10 text-destructive rounded-md p-3 text-sm">
-          {t(error)}{' '}
-          {canRetry && (
-            <Button variant="outline" size="sm" className="ml-2" onClick={handleRetry}>
-              {t('retry')}
-            </Button>
+          {error && (
+            <div className="bg-destructive/10 text-destructive rounded-md p-3 text-sm">
+              {t(error)}{' '}
+              {canRetry && (
+                <Button variant="outline" size="sm" className="ml-2" onClick={handleRetry}>
+                  {t('retry')}
+                </Button>
+              )}
+            </div>
+          )}
+
+          {hasSearched && isSearching && rows.length > 0 && (
+            <div className="flex items-center justify-end gap-2">
+              <span className="text-muted-foreground inline-flex items-center text-sm">
+                <Loader2Icon className="mr-1 h-3 w-3 animate-spin" />
+                {t('updating')}
+              </span>
+            </div>
+          )}
+
+          {selected.length > 0 && (
+            <div className="bg-muted/30 flex flex-wrap items-center gap-2 rounded-md border p-2 max-sm:fixed max-sm:inset-x-0 max-sm:bottom-0 max-sm:z-30 max-sm:rounded-none max-sm:border-t">
+              <span className="text-sm font-medium">
+                {t('selectedCount', { count: selected.length })}
+              </span>
+              {isAuthenticated && (
+                <Button size="sm" onClick={() => openAddForAddresses(selected)}>
+                  <PlusIcon className="mr-2 h-4 w-4" />
+                  {t('addToGroup')}
+                </Button>
+              )}
+              <Button size="sm" variant="ghost" onClick={() => setSelected([])}>
+                {t('clearAll')}
+              </Button>
+            </div>
+          )}
+
+          {showSkeleton ? (
+            <div className="flex flex-col gap-2" role="status" aria-label={t('loading')}>
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Skeleton key={i} className="h-12" />
+              ))}
+            </div>
+          ) : (
+            rows.length > 0 && (
+              <>
+                <TraderTable
+                  rows={rows}
+                  period={form.period}
+                  sortBy={sortBy}
+                  sortDirection={sortDirection}
+                  onSortChange={handleSortChange}
+                  selectable
+                  selected={selected}
+                  onSelect={setSelected}
+                  onView={(row) => router.push(`/${locale}/traders/${row.wallet_address}`)}
+                  onAdd={
+                    isAuthenticated ? (row) => openAddForAddresses([row.wallet_address]) : undefined
+                  }
+                />
+                <ScannerBottomBar
+                  compact
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  total={total}
+                  pageSize={pageSize}
+                  onPageChange={handlePageChange}
+                  onPageSizeChange={handlePageSizeChange}
+                  disabled={isSearching}
+                  start={start}
+                  end={end}
+                />
+              </>
+            )
+          )}
+
+          {showEmpty && (
+            <div className="flex flex-col items-center gap-3 py-12">
+              <p className="text-muted-foreground text-sm">{t('noTraders')}</p>
+              <Button variant="outline" size="sm" onClick={handleReset}>
+                {t('resetFilters')}
+              </Button>
+            </div>
           )}
         </div>
-      )}
-
-      {hasSearched && isSearching && rows.length > 0 && (
-        <div className="flex items-center justify-end gap-2">
-          <span className="text-muted-foreground inline-flex items-center text-sm">
-            <Loader2Icon className="mr-1 h-3 w-3 animate-spin" />
-            {t('updating')}
-          </span>
-        </div>
-      )}
-
-      {selected.length > 0 && (
-        <div className="bg-muted/30 flex flex-wrap items-center gap-2 rounded-md border p-2 max-sm:fixed max-sm:inset-x-0 max-sm:bottom-0 max-sm:z-30 max-sm:rounded-none max-sm:border-t">
-          <span className="text-sm font-medium">
-            {t('selectedCount', { count: selected.length })}
-          </span>
-          <Button size="sm" onClick={() => openAddForAddresses(selected)}>
-            <PlusIcon className="mr-2 h-4 w-4" />
-            {t('addToGroup')}
-          </Button>
-          <Button size="sm" variant="ghost" onClick={() => setSelected([])}>
-            {t('clearAll')}
-          </Button>
-        </div>
-      )}
-
-      {showSkeleton ? (
-        <div className="flex flex-col gap-2" role="status" aria-label={t('loading')}>
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={i} className="h-12" />
-          ))}
-        </div>
-      ) : (
-        rows.length > 0 && (
-          <>
-            <TraderTable
-              rows={rows}
-              period={form.period}
+        {isDesktop && filtersOpen && (
+          <div className="hidden lg:block">
+            <ScannerFiltersPanel
+              variant="docked"
+              open={filtersOpen}
+              onOpenChange={setFiltersOpen}
+              draft={form}
+              onApply={applyDraft}
+              onResetFilters={handleResetFilters}
+              onApplySavedSearch={handleApplySavedSearch}
               sortBy={sortBy}
               sortDirection={sortDirection}
-              onSortChange={handleSortChange}
-              selectable
-              selected={selected}
-              onSelect={setSelected}
-              onView={(row) => router.push(`/${locale}/traders/${row.wallet_address}`)}
-              onAdd={(row) => openAddForAddresses([row.wallet_address])}
-            />
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              total={total}
-              pageSize={pageSize}
-              onPageChange={handlePageChange}
-              onPageSizeChange={handlePageSizeChange}
               disabled={isSearching}
             />
-          </>
-        )
-      )}
-
-      {showEmpty && (
-        <div className="flex flex-col items-center gap-3 py-12">
-          <p className="text-muted-foreground text-sm">{t('noTraders')}</p>
-          <Button variant="outline" size="sm" onClick={handleReset}>
-            {t('resetFilters')}
-          </Button>
-        </div>
-      )}
+          </div>
+        )}
+      </div>
 
       <AddToTraderGroupModal
         open={addOpen}

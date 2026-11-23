@@ -72,7 +72,7 @@ function renderPage() {
 }
 
 async function openFilters(user: ReturnType<typeof userEvent.setup>) {
-  await user.click(screen.getByRole('button', { name: 'Filters' }));
+  await user.click(screen.getByRole('button', { name: /^Filters/ }));
 }
 
 async function applyFilters(user: ReturnType<typeof userEvent.setup>) {

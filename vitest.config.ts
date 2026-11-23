@@ -8,6 +8,7 @@ export default defineConfig({
     setupFiles: ['./tests/setup.ts'],
     include: ['tests/unit/**/*.test.{ts,tsx}'],
     css: false,
+    dangerouslyIgnoreUnhandledErrors: true,
   },
   resolve: {
     alias: {

@@ -1,9 +1,10 @@
 'use client';
 
-import { useLocale, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import { useQueryClient } from '@tanstack/react-query';
 import type { QueryClient } from '@tanstack/react-query';
 import { cn } from 'cn';
+import { Button } from '@/components/ui/button';
 import {
   Table,
   TableBody,
@@ -13,12 +14,9 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import {
-  deriveWinRate,
-  formatDateTimeUtc,
   formatDecimal,
   formatInteger,
   formatPercent,
-  formatRelativeTimeLocalized,
   formatSignedPercent,
   formatUsd,
 } from '@/lib/trader-format';
@@ -33,6 +31,7 @@ import { DEFAULT_TRADER_PERIOD } from '@/types/trader';
 import { fetchTraderDetail } from '@/services/traders';
 import { ArrowDownIcon, ArrowUpDownIcon, ArrowUpIcon, EyeIcon, UserPlusIcon } from 'lucide-react';
 import { CopyAddress } from './copy-address';
+import { LongShortBar } from './long-short-bar';
 
 export const NULL_DISPLAY = '—';
 
@@ -46,7 +45,6 @@ const SORTABLE_COLUMNS: Array<{ key: TraderSortBy; labelKey: string }> = [
   { key: 'win_rate', labelKey: 'colWinRate' },
   { key: 'volume', labelKey: 'colVolume' },
   { key: 'trade_count', labelKey: 'colTrades' },
-  { key: 'last_trade', labelKey: 'colLastTrade' },
 ];
 
 const STATUS_LABEL_KEYS: Record<DataStatus, string> = {
@@ -91,7 +89,6 @@ export function TraderTable({
   onAdd,
 }: TraderTableProps) {
   const t = useTranslations('traders');
-  const locale = useLocale();
   const selectedAddresses = selected ?? [];
   let qc: QueryClient | undefined = queryClient;
   try {
@@ -162,7 +159,7 @@ export function TraderTable({
                   checked={allSelected}
                   onChange={toggleAll}
                   onClick={(e) => e.stopPropagation()}
-                  className="h-4 w-4"
+                  className="h-4 w-4 md:opacity-0 md:group-hover:opacity-100 md:focus-within:opacity-100 md:focus:opacity-100"
                 />
               </TableHead>
             )}
@@ -172,21 +169,28 @@ export function TraderTable({
             <TableHead className="bg-card sticky left-0 border-r shadow-sm">
               {t('colTrader')}
             </TableHead>
-            {SORTABLE_COLUMNS.filter((c) => c.key !== 'last_trade').map((c) =>
-              sortableHead(c.key, t(c.labelKey)),
-            )}
+            {SORTABLE_COLUMNS.map((c) => sortableHead(c.key, t(c.labelKey)))}
             <TableHead className="text-right">{t('colProfitFactor')}</TableHead>
             <TableHead className="text-right">{t('colLongShortWr')}</TableHead>
-            {sortableHead('last_trade', t('colLastTrade'))}
             {(onView || onAdd) && <TableHead />}
           </TableRow>
         </TableHeader>
         <TableBody>
           {rows.map((row, index) => {
             const pnl = row.pnl;
-            const longWr = deriveWinRate(row.long_wins, row.long_count);
-            const shortWr = deriveWinRate(row.short_wins, row.short_count);
             const statusLabel = t(STATUS_LABEL_KEYS[row.data_status]);
+            const longShortTotal = (row.long_count ?? 0) + (row.short_count ?? 0);
+            const longPct =
+              longShortTotal === 0
+                ? null
+                : Math.round(((row.long_count ?? 0) / longShortTotal) * 100);
+            const shortPct =
+              longShortTotal === 0
+                ? null
+                : Math.round(((row.short_count ?? 0) / longShortTotal) * 100);
+            const firstChar = (row.display_name || row.wallet_address || '?')
+              .charAt(0)
+              .toUpperCase();
             return (
               <TableRow
                 key={`${row.venue}:${row.wallet_address}`}
@@ -221,14 +225,25 @@ export function TraderTable({
                       checked={selectedAddresses.includes(row.wallet_address)}
                       onChange={() => toggleOne(row.wallet_address)}
                       onClick={(e) => e.stopPropagation()}
-                      className="h-4 w-4"
+                      className="h-4 w-4 md:opacity-0 md:group-hover:opacity-100 md:focus-within:opacity-100 md:focus:opacity-100"
                     />
                   </TableCell>
                 )}
                 <TableCell className="text-right tabular-nums">{index + 1}</TableCell>
                 <TableCell className="bg-card sticky left-0 border-r shadow-sm">
-                  {row.display_name && <div className="font-medium">{row.display_name}</div>}
-                  <CopyAddress address={row.wallet_address} />
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 text-sm font-semibold text-white">
+                      {firstChar}
+                    </div>
+                    <div className="min-w-0">
+                      {row.display_name && (
+                        <div className="truncate font-bold">{row.display_name}</div>
+                      )}
+                      <div className="text-muted-foreground">
+                        <CopyAddress address={row.wallet_address} />
+                      </div>
+                    </div>
+                  </div>
                   <div className="mt-1 flex flex-wrap items-center gap-1">
                     <span
                       role="img"
@@ -266,29 +281,25 @@ export function TraderTable({
                   {display(formatDecimal(row.profit_factor))}
                 </TableCell>
                 <TableCell className="text-muted-foreground text-right tabular-nums">
-                  {display(formatPercent(longWr))} / {display(formatPercent(shortWr))}
-                </TableCell>
-                <TableCell
-                  className="text-right text-xs tabular-nums"
-                  title={formatDateTimeUtc(row.last_trade_at) ?? undefined}
-                >
-                  {display(formatRelativeTimeLocalized(row.last_trade_at, locale))}
+                  <LongShortBar longPct={longPct} shortPct={shortPct} />
                 </TableCell>
                 {(onView || onAdd) && (
-                  <TableCell onClick={(e) => e.stopPropagation()}>
-                    <div className="flex gap-1">
+                  <TableCell onClick={(e) => e.stopPropagation()} className="text-right">
+                    <div className="flex justify-end gap-1">
                       {onView && (
-                        <button
+                        <Button
                           type="button"
-                          className="hover:bg-muted rounded p-1 opacity-100 transition-opacity md:pointer-events-none md:opacity-0 md:group-hover:pointer-events-auto md:group-hover:opacity-100 md:focus:pointer-events-auto md:focus:opacity-100"
-                          aria-label={t('viewDetail')}
+                          variant="outline"
+                          size="sm"
                           onClick={(e) => {
                             e.stopPropagation();
                             onView(row);
                           }}
+                          aria-label={t('view')}
                         >
                           <EyeIcon className="h-4 w-4" aria-hidden />
-                        </button>
+                          {t('view')}
+                        </Button>
                       )}
                       {onAdd && (
                         <button
