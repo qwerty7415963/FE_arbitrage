@@ -34,7 +34,12 @@ export function ConnectWalletButton() {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-48">
-          <DropdownMenuItem variant="destructive" onClick={disconnectWallet}>
+          <DropdownMenuItem
+            variant="destructive"
+            onClick={() => {
+              void disconnectWallet();
+            }}
+          >
             <LogOutIcon className="mr-2 h-4 w-4" />
             {t('disconnect')}
           </DropdownMenuItem>
@@ -47,7 +52,7 @@ export function ConnectWalletButton() {
     <Button
       variant="outline"
       onClick={() => {
-        void connectWallet();
+        void connectWallet().catch(() => {});
       }}
     >
       <WalletIcon className="mr-2 h-4 w-4" />

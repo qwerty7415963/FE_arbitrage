@@ -98,6 +98,45 @@ describe('auth store', () => {
       expect(useAuthStore.getState().isConnecting).toBe(false);
     });
 
+    it('swallows rejection reported only via message', async () => {
+      vi.mocked(connect).mockRejectedValue(new Error('User rejected the request.'));
+
+      await expect(useAuthStore.getState().connectWallet()).resolves.toBeUndefined();
+      expect(useAuthStore.getState().error).toBeNull();
+      expect(useAuthStore.getState().isConnecting).toBe(false);
+    });
+
+    it('swallows wagmi-style rejection via shortMessage', async () => {
+      vi.mocked(connect).mockRejectedValue(
+        Object.assign(new Error('request failed'), {
+          shortMessage: 'User denied transaction signature.',
+        }),
+      );
+
+      await expect(useAuthStore.getState().connectWallet()).resolves.toBeUndefined();
+      expect(useAuthStore.getState().error).toBeNull();
+      expect(useAuthStore.getState().isConnecting).toBe(false);
+    });
+
+    it('swallows WalletConnect modal close rejection', async () => {
+      vi.mocked(connect).mockRejectedValue(
+        new Error('Connection request reset. Please try again.'),
+      );
+
+      await expect(useAuthStore.getState().connectWallet()).resolves.toBeUndefined();
+      expect(useAuthStore.getState().error).toBeNull();
+      expect(useAuthStore.getState().isConnecting).toBe(false);
+    });
+
+    it('swallows modal-closed error by name', async () => {
+      vi.mocked(connect).mockRejectedValue(
+        Object.assign(new Error('Modal closed'), { name: 'WalletConnectModalClosedError' }),
+      );
+
+      await expect(useAuthStore.getState().connectWallet()).resolves.toBeUndefined();
+      expect(useAuthStore.getState().error).toBeNull();
+    });
+
     it('stores generic errors without rejecting', async () => {
       vi.mocked(connect).mockRejectedValue(new Error('boom'));
 

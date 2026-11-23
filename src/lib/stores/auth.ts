@@ -19,15 +19,43 @@ function formatAddress(address: string): string {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
 }
 
-function isUserRejection(error: unknown): boolean {
-  if (!error || typeof error !== 'object') return false;
-  const e = error as { name?: string; code?: number; cause?: unknown };
-  return (
-    e.name === 'UserRejectedRequestError' ||
-    e.code === 4001 ||
-    (typeof e.name === 'string' && e.name.includes('UserRejected')) ||
-    isUserRejection(e.cause)
-  );
+const USER_REJECTION_RE =
+  /user\s*(rejected|denied|cancelled?|closed)|reject(ed)?\s*the\s*request|connection request reset|request reset|modal (was )?closed/i;
+
+function isUserRejection(error: unknown, seen?: WeakSet<object>): boolean {
+  if (error === null || error === undefined) return false;
+  if (typeof error === 'string') {
+    return USER_REJECTION_RE.test(error);
+  }
+  if (typeof error !== 'object') return false;
+
+  const obj = error as Record<string, unknown>;
+  if (!seen) seen = new WeakSet<object>();
+  if (seen.has(obj)) return false;
+  seen.add(obj);
+
+  if (obj.code === 4001) return true;
+
+  const fields = ['name', 'message', 'shortMessage', 'details', 'reason'];
+  const text = fields
+    .map((field) => obj[field])
+    .filter((value): value is string => typeof value === 'string')
+    .join(' ');
+  if (USER_REJECTION_RE.test(text)) return true;
+  if (typeof obj.name === 'string' && /UserRejected|ModalClosed/i.test(obj.name)) return true;
+
+  const errors = obj.errors;
+  if (Array.isArray(errors)) {
+    for (const entry of errors) {
+      if (isUserRejection(entry, seen)) return true;
+    }
+  }
+
+  if (obj.cause !== undefined && obj.cause !== null) {
+    if (isUserRejection(obj.cause, seen)) return true;
+  }
+
+  return false;
 }
 
 function buildSiweMessage(params: {
@@ -99,8 +127,8 @@ export const useAuthStore = create<AuthState>()(
       },
 
       connectWallet: async () => {
-        set({ isConnecting: true, error: null });
         try {
+          set({ isConnecting: true, error: null });
           const hasExtension = typeof window !== 'undefined' && !!window.ethereum;
 
           const connector = hasExtension
