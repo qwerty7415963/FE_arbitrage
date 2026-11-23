@@ -980,3 +980,4 @@ reviewing diffs â€” never blindly.
 - Assets: public/logo.svg wordmark "HyperScan AI", public/logo-mark.svg monogram H with spread ribbon, public/favicon.svg.
 - Marketing layout uses Logo in header/footer instead of text-only.
 - SEO: src/app/[locale]/(marketing)/opengraph-image.tsx renders brand, title, description via next/og.
+- 2026-11-22: Scanner mobile row tap fix: touch-manipulation, keyboard activation, visible action buttons, prefetch guard; E2E scanner-mobile-tap.spec.ts.

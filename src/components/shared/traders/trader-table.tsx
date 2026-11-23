@@ -150,7 +150,7 @@ export function TraderTable({
     rows.length > 0 && rows.every((r) => selectedAddresses.includes(r.wallet_address));
 
   return (
-    <div className="overflow-x-auto">
+    <div className="relative w-full touch-manipulation">
       <Table>
         <TableHeader className="bg-card sticky top-0 z-10">
           <TableRow>
@@ -190,10 +190,21 @@ export function TraderTable({
             return (
               <TableRow
                 key={`${row.venue}:${row.wallet_address}`}
-                className={cn('group hover:bg-muted/40 cursor-pointer transition-colors')}
+                tabIndex={0}
+                className={cn(
+                  'group hover:bg-muted/40 cursor-pointer touch-manipulation transition-colors select-none',
+                )}
                 onClick={() => onView?.(row)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onView?.(row);
+                  }
+                }}
                 onMouseEnter={() => {
                   if (!qc) return;
+                  if (typeof window !== 'undefined' && !window.matchMedia('(hover: hover)').matches)
+                    return;
                   const wallet = row.wallet_address.toLowerCase();
                   const p = period ?? DEFAULT_TRADER_PERIOD;
                   void qc.prefetchQuery({
@@ -269,7 +280,7 @@ export function TraderTable({
                       {onView && (
                         <button
                           type="button"
-                          className="hover:bg-muted rounded p-1 opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100"
+                          className="hover:bg-muted rounded p-1 opacity-100 transition-opacity md:pointer-events-none md:opacity-0 md:group-hover:pointer-events-auto md:group-hover:opacity-100 md:focus:pointer-events-auto md:focus:opacity-100"
                           aria-label={t('viewDetail')}
                           onClick={(e) => {
                             e.stopPropagation();
@@ -282,7 +293,7 @@ export function TraderTable({
                       {onAdd && (
                         <button
                           type="button"
-                          className="hover:bg-muted rounded p-1 opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100"
+                          className="hover:bg-muted rounded p-1 opacity-100 transition-opacity md:pointer-events-none md:opacity-0 md:group-hover:pointer-events-auto md:group-hover:opacity-100 md:focus:pointer-events-auto md:focus:opacity-100"
                           aria-label={t('addToGroup')}
                           onClick={(e) => {
                             e.stopPropagation();
