@@ -36,7 +36,7 @@ async function expectNoViolations(page: Page) {
 }
 
 async function applyFilters(page: Page) {
-  await page.getByRole('button', { name: 'Filters', exact: true }).click();
+  await page.getByRole('button', { name: /Filters/ }).click();
   await page.getByRole('button', { name: 'Apply', exact: true }).click();
 }
 
@@ -48,11 +48,31 @@ async function mockScanner(page: Page) {
       body: JSON.stringify({ success: true, data: [TRADER], meta: {} }),
     }),
   );
-  await page.route('**/api/v1/trader-groups', (route) =>
+  await page.route('**/api/v1/trader-groups**', (route) =>
     route.fulfill({
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify({ success: true, data: [] }),
+    }),
+  );
+  await page.route('**/api/v1/trader-groups/overview**', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        data: {
+          total_groups: 0,
+          unique_wallets: 0,
+          account_value: null,
+          unrealized_pnl: null,
+          partial: false,
+          missing_wallets: 0,
+          stale_groups: 0,
+          empty_groups: 0,
+          as_of: new Date().toISOString(),
+        },
+      }),
     }),
   );
 }
@@ -153,13 +173,33 @@ test.describe('Accessibility', () => {
 
   test('groups list and create dialog have no violations', async ({ page }) => {
     await seedAuth(page);
-    await page.route('**/api/v1/trader-groups', (route) =>
+    await page.route('**/api/v1/trader-groups**', (route) =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
           success: true,
           data: [{ id: 'g1', user_id: 'u1', name: 'Main', description: null, member_count: 2 }],
+        }),
+      }),
+    );
+    await page.route('**/api/v1/trader-groups/overview**', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          data: {
+            total_groups: 1,
+            unique_wallets: 0,
+            account_value: null,
+            unrealized_pnl: null,
+            partial: false,
+            missing_wallets: 0,
+            stale_groups: 0,
+            empty_groups: 0,
+            as_of: new Date().toISOString(),
+          },
         }),
       }),
     );
@@ -172,6 +212,7 @@ test.describe('Accessibility', () => {
   });
 
   test('add-to-group modal has no violations', async ({ page }) => {
+    await seedAuth(page);
     await mockScanner(page);
     await page.route('**/api/v1/trader-groups', (route) =>
       route.fulfill({
@@ -187,7 +228,10 @@ test.describe('Accessibility', () => {
     await applyFilters(page);
     await expect(page.getByText('Smart Money')).toBeVisible();
     await page.getByLabel(`Select ${TRADER.wallet_address}`).click();
-    await page.getByRole('button', { name: 'Add to group (1)', exact: true }).click();
+    await page
+      .getByRole('status')
+      .getByRole('button', { name: 'Add to group', exact: true })
+      .click();
     await expect(page.getByText('Add wallets to group')).toBeVisible();
     await expectNoViolations(page);
   });
@@ -200,6 +244,7 @@ test.describe('Accessibility', () => {
   for (const { locale, filters } of FILTER_SHEET_LOCALES) {
     test(`open filter sheet has no violations (${locale})`, async ({ page }) => {
       await mockScanner(page);
+      await page.setViewportSize({ width: 375, height: 667 });
       await page.goto(`/${locale}/traders`);
       await page.getByRole('button', { name: filters, exact: true }).click();
       await expect(page.locator('[data-slot="sheet-content"]')).toBeVisible();
@@ -209,12 +254,13 @@ test.describe('Accessibility', () => {
 
   test('open filter sheet with an active chip has no violations', async ({ page }) => {
     await mockScanner(page);
+    await page.setViewportSize({ width: 375, height: 667 });
     await page.goto('/en/traders');
-    await page.getByRole('button', { name: 'Filters', exact: true }).click();
+    await page.getByRole('button', { name: /Filters/ }).click();
     await page.getByLabel('ROI from (%)').fill('20');
     await page.getByRole('button', { name: 'Apply', exact: true }).click();
     await expect(page.getByTestId('filter-chips')).toBeVisible();
-    await page.getByRole('button', { name: 'Filters', exact: true }).click();
+    await page.getByRole('button', { name: /Filters/ }).click();
     await expect(page.locator('[data-slot="sheet-content"]')).toBeVisible();
     await expectNoViolations(page);
   });

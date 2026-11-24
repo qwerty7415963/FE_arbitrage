@@ -91,7 +91,13 @@ test.describe('Funding Arbitrage', () => {
     await page.goto('/en/funding-arbitrage');
 
     await page.getByText('Select venues').click();
-    await page.getByText('Select All').click();
+    for (const code of ['binance', 'extended', 'hyperliquid', 'variational']) {
+      await page
+        .locator('[data-slot="dropdown-menu-item"]')
+        .filter({ hasText: code })
+        .first()
+        .click();
+    }
     await page.keyboard.press('Escape');
     await page.getByText('Search').click();
 
@@ -102,7 +108,13 @@ test.describe('Funding Arbitrage', () => {
     await page.goto('/en/funding-arbitrage');
 
     await page.getByText('Select venues').click();
-    await page.getByText('Select All').click();
+    for (const code of ['binance', 'extended', 'hyperliquid', 'variational']) {
+      await page
+        .locator('[data-slot="dropdown-menu-item"]')
+        .filter({ hasText: code })
+        .first()
+        .click();
+    }
     await page.keyboard.press('Escape');
     await page.getByText('Search').click();
 
@@ -135,7 +147,13 @@ test.describe('Funding Arbitrage', () => {
     await page.goto('/en/funding-arbitrage');
 
     await page.getByText('Select venues').click();
-    await page.getByText('Select All').click();
+    for (const code of ['binance', 'extended', 'hyperliquid', 'variational']) {
+      await page
+        .locator('[data-slot="dropdown-menu-item"]')
+        .filter({ hasText: code })
+        .first()
+        .click();
+    }
     await page.keyboard.press('Escape');
     await page.getByText('Search').click();
 

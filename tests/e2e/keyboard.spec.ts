@@ -57,35 +57,37 @@ test.describe('Keyboard', () => {
     await page.goto('/en/traders');
     await page.locator('body').click();
     const seen: string[] = [];
-    for (let i = 0; i < 24; i += 1) {
+    for (let i = 0; i < 40; i += 1) {
       await page.keyboard.press('Tab');
       const label = await page.evaluate(() => {
         const el = document.activeElement as HTMLElement | null;
         if (!el) return '';
+        if (el === document.body || ['SCRIPT', 'STYLE', 'NOSCRIPT'].includes(el.tagName)) return '';
         const labelledBy = el.closest('label');
         const legend = labelledBy?.querySelector('span')?.textContent;
         if (legend) return legend.trim();
-        return (
+        const out = (
           el.getAttribute('aria-label') ||
           (el as HTMLInputElement).placeholder ||
           el.textContent ||
           ''
         ).trim();
+        return out.length > 40 ? '' : out;
       });
       seen.push(label);
     }
-    // Venue is static text since Phase 4, so it is intentionally absent here.
-    expect(seen).not.toContain('Venue');
+    // Venue is a focusable dropdown in the current toolbar.
+    expect(seen).toContain('Venue');
     // Search/Reset moved into the filter sheet (Phase 5), so they are not in the
     // closed-sheet tab order. Only the header controls remain reachable.
     // The scanner no longer has a group picker, so Group is absent.
-    for (const expected of ['Period', 'Filters']) {
+    for (const expected of ['1D', 'Filters']) {
       expect(seen).toContain(expected);
     }
     expect(seen).not.toContain('Group');
     expect(seen).not.toContain('Search');
     expect(seen).not.toContain('Reset');
-    expect(seen.indexOf('Period')).toBeLessThan(seen.indexOf('Filters'));
+    expect(seen.indexOf('1D')).toBeLessThan(seen.indexOf('Filters'));
   });
 
   test('sort header activates with Enter', async ({ page }) => {
@@ -145,6 +147,7 @@ test.describe('Keyboard', () => {
   test('filter sheet closes with Escape and returns focus to the header Filters button', async ({
     page,
   }) => {
+    await page.setViewportSize({ width: 375, height: 900 });
     await mockScanner(page);
     await page.goto('/en/traders');
     const filters = page.getByRole('button', { name: 'Filters', exact: true });

@@ -286,7 +286,7 @@ test.describe('Wallet live (contract v1.2 wallet.* envelope)', () => {
     const feed = page.getByRole('region', { name: 'Recent Activity' });
     for (const status of ['DISCONNECTED', 'RECONNECTING', 'RESYNCING', 'RECONCILING', 'ERROR']) {
       await broadcast(page, { type: 'wallet.connection.updated', data: { status } });
-      await expect(feed.getByText('LIVE')).toHaveCount(0);
+      await expect(feed.getByText('LIVE', { exact: true })).toHaveCount(0);
     }
     await broadcast(page, { type: 'wallet.connection.updated', data: { status: 'LIVE' } });
     await expect(feed.getByText('LIVE').first()).toBeVisible();
