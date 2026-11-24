@@ -47,11 +47,31 @@ test.beforeEach(async ({ page }) => {
       }),
     }),
   );
-  await page.route('**/api/v1/trader-groups', (route) =>
+  await page.route('**/api/v1/trader-groups**', (route) =>
     route.fulfill({
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify({ success: true, data: [] }),
+    }),
+  );
+  await page.route('**/api/v1/trader-groups/overview**', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        data: {
+          total_groups: 0,
+          unique_wallets: 0,
+          account_value: null,
+          unrealized_pnl: null,
+          partial: false,
+          missing_wallets: 0,
+          stale_groups: 0,
+          empty_groups: 0,
+          as_of: new Date().toISOString(),
+        },
+      }),
     }),
   );
 });
@@ -69,7 +89,7 @@ test.describe('Groups', () => {
 
   test('shows empty state when no groups', async ({ page }) => {
     await seedAuth(page);
-    await page.route('**/api/v1/trader-groups', (route) =>
+    await page.route('**/api/v1/trader-groups**', (route) =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -82,7 +102,7 @@ test.describe('Groups', () => {
 
   test('create group dialog opens and validates blank name', async ({ page }) => {
     await seedAuth(page);
-    await page.route('**/api/v1/trader-groups', (route) =>
+    await page.route('**/api/v1/trader-groups**', (route) =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -100,7 +120,7 @@ test.describe('Groups', () => {
 
   test('lists groups from API', async ({ page }) => {
     await seedAuth(page);
-    await page.route('**/api/v1/trader-groups', (route) =>
+    await page.route('**/api/v1/trader-groups**', (route) =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -113,6 +133,17 @@ test.describe('Groups', () => {
               name: 'Main',
               description: 'desc',
               member_count: 2,
+              is_favorite: false,
+              account_value: 1000,
+              unrealized_pnl: 10,
+              roi: 0.05,
+              volume: 500,
+              open_positions: 1,
+              win_rate: 0.5,
+              updated_at: new Date().toISOString(),
+              data_status: 'ready',
+              partial: false,
+              missing_wallets: 0,
             },
           ],
         }),
@@ -120,12 +151,14 @@ test.describe('Groups', () => {
     );
     await page.goto('/en/groups');
     await expect(page.getByText('Main')).toBeVisible();
-    await expect(page.getByText('2')).toBeVisible();
+    await expect(
+      page.getByRole('row').filter({ hasText: 'Main' }).getByText('2', { exact: true }),
+    ).toBeVisible();
   });
 
   test('shows retry on API error', async ({ page }) => {
     await seedAuth(page);
-    await page.route('**/api/v1/trader-groups', (route) =>
+    await page.route('**/api/v1/trader-groups**', (route) =>
       route.fulfill({
         status: 500,
         contentType: 'application/json',
@@ -145,18 +178,57 @@ test.describe('Groups', () => {
       description: 'first',
       member_count: 0,
     };
-    await page.route('**/api/v1/trader-groups', (route) => {
+    let createdGroup: unknown = null;
+    await page.route('**/api/v1/trader-groups**', (route) => {
+      if (route.request().url().includes('/overview')) {
+        return route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            success: true,
+            data: {
+              total_groups: createdGroup ? 1 : 0,
+              unique_wallets: 0,
+              account_value: null,
+              unrealized_pnl: null,
+              partial: false,
+              missing_wallets: 0,
+              stale_groups: 0,
+              empty_groups: 0,
+              as_of: new Date().toISOString(),
+            },
+          }),
+        });
+      }
       if (route.request().method() === 'POST') {
+        createdGroup = {
+          ...created,
+          is_favorite: false,
+          account_value: null,
+          unrealized_pnl: null,
+          roi: null,
+          volume: null,
+          open_positions: 0,
+          win_rate: null,
+          updated_at: new Date().toISOString(),
+          data_status: 'empty',
+          partial: false,
+          missing_wallets: 0,
+        };
         return route.fulfill({
           status: 201,
           contentType: 'application/json',
-          body: JSON.stringify({ success: true, data: created }),
+          body: JSON.stringify({ success: true, data: createdGroup }),
         });
       }
       return route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ success: true, data: [] }),
+        body: JSON.stringify({
+          success: true,
+          data: createdGroup ? [createdGroup] : [],
+          meta: { total: createdGroup ? 1 : 0, page: 1, total_pages: 1, limit: 20 },
+        }),
       });
     });
     await page.goto('/en/groups');
@@ -170,26 +242,64 @@ test.describe('Groups', () => {
 
   test('edits a group name', async ({ page }) => {
     await seedAuth(page);
-    await page.route('**/api/v1/trader-groups', (route) =>
-      route.fulfill({
+    let currentName = 'Main';
+    const row = () => ({
+      id: 'g1',
+      user_id: 'u1',
+      name: currentName,
+      description: null,
+      member_count: 0,
+      is_favorite: false,
+      account_value: null,
+      unrealized_pnl: null,
+      roi: null,
+      volume: null,
+      open_positions: 0,
+      win_rate: null,
+      updated_at: new Date().toISOString(),
+      data_status: 'empty',
+      partial: false,
+      missing_wallets: 0,
+    });
+    await page.route('**/api/v1/trader-groups**', (route) => {
+      if (route.request().url().includes('/overview')) {
+        return route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            success: true,
+            data: {
+              total_groups: 1,
+              unique_wallets: 0,
+              account_value: null,
+              unrealized_pnl: null,
+              partial: false,
+              missing_wallets: 0,
+              stale_groups: 0,
+              empty_groups: 1,
+              as_of: new Date().toISOString(),
+            },
+          }),
+        });
+      }
+      return route.fulfill({
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
           success: true,
-          data: [{ id: 'g1', user_id: 'u1', name: 'Main', description: null, member_count: 0 }],
+          data: [row()],
+          meta: { total: 1, page: 1, total_pages: 1, limit: 20 },
         }),
-      }),
-    );
-    await page.route('**/api/v1/trader-groups/g1', (route) =>
-      route.fulfill({
+      });
+    });
+    await page.route('**/api/v1/trader-groups/g1', (route) => {
+      if (route.request().method() === 'PATCH') currentName = 'Renamed';
+      return route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({
-          success: true,
-          data: { id: 'g1', user_id: 'u1', name: 'Renamed', description: null, member_count: 0 },
-        }),
-      }),
-    );
+        body: JSON.stringify({ success: true, data: { ...row(), name: currentName } }),
+      });
+    });
     await page.goto('/en/groups');
     await expect(page.getByText('Main')).toBeVisible();
     await page.getByRole('button', { name: 'Edit Main' }).click();
@@ -201,19 +311,60 @@ test.describe('Groups', () => {
 
   test('delete confirmation states membership consequence', async ({ page }) => {
     await seedAuth(page);
-    await page.route('**/api/v1/trader-groups', (route) =>
-      route.fulfill({
+    let deleted = false;
+    const row = () => ({
+      id: 'g1',
+      user_id: 'u1',
+      name: 'Main',
+      description: null,
+      member_count: 3,
+      is_favorite: false,
+      account_value: null,
+      unrealized_pnl: null,
+      roi: null,
+      volume: null,
+      open_positions: 0,
+      win_rate: null,
+      updated_at: new Date().toISOString(),
+      data_status: 'ready',
+      partial: false,
+      missing_wallets: 0,
+    });
+    await page.route('**/api/v1/trader-groups**', (route) => {
+      if (route.request().url().includes('/overview')) {
+        return route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            success: true,
+            data: {
+              total_groups: deleted ? 0 : 1,
+              unique_wallets: 0,
+              account_value: null,
+              unrealized_pnl: null,
+              partial: false,
+              missing_wallets: 0,
+              stale_groups: 0,
+              empty_groups: deleted ? 1 : 0,
+              as_of: new Date().toISOString(),
+            },
+          }),
+        });
+      }
+      return route.fulfill({
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
           success: true,
-          data: [{ id: 'g1', user_id: 'u1', name: 'Main', description: null, member_count: 3 }],
+          data: deleted ? [] : [row()],
+          meta: { total: deleted ? 0 : 1, page: 1, total_pages: 1, limit: 20 },
         }),
-      }),
-    );
-    await page.route('**/api/v1/trader-groups/g1', (route) =>
-      route.fulfill({ status: 204, body: '' }),
-    );
+      });
+    });
+    await page.route('**/api/v1/trader-groups/g1', (route) => {
+      if (route.request().method() === 'DELETE') deleted = true;
+      return route.fulfill({ status: 204, body: '' });
+    });
     await page.goto('/en/groups');
     await expect(page.getByText('Main')).toBeVisible();
     await page.getByRole('button', { name: 'Delete Main' }).click();
@@ -452,7 +603,7 @@ test.describe('Wallet Scanner', () => {
   };
 
   async function mockGroupsRoute(page: Page, groups: unknown[] = []) {
-    await page.route('**/api/v1/trader-groups', (route) =>
+    await page.route('**/api/v1/trader-groups**', (route) =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -940,7 +1091,7 @@ test.describe('Trader Detail', () => {
         body: JSON.stringify({ success: true, data: mockDetail }),
       }),
     );
-    await page.route('**/api/v1/trader-groups', (route) =>
+    await page.route('**/api/v1/trader-groups**', (route) =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -1004,7 +1155,7 @@ test.describe('Trader Detail', () => {
         body: JSON.stringify({ success: true, data: mockDetail }),
       }),
     );
-    await page.route('**/api/v1/trader-groups', (route) => {
+    await page.route('**/api/v1/trader-groups**', (route) => {
       if (route.request().method() === 'POST') {
         return route.fulfill({
           status: 201,

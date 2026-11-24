@@ -2,20 +2,19 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Link } from '@/i18n/navigation';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Input } from '@/components/ui/input';
 import { ApiError } from '@/infrastructure/api-client';
 import { mapErrorCode } from '@/lib/error-mapping';
-import { listTraderGroups, updateTraderGroup } from '@/services/traders';
-import type { TraderGroup } from '@/types/trader';
-import { useTelegramStatus } from '@/hooks/use-telegram';
+import { getGroupsOverview, listTraderGroupsDetailed, updateTraderGroup } from '@/services/traders';
+import type { GroupListItem, GroupsOverview, TraderGroup } from '@/types/trader';
 import { useAuthGate } from '@/hooks/use-auth-gate';
 import { useAuthStore } from '@/lib/stores/auth';
 import { ConnectWalletButton } from '@/components/shared/auth/connect-wallet-button';
-import { PencilIcon, Trash2Icon } from 'lucide-react';
 import { GroupForm } from './_components/group-form';
 import { DeleteGroupDialog } from './_components/delete-group-dialog';
+import { GroupsOverviewStats } from './_components/groups-overview-stats';
+import { GroupsTable } from './_components/groups-table';
 
 export default function GroupsPage() {
   const t = useTranslations('groups');
@@ -23,11 +22,21 @@ export default function GroupsPage() {
   const te = useTranslations();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const setConnectModalOpen = useAuthStore((s) => s.setConnectModalOpen);
-  const telegramStatus = useTelegramStatus({ enabled: isAuthenticated });
 
-  const [groups, setGroups] = useState<TraderGroup[]>([]);
+  const [groups, setGroups] = useState<GroupListItem[]>([]);
+  const [overview, setOverview] = useState<GroupsOverview | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<unknown>(null);
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [sort, setSort] = useState('name');
+  const [dir, setDir] = useState<'asc' | 'desc'>('asc');
+  const [page, setPage] = useState(1);
+  const [meta, setMeta] = useState<{ total: number; page: number; total_pages: number }>({
+    total: 0,
+    page: 1,
+    total_pages: 1,
+  });
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<TraderGroup | null>(null);
   const [deleting, setDeleting] = useState<TraderGroup | null>(null);
@@ -38,13 +47,31 @@ export default function GroupsPage() {
     setIsLoading(true);
     setError(null);
     try {
-      setGroups(await listTraderGroups());
+      const list = await listTraderGroupsDetailed({
+        search,
+        status: statusFilter || undefined,
+        sort,
+        dir,
+        page,
+        page_size: 20,
+      });
+      setGroups(list.items);
+      setMeta({
+        total: list.meta.total ?? 0,
+        page: list.meta.page ?? page,
+        total_pages: list.meta.total_pages ?? 1,
+      });
+      try {
+        setOverview(await getGroupsOverview('30D'));
+      } catch {
+        // Overview is optional; keep the list usable when it fails.
+      }
     } catch (err) {
       setError(err);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [search, statusFilter, sort, dir, page]);
 
   const errorMessage =
     error instanceof ApiError && error.status === 403
@@ -66,15 +93,21 @@ export default function GroupsPage() {
     load();
   }, [fetchGroups, isAuthenticated]);
 
-  function handleFormSuccess(saved: TraderGroup) {
-    setGroups((prev) => {
-      const exists = prev.some((g) => g.id === saved.id);
-      return exists ? prev.map((g) => (g.id === saved.id ? saved : g)) : [saved, ...prev];
-    });
+  function handleFormSuccess() {
+    void fetchGroups();
   }
 
-  function handleDeleteSuccess(id: string) {
-    setGroups((prev) => prev.filter((g) => g.id !== id));
+  function handleDeleteSuccess() {
+    void fetchGroups();
+  }
+
+  async function handleToggleFavorite(id: string, next: boolean) {
+    setGroups((prev) => prev.map((g) => (g.id === id ? { ...g, is_favorite: next } : g)));
+    try {
+      await updateTraderGroup(id, { is_favorite: next });
+    } catch {
+      void fetchGroups();
+    }
   }
 
   return (
@@ -118,15 +151,72 @@ export default function GroupsPage() {
             )
           ) : null}
 
-          {isLoading ? (
-            <div className="space-y-2">
-              <Skeleton className="h-12 w-full" />
-              <Skeleton className="h-12 w-full" />
-              <Skeleton className="h-12 w-full" />
-            </div>
-          ) : groups.length === 0 && !error ? (
+          <GroupsOverviewStats
+            totalGroups={overview?.total_groups ?? meta.total}
+            uniqueWallets={overview?.unique_wallets ?? 0}
+            accountValue={overview?.account_value ?? null}
+            unrealizedPnl={overview?.unrealized_pnl ?? null}
+            partial={overview?.partial ?? false}
+            isLoading={isLoading && groups.length === 0}
+          />
+
+          <div className="flex flex-wrap items-center gap-2">
+            <Input
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
+              placeholder={t('searchGroups')}
+              className="h-8 w-56"
+            />
+            <select
+              aria-label={t('filterStatus')}
+              value={statusFilter}
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+                setPage(1);
+              }}
+              className="bg-background h-8 rounded-md border px-2 text-sm"
+            >
+              <option value="">{t('allStatuses')}</option>
+              <option value="ready">{t('statusReady')}</option>
+              <option value="partial">{t('statusPartial')}</option>
+              <option value="stale">{t('statusStale')}</option>
+              <option value="empty">{t('statusEmpty')}</option>
+              <option value="error">{t('statusError')}</option>
+            </select>
+            <select
+              aria-label={t('sortBy')}
+              value={sort}
+              onChange={(e) => setSort(e.target.value)}
+              className="bg-background h-8 rounded-md border px-2 text-sm"
+            >
+              <option value="name">{t('name')}</option>
+              <option value="account_value">{t('accountValue')}</option>
+              <option value="unrealized_pnl">{t('unrealizedPnl')}</option>
+              <option value="roi">{t('roi')}</option>
+              <option value="volume">{t('volume')}</option>
+              <option value="open_positions">{t('openPositions')}</option>
+              <option value="win_rate">{t('winRate')}</option>
+              <option value="updated_at">{t('updated')}</option>
+            </select>
+            <Button
+              variant="outline"
+              size="sm"
+              aria-label="sort direction"
+              onClick={() => {
+                setDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+                setPage(1);
+              }}
+            >
+              {dir === 'asc' ? '↑' : '↓'}
+            </Button>
+          </div>
+
+          {groups.length === 0 && !isLoading && !error ? (
             <div className="text-muted-foreground py-12 text-center">
-              <p>{t('empty')}</p>
+              <p>{t('noGroups')}</p>
               <Button
                 variant="outline"
                 className="mt-4"
@@ -140,97 +230,43 @@ export default function GroupsPage() {
             </div>
           ) : (
             <div className="overflow-x-auto rounded-lg border">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b text-left">
-                    <th className="p-2">{t('name')}</th>
-                    <th className="p-2">{t('description')}</th>
-                    <th className="p-2">{t('walletCount')}</th>
-                    <th className="p-2">{t('receiveNotifications')}</th>
-                    <th className="p-2 text-right">{tCommon('edit')}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {groups.map((group) => (
-                    <tr key={group.id} className="border-b last:border-0">
-                      <td className="p-2 font-medium">
-                        <Link href={`/groups/${group.id}`} className="text-primary hover:underline">
-                          {group.name}
-                        </Link>
-                      </td>
-                      <td className="text-muted-foreground p-2">{group.description ?? '—'}</td>
-                      <td className="p-2">{group.member_count}</td>
-                      <td className="p-2">
-                        <div className="flex flex-col gap-1">
-                          <label className="flex items-center gap-2 text-sm">
-                            <input
-                              type="checkbox"
-                              role="switch"
-                              aria-label={t('receiveNotifications')}
-                              aria-checked={group.notify_enabled}
-                              checked={group.notify_enabled}
-                              disabled={!telegramStatus.data?.connected}
-                              onChange={async (e) => {
-                                if (!telegramStatus.data?.connected) return;
-                                try {
-                                  const updated = await updateTraderGroup(group.id, {
-                                    notify_enabled: e.target.checked,
-                                  });
-                                  setGroups((prev) =>
-                                    prev.map((g) => (g.id === updated.id ? updated : g)),
-                                  );
-                                } catch (err) {
-                                  setError(err);
-                                }
-                              }}
-                            />
-                            <span>{t('receiveNotifications')}</span>
-                          </label>
-                          {!telegramStatus.data?.connected && (
-                            <span className="text-muted-foreground text-xs">
-                              {t('telegramNotConnectedHint')}
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="p-2">
-                        <div className="flex justify-end gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon-xs"
-                            aria-label={`${t('edit')} ${group.name}`}
-                            onClick={() => {
-                              setEditing(group);
-                              setFormOpen(true);
-                            }}
-                          >
-                            <PencilIcon className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon-xs"
-                            aria-label={`${t('delete')} ${group.name}`}
-                            onClick={() => {
-                              setDeleting(group);
-                              setDeleteOpen(true);
-                            }}
-                          >
-                            <Trash2Icon className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <GroupsTable
+                groups={groups}
+                isLoading={isLoading && groups.length === 0}
+                onToggleFavorite={handleToggleFavorite}
+                onEdit={(g: GroupListItem) => {
+                  setEditing(g as unknown as TraderGroup);
+                  setFormOpen(true);
+                }}
+                onDelete={(g: GroupListItem) => {
+                  setDeleting(g as unknown as TraderGroup);
+                  setDeleteOpen(true);
+                }}
+              />
             </div>
           )}
 
-          {isLoading && groups.length > 0 && (
-            <div className="flex flex-col gap-2" role="status" aria-label={tCommon('loading')}>
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-full" />
+          {meta.total_pages > 1 && (
+            <div className="flex items-center justify-end gap-2 text-sm">
+              <span className="text-muted-foreground">
+                {meta.page} / {meta.total_pages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page <= 1}
+                onClick={() => setPage((p) => p - 1)}
+              >
+                ‹
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page >= meta.total_pages}
+                onClick={() => setPage((p) => p + 1)}
+              >
+                ›
+              </Button>
             </div>
           )}
         </>

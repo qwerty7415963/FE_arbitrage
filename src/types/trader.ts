@@ -126,6 +126,36 @@ export interface TraderGroup {
   notify_enabled: boolean;
 }
 
+export interface GroupListItem {
+  id: string;
+  name: string;
+  description: string | null;
+  is_favorite: boolean;
+  notify_enabled: boolean;
+  member_count: number;
+  account_value: number | null;
+  unrealized_pnl: number | null;
+  roi: number | null;
+  volume: number | null;
+  open_positions: number;
+  win_rate: number | null;
+  updated_at: string;
+  data_status: 'empty' | 'ready' | 'partial' | 'stale' | 'error';
+  partial: boolean;
+  missing_wallets: number;
+}
+
+export interface GroupsOverview {
+  total_groups: number;
+  unique_wallets: number;
+  account_value: number | null;
+  unrealized_pnl: number | null;
+  partial: boolean;
+  missing_wallets: number;
+  stale_groups: number;
+  empty_groups: number;
+  as_of: string;
+}
 export interface TraderMember {
   group_id: string;
   venue_id: string | null;

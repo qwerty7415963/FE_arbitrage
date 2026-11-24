@@ -34,6 +34,8 @@ import {
   type MarketWalletRow,
   type WatchedMarket,
   type TraderGroup,
+  type GroupListItem,
+  type GroupsOverview,
   type TraderMember,
   type TraderOverview,
   type TraderOverviewSeries,
@@ -294,6 +296,52 @@ export async function listTraderGroups(): Promise<TraderGroup[]> {
   return res.data ?? [];
 }
 
+interface GroupsListResponse {
+  success: boolean;
+  data?: GroupListItem[];
+  meta?: Meta;
+  as_of?: string;
+}
+
+export async function listTraderGroupsDetailed(
+  params: {
+    search?: string;
+    favorite?: boolean;
+    status?: string;
+    period?: string;
+    sort?: string;
+    dir?: 'asc' | 'desc';
+    page?: number;
+    page_size?: number;
+  } = {},
+): Promise<{ items: GroupListItem[]; meta: Meta; as_of: string }> {
+  const sp = new URLSearchParams();
+  if (params.search) sp.set('search', params.search);
+  if (params.favorite !== undefined) sp.set('favorite', String(params.favorite));
+  if (params.status) sp.set('status', params.status);
+  if (params.period) sp.set('period', params.period);
+  if (params.sort) sp.set('sort', params.sort);
+  if (params.dir) sp.set('dir', params.dir);
+  if (params.page) sp.set('page', String(params.page));
+  if (params.page_size) sp.set('page_size', String(params.page_size));
+  const res = await apiClient<GroupsListResponse>(`${TRADER_GROUPS_BASE}?${sp.toString()}`);
+  return {
+    items: res.data ?? [],
+    meta: res.meta ?? { total: 0, page: 1, total_pages: 1, limit: params.page_size ?? 20 },
+    as_of: res.as_of ?? '',
+  };
+}
+
+export async function getGroupsOverview(
+  period: '1D' | '7D' | '30D' | '90D' | 'ALL' = '30D',
+): Promise<GroupsOverview> {
+  const res = await apiClient<ApiResponse<GroupsOverview>>(
+    `${TRADER_GROUPS_BASE}/overview?period=${period}`,
+  );
+  if (!res.data) throw new Error('No data returned');
+  return res.data;
+}
+
 export async function getTraderGroup(id: string): Promise<TraderGroup> {
   const res = await apiClient<ApiResponse<TraderGroup>>(`${TRADER_GROUPS_BASE}/${id}`);
   if (!res.data) throw new Error('No data returned');
@@ -314,12 +362,27 @@ export async function createTraderGroup(input: {
 
 export async function updateTraderGroup(
   id: string,
-  input: { name?: string; description?: string; notify_enabled?: boolean },
+  input: { name?: string; description?: string; notify_enabled?: boolean; is_favorite?: boolean },
 ): Promise<TraderGroup> {
   const res = await apiClient<ApiResponse<TraderGroup>>(`${TRADER_GROUPS_BASE}/${id}`, {
     method: 'PATCH',
     body: JSON.stringify(input),
   });
+  if (!res.data) throw new Error('No data returned');
+  return res.data;
+}
+
+export async function toggleGroupFavorite(
+  id: string,
+  isFavorite: boolean,
+): Promise<{ id: string; is_favorite: boolean }> {
+  const res = await apiClient<ApiResponse<{ id: string; is_favorite: boolean }>>(
+    `${TRADER_GROUPS_BASE}/${id}/favorite`,
+    {
+      method: 'PATCH',
+      body: JSON.stringify({ is_favorite: isFavorite }),
+    },
+  );
   if (!res.data) throw new Error('No data returned');
   return res.data;
 }
