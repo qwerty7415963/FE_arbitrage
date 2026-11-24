@@ -36,6 +36,9 @@ import {
   type TraderGroup,
   type GroupListItem,
   type GroupsOverview,
+  type GroupPerformanceResponse,
+  type GroupPositionsResponse,
+  type GroupStats,
   type TraderMember,
   type TraderOverview,
   type TraderOverviewSeries,
@@ -337,6 +340,36 @@ export async function getGroupsOverview(
 ): Promise<GroupsOverview> {
   const res = await apiClient<ApiResponse<GroupsOverview>>(
     `${TRADER_GROUPS_BASE}/overview?period=${period}`,
+  );
+  if (!res.data) throw new Error('No data returned');
+  return res.data;
+}
+
+export async function getGroupStats(
+  id: string,
+  period: '1D' | '7D' | '30D' | '90D' | 'ALL' = '30D',
+): Promise<GroupStats> {
+  const res = await apiClient<ApiResponse<GroupStats>>(
+    `${TRADER_GROUPS_BASE}/${id}/stats?period=${period}`,
+  );
+  if (!res.data) throw new Error('No data returned');
+  return res.data;
+}
+
+export async function getGroupPerformance(
+  id: string,
+  period: '1D' | '7D' | '30D' | '90D' | 'ALL' = '30D',
+): Promise<GroupPerformanceResponse> {
+  const res = await apiClient<ApiResponse<GroupPerformanceResponse>>(
+    `${TRADER_GROUPS_BASE}/${id}/performance?period=${period}`,
+  );
+  if (!res.data) throw new Error('No data returned');
+  return res.data;
+}
+
+export async function getGroupPositions(id: string): Promise<GroupPositionsResponse> {
+  const res = await apiClient<ApiResponse<GroupPositionsResponse>>(
+    `${TRADER_GROUPS_BASE}/${id}/positions`,
   );
   if (!res.data) throw new Error('No data returned');
   return res.data;

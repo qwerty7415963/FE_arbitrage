@@ -9,6 +9,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ApiError } from '@/infrastructure/api-client';
 import { mapErrorCode } from '@/lib/error-mapping';
 import {
+  getGroupPositions,
+  getGroupStats,
   getTraderGroup,
   listGroupMembers,
   removeGroupMembers,
@@ -21,11 +23,18 @@ import { useAuthGate } from '@/hooks/use-auth-gate';
 import { ConnectWalletButton } from '@/components/shared/auth/connect-wallet-button';
 import { CopyAddress } from '@/components/shared/traders/copy-address';
 import { NULL_DISPLAY } from '@/components/shared/traders/trader-table';
-import { formatDecimal, formatPercent, formatSignedPercent, formatUsd } from '@/lib/trader-format';
-import type { TraderGroup, TraderMember } from '@/types/trader';
+import {
+  formatDecimal,
+  formatPercent,
+  formatSignedPercent,
+  formatSignedUsd,
+  formatUsd,
+} from '@/lib/trader-format';
+import type { GroupPositionsResponse, GroupStats, TraderGroup, TraderMember } from '@/types/trader';
 import { CheckIcon, PencilIcon, RadarIcon, Trash2Icon, XIcon } from 'lucide-react';
 import { GroupForm } from '../_components/group-form';
 import { DeleteGroupDialog } from '../_components/delete-group-dialog';
+import { GroupPerformanceChart } from './_components/group-performance-chart';
 import { Pagination } from '@/components/shared/pagination';
 
 const PAGE_SIZE = 10;
@@ -53,6 +62,12 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
   const [editNote, setEditNote] = useState('');
   const [isSavingEdit, setIsSavingEdit] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [tab, setTab] = useState<'overview' | 'members'>('members');
+  const [groupStats, setGroupStats] = useState<GroupStats | null>(null);
+  const [isLoadingStats, setIsLoadingStats] = useState(false);
+  const [statsPeriod, setStatsPeriod] = useState<'1D' | '7D' | '30D' | '90D' | 'ALL'>('30D');
+  const [positions, setPositions] = useState<GroupPositionsResponse | null>(null);
+  const [isLoadingPositions, setIsLoadingPositions] = useState(false);
   const [isLoadingMembers, setIsLoadingMembers] = useState(true);
   const [membersError, setMembersError] = useState<unknown>(null);
   const groupGate = useAuthGate({
@@ -115,6 +130,42 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
     }
     load();
   }, [fetchMembers, isAuthenticated]);
+
+  useEffect(() => {
+    async function loadStats() {
+      if (!isAuthenticated) {
+        setGroupStats(null);
+        return;
+      }
+      setIsLoadingStats(true);
+      try {
+        setGroupStats(await getGroupStats(groupId, statsPeriod));
+      } catch {
+        setGroupStats(null);
+      } finally {
+        setIsLoadingStats(false);
+      }
+    }
+    loadStats();
+  }, [groupId, isAuthenticated, statsPeriod]);
+
+  useEffect(() => {
+    async function loadPositions() {
+      if (!isAuthenticated) {
+        setPositions(null);
+        return;
+      }
+      setIsLoadingPositions(true);
+      try {
+        setPositions(await getGroupPositions(groupId));
+      } catch {
+        setPositions(null);
+      } finally {
+        setIsLoadingPositions(false);
+      }
+    }
+    loadPositions();
+  }, [groupId, isAuthenticated]);
 
   const filtered = useMemo(() => {
     const needle = search.trim().toLowerCase();
@@ -296,176 +347,292 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
         </div>
       </div>
 
-      <div className="flex flex-wrap items-end gap-2">
-        <Input
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setCurrentPage(1);
-          }}
-          placeholder={t('searchPlaceholder')}
-          className="w-56"
-        />
-        <Link href={`/traders?group=${group.id}`}>
-          <Button variant="outline" size="sm">
-            <RadarIcon className="mr-2 h-4 w-4" />
-            {t('scanMore')}
-          </Button>
-        </Link>
+      <div className="flex gap-2 border-b pb-1">
+        <Button
+          variant={tab === 'overview' ? 'default' : 'ghost'}
+          size="sm"
+          onClick={() => setTab('overview')}
+        >
+          {t('overview')}
+        </Button>
+        <Button
+          variant={tab === 'members' ? 'default' : 'ghost'}
+          size="sm"
+          onClick={() => setTab('members')}
+        >
+          {t('members')}
+        </Button>
       </div>
 
-      {membersError ? (
-        membersGate === 'expired' ? (
-          <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-200">
-            {t('sessionExpired')}{' '}
-            <Button variant="link" size="sm" onClick={() => setConnectModalOpen(true)}>
-              {tc('reconnect')}
-            </Button>
+      {tab === 'overview' && (
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-wrap items-center gap-2">
+            {(['1D', '7D', '30D', '90D', 'ALL'] as const).map((p) => (
+              <Button
+                key={p}
+                variant={statsPeriod === p ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setStatsPeriod(p)}
+              >
+                {p === 'ALL' ? t('rangeAll') : p}
+              </Button>
+            ))}
           </div>
-        ) : (
-          <div className="bg-destructive/10 text-destructive rounded-md p-3 text-sm">
-            {membersErrorMessage}{' '}
-            <Button variant="link" size="sm" onClick={fetchMembers}>
-              {t('retry')}
-            </Button>
-          </div>
-        )
-      ) : null}
+          {isLoadingStats ? (
+            <Skeleton className="h-20 w-full" />
+          ) : groupStats ? (
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {(
+                [
+                  [t('accountValue'), formatUsd(groupStats.account_value) ?? NULL_DISPLAY],
+                  [t('unrealizedPnl'), formatSignedUsd(groupStats.unrealized_pnl)],
+                  [t('realizedPnl'), formatSignedUsd(groupStats.realized_pnl)],
+                  [
+                    t('roi'),
+                    formatSignedPercent(groupStats.roi != null ? groupStats.roi * 100 : null) ??
+                      NULL_DISPLAY,
+                  ],
+                  [t('volume'), formatUsd(groupStats.volume) ?? NULL_DISPLAY],
+                  [
+                    t('winRate'),
+                    formatPercent(groupStats.win_rate != null ? groupStats.win_rate * 100 : null) ??
+                      NULL_DISPLAY,
+                  ],
+                  [t('profitFactor'), formatDecimal(groupStats.profit_factor) ?? NULL_DISPLAY],
+                  [t('maxDrawdown'), formatPercent(groupStats.max_drawdown_pct) ?? NULL_DISPLAY],
+                ] as [string, string][]
+              ).map(([label, value]) => (
+                <div key={label} className="rounded-md border p-2">
+                  <div className="text-muted-foreground text-xs">{label}</div>
+                  <div className="font-medium tabular-nums">{value}</div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-muted-foreground text-sm">{t('noMembers')}</div>
+          )}
+          <GroupPerformanceChart groupId={groupId} />
 
-      {isLoadingMembers && members.length === 0 ? (
-        <div className="flex flex-col gap-2" role="status" aria-label={t('loading')}>
-          <Skeleton className="h-12 w-full" />
-          <Skeleton className="h-12 w-full" />
-          <Skeleton className="h-12 w-full" />
-        </div>
-      ) : visible.length === 0 && !membersError ? (
-        <div className="text-muted-foreground py-8 text-center text-sm">{t('noMembers')}</div>
-      ) : (
-        <>
-          <div className="overflow-x-auto rounded-lg border">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b text-left">
-                  <th className="p-2">{t('member')}</th>
-                  <th className="p-2">{t('venue')}</th>
-                  <th className="p-2">{t('alias')}</th>
-                  <th className="p-2">{tt('colRoi')}</th>
-                  <th className="p-2">{tt('colPnl')}</th>
-                  <th className="p-2">{tt('colWinRate')}</th>
-                  <th className="p-2">{tt('colProfitFactor')}</th>
-                  <th className="p-2" />
-                </tr>
-              </thead>
-              <tbody>
-                {visible.map((m) => {
-                  const key = `${m.venue}:${m.wallet_address}`;
-                  const isEditing = editingKey === key;
-                  return (
-                    <tr key={key} className="border-b last:border-0">
-                      <td className="p-2">
-                        {m.display_name && <div className="font-medium">{m.display_name}</div>}
-                        <CopyAddress address={m.wallet_address} />
-                      </td>
-                      <td className="p-2">{m.venue}</td>
-                      <td className="text-muted-foreground p-2">
-                        {isEditing ? (
-                          <div
-                            className="flex flex-col gap-1"
-                            onKeyDown={(e) => {
-                              if (e.key === 'Escape') cancelEdit();
-                            }}
-                          >
-                            <Input
-                              aria-label={`${t('alias')} ${m.wallet_address}`}
-                              value={editAlias}
-                              maxLength={100}
-                              placeholder={t('alias')}
-                              className="h-8"
-                              disabled={isSavingEdit}
-                              onChange={(e) => setEditAlias(e.target.value)}
-                            />
-                            <Input
-                              aria-label={`${t('note')} ${m.wallet_address}`}
-                              value={editNote}
-                              maxLength={500}
-                              placeholder={t('note')}
-                              className="h-8"
-                              disabled={isSavingEdit}
-                              onChange={(e) => setEditNote(e.target.value)}
-                            />
-                          </div>
-                        ) : (
-                          <>
-                            <div>{m.alias ?? '—'}</div>
-                            {m.note && <div className="text-xs">{m.note}</div>}
-                          </>
-                        )}
-                      </td>
-                      <td className="p-2">{formatSignedPercent(m.metrics?.roi) ?? NULL_DISPLAY}</td>
-                      <td className="p-2">
-                        {m.metrics?.pnl === null || m.metrics?.pnl === undefined
-                          ? NULL_DISPLAY
-                          : `${m.metrics.pnl > 0 ? '+' : ''}${formatUsd(m.metrics.pnl)}`}
-                      </td>
-                      <td className="p-2">{formatPercent(m.metrics?.win_rate) ?? NULL_DISPLAY}</td>
-                      <td className="p-2">
-                        {formatDecimal(m.metrics?.profit_factor) ?? NULL_DISPLAY}
-                      </td>
-                      <td className="p-2 text-right">
-                        {isEditing ? (
-                          <div className="flex justify-end gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon-xs"
-                              aria-label={t('save')}
-                              disabled={isSavingEdit}
-                              onClick={() => saveEdit(m)}
-                            >
-                              <CheckIcon className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon-xs"
-                              aria-label={t('cancel')}
-                              disabled={isSavingEdit}
-                              onClick={cancelEdit}
-                            >
-                              <XIcon className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        ) : (
-                          <div className="flex justify-end gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon-xs"
-                              aria-label={`${t('editMember')} ${m.wallet_address}`}
-                              onClick={() => startEdit(m)}
-                            >
-                              <PencilIcon className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon-xs"
-                              aria-label={t('removeMember')}
-                              onClick={() => handleRemove(m)}
-                            >
-                              <Trash2Icon className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        )}
-                      </td>
+          <div className="flex flex-col gap-2">
+            <h2 className="text-lg font-semibold">{t('positions')}</h2>
+            {isLoadingPositions ? (
+              <Skeleton className="h-16 w-full" />
+            ) : positions && positions.positions.length > 0 ? (
+              <div className="overflow-x-auto rounded-lg border">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b text-left">
+                      <th className="p-2">{t('coin')}</th>
+                      <th className="p-2 text-right">{t('longExposure')}</th>
+                      <th className="p-2 text-right">{t('shortExposure')}</th>
+                      <th className="p-2 text-right">{t('netExposure')}</th>
+                      <th className="p-2 text-right">{t('walletCount')}</th>
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                  </thead>
+                  <tbody>
+                    {positions.positions.map((p) => (
+                      <tr key={p.coin} className="border-b last:border-0">
+                        <td className="p-2 font-medium">{p.coin}</td>
+                        <td className="p-2 text-right tabular-nums">
+                          {formatUsd(p.long_ntl) ?? NULL_DISPLAY}
+                        </td>
+                        <td className="p-2 text-right tabular-nums">
+                          {formatUsd(p.short_ntl) ?? NULL_DISPLAY}
+                        </td>
+                        <td className="p-2 text-right tabular-nums">
+                          {formatUsd(p.net_ntl) ?? NULL_DISPLAY}
+                        </td>
+                        <td className="p-2 text-right tabular-nums">{p.wallet_count}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="text-muted-foreground text-sm">{t('noMembers')}</div>
+            )}
           </div>
-          <Pagination
-            currentPage={page}
-            totalPages={totalPages}
-            onPageChange={setCurrentPage}
-            disabled={isLoadingMembers}
-          />
+        </div>
+      )}
+
+      {tab === 'members' && (
+        <>
+          <div className="flex flex-wrap items-end gap-2">
+            <Input
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setCurrentPage(1);
+              }}
+              placeholder={t('searchPlaceholder')}
+              className="w-56"
+            />
+            <Link href={`/traders?group=${group.id}`}>
+              <Button variant="outline" size="sm">
+                <RadarIcon className="mr-2 h-4 w-4" />
+                {t('scanMore')}
+              </Button>
+            </Link>
+          </div>
+
+          {membersError ? (
+            membersGate === 'expired' ? (
+              <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-200">
+                {t('sessionExpired')}{' '}
+                <Button variant="link" size="sm" onClick={() => setConnectModalOpen(true)}>
+                  {tc('reconnect')}
+                </Button>
+              </div>
+            ) : (
+              <div className="bg-destructive/10 text-destructive rounded-md p-3 text-sm">
+                {membersErrorMessage}{' '}
+                <Button variant="link" size="sm" onClick={fetchMembers}>
+                  {t('retry')}
+                </Button>
+              </div>
+            )
+          ) : null}
+
+          {isLoadingMembers && members.length === 0 ? (
+            <div className="flex flex-col gap-2" role="status" aria-label={t('loading')}>
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+            </div>
+          ) : visible.length === 0 && !membersError ? (
+            <div className="text-muted-foreground py-8 text-center text-sm">{t('noMembers')}</div>
+          ) : (
+            <>
+              <div className="overflow-x-auto rounded-lg border">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b text-left">
+                      <th className="p-2">{t('member')}</th>
+                      <th className="p-2">{t('venue')}</th>
+                      <th className="p-2">{t('alias')}</th>
+                      <th className="p-2">{tt('colRoi')}</th>
+                      <th className="p-2">{tt('colPnl')}</th>
+                      <th className="p-2">{tt('colWinRate')}</th>
+                      <th className="p-2">{tt('colProfitFactor')}</th>
+                      <th className="p-2" />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {visible.map((m) => {
+                      const key = `${m.venue}:${m.wallet_address}`;
+                      const isEditing = editingKey === key;
+                      return (
+                        <tr key={key} className="border-b last:border-0">
+                          <td className="p-2">
+                            {m.display_name && <div className="font-medium">{m.display_name}</div>}
+                            <CopyAddress address={m.wallet_address} />
+                          </td>
+                          <td className="p-2">{m.venue}</td>
+                          <td className="text-muted-foreground p-2">
+                            {isEditing ? (
+                              <div
+                                className="flex flex-col gap-1"
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Escape') cancelEdit();
+                                }}
+                              >
+                                <Input
+                                  aria-label={`${t('alias')} ${m.wallet_address}`}
+                                  value={editAlias}
+                                  maxLength={100}
+                                  placeholder={t('alias')}
+                                  className="h-8"
+                                  disabled={isSavingEdit}
+                                  onChange={(e) => setEditAlias(e.target.value)}
+                                />
+                                <Input
+                                  aria-label={`${t('note')} ${m.wallet_address}`}
+                                  value={editNote}
+                                  maxLength={500}
+                                  placeholder={t('note')}
+                                  className="h-8"
+                                  disabled={isSavingEdit}
+                                  onChange={(e) => setEditNote(e.target.value)}
+                                />
+                              </div>
+                            ) : (
+                              <>
+                                <div>{m.alias ?? '—'}</div>
+                                {m.note && <div className="text-xs">{m.note}</div>}
+                              </>
+                            )}
+                          </td>
+                          <td className="p-2">
+                            {formatSignedPercent(m.metrics?.roi) ?? NULL_DISPLAY}
+                          </td>
+                          <td className="p-2">
+                            {m.metrics?.pnl === null || m.metrics?.pnl === undefined
+                              ? NULL_DISPLAY
+                              : `${m.metrics.pnl > 0 ? '+' : ''}${formatUsd(m.metrics.pnl)}`}
+                          </td>
+                          <td className="p-2">
+                            {formatPercent(m.metrics?.win_rate) ?? NULL_DISPLAY}
+                          </td>
+                          <td className="p-2">
+                            {formatDecimal(m.metrics?.profit_factor) ?? NULL_DISPLAY}
+                          </td>
+                          <td className="p-2 text-right">
+                            {isEditing ? (
+                              <div className="flex justify-end gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="icon-xs"
+                                  aria-label={t('save')}
+                                  disabled={isSavingEdit}
+                                  onClick={() => saveEdit(m)}
+                                >
+                                  <CheckIcon className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon-xs"
+                                  aria-label={t('cancel')}
+                                  disabled={isSavingEdit}
+                                  onClick={cancelEdit}
+                                >
+                                  <XIcon className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            ) : (
+                              <div className="flex justify-end gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="icon-xs"
+                                  aria-label={`${t('editMember')} ${m.wallet_address}`}
+                                  onClick={() => startEdit(m)}
+                                >
+                                  <PencilIcon className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon-xs"
+                                  aria-label={t('removeMember')}
+                                  onClick={() => handleRemove(m)}
+                                >
+                                  <Trash2Icon className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              <Pagination
+                currentPage={page}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+                disabled={isLoadingMembers}
+              />
+            </>
+          )}
         </>
       )}
 

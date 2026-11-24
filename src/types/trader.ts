@@ -145,6 +145,88 @@ export interface GroupListItem {
   missing_wallets: number;
 }
 
+export interface GroupStats {
+  period: string;
+  from: string;
+  to: string;
+  as_of: string;
+  data_status: 'empty' | 'ready' | 'partial' | 'stale' | 'error';
+  partial: boolean;
+  members_total: number;
+  members_with_data: number;
+  missing_wallets: number;
+  account_value: number | null;
+  total_notional: number | null;
+  unrealized_pnl: number | null;
+  realized_pnl: number | null;
+  roi: number | null;
+  win_rate: number | null;
+  volume: number | null;
+  profit_factor: number | null;
+  max_drawdown_pct: number | null;
+  open_positions: number;
+  trade_count: number;
+  definitions_version: number;
+}
+
+export interface GroupPerformancePoint {
+  t: string;
+  account_value: number | null;
+  cumulative_realized_pnl: number | null;
+  roi_index: number | null;
+}
+
+export interface GroupPerformanceResponse {
+  period: string;
+  granularity: 'intraday' | 'daily';
+  from: string;
+  to: string;
+  partial: boolean;
+  missing_wallets: number;
+  insufficient_data: boolean;
+  metric_availability: { account_value: boolean; cumulative_realized_pnl: boolean; roi: boolean };
+  points: GroupPerformancePoint[];
+}
+
+export interface GroupPositionWallet {
+  wallet_address: string;
+  side: 'LONG' | 'SHORT';
+  size: number;
+  entry_price: number | null;
+  mark_price: number | null;
+  leverage: number | null;
+  position_value: number | null;
+  unrealized_pnl: number | null;
+  as_of: string;
+  stale: boolean;
+}
+
+export interface GroupPosition {
+  coin: string;
+  long_ntl: number;
+  short_ntl: number;
+  net_ntl: number;
+  gross_ntl: number;
+  wallet_count: number;
+  unrealized_pnl: number | null;
+  wallets: GroupPositionWallet[];
+}
+
+export interface GroupPositionsResponse {
+  as_of: string;
+  data_status: 'empty' | 'ready' | 'partial' | 'stale' | 'error';
+  partial: boolean;
+  missing_wallets: number;
+  totals: {
+    long_ntl: number;
+    short_ntl: number;
+    net_ntl: number;
+    gross_ntl: number;
+    open_positions: number;
+  };
+  positions: GroupPosition[];
+}
+
 export interface GroupsOverview {
   total_groups: number;
   unique_wallets: number;

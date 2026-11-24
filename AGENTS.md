@@ -8,9 +8,9 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 <!-- END:nextjs-agent-rules -->
 
-## Orchestration Policy (RAO v1)
+## Orchestrator v2
 
-See `docs/AGENT_ORCHESTRATION.md` (v1). Tiers: L1 Simple / L2 Standard / L3 Critical. Hard gates: L3 plan approval, API contract approval, commit/push approval. Workers/reviewers are read-only on policy and never self-approve. Classification is by task description AND actual diff; uncertainty escalates upward; no downgrade after critical detection.
+See `plans/supervisor/ORCHESTRATOR_V2.md`. Contract freeze before code; FE/BE workers and QA never commit; human commits. Risk-based review for concurrency, money, migrations, auth. Contract: `plans/<feature>/contract.md` (canonical BE, mirror FE).
 
 ## Testing Rules
 
@@ -19,33 +19,10 @@ See `docs/AGENT_ORCHESTRATION.md` (v1). Tiers: L1 Simple / L2 Standard / L3 Crit
 - L2/L3: update `docs/test-cases.md` when tests/behavior change.
 - Run relevant targeted tests + `pnpm type-check` before completion. Run the full `pnpm test` only per tier (L2 at most once at end; L3 as required; L1 not required). Visual snapshots only with explicit approval.
 - E2E tests need backend `localhost:8080` + frontend `localhost:3000` running.
-- L2 review is mandatory by default; only the narrow exemption in the policy may skip it.
+- Risk review is auto-triggered when the diff touches concurrency, money, migrations, or auth.
 
 ## Git Rules
 
 - **KHÔNG** commit hoặc push nếu chưa được yêu cầu rõ ràng
 - Luôn hỏi trước khi commit: "Bạn muốn tôi commit + push không?"
 - Chỉ commit khi user xác nhận
-
-## Workflow & Allowlist (RAO v1)
-
-- Allowlist: BE agent edits only `go_be_arbitrage/`; FE agent edits only `FE_arbitrage/`. Contract: `plans/wallet-groups/contract-v1.0.md` (BE) / `docs/contracts/wallet-groups-v1.0.md` (FE mirror) — owned by BE, frozen; FE mocks against it, never edits it.
-- Brief template per batch: Goal / Allowlist / Acceptance criteria / Test commands / Contract link / Self-check.
-- Worker report: `Batch | Agent | Files changed | Tests (cmd → result) | Deviations | Open questions`.
-- Review: code-reviewer after each batch, max 2 fix rounds, then escalate to human.
-- Gates: plan approval (done), contract approval (done), final commit+push approval (pending).
-
-## Workflow (multi-agent, RAO v1)
-
-Roles: Orchestrator plans/dispatches/reviews; BE agent edits only backend repo; FE agent edits only frontend repo; code-reviewer read-only.
-Gates: HUMAN GATE 1 (plan/batch), HUMAN GATE 2 (contract, if API), final gate (commit+push). No API work before contract approved.
-Brief per batch (required): Goal / Allowlist (files) / Acceptance criteria / Test commands / Contract link / Self-check checklist.
-Worker report: `Batch | Agent | Files changed | Tests (cmd → result) | Deviations | Open questions`.
-Review: code-reviewer after each batch, max 2 fix rounds then escalate to human.
-Safety: no secrets in code; .env gitignored, only .env.example tracked; do not edit tests to make them green unless behavior intentionally changed (document reason).
-FE-specific: mock against contract; do not edit contract; new interactive UI component needs e2e (unit cannot catch rendering); update docs/test-cases.md when tests/behavior change.
-
-## Workflow Reference
-
-See `docs/WORKFLOW.md` for the OpenCode parallel FE/BE agent workflow (roles, batch schema, gates, sync points, dispatch/verify). State: `docs/WORKFLOW_STATE.md`.
-Lead may write plan/docs/state; FE/BE agents write source only within their repo allowlist. Contract is frozen in `plans/wallet-groups/contract-v1.0.md` (BE) + `docs/contracts/wallet-groups-v1.0.md` (FE mirror).
