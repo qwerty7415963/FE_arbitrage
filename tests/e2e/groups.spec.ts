@@ -18,7 +18,7 @@ async function seedAuth(page: Page) {
 }
 
 async function openFilters(page: Page) {
-  await page.getByRole('button', { name: 'Filters', exact: true }).click();
+  await page.getByRole('button', { name: /Filters/ }).click();
 }
 
 async function applyFilters(page: Page) {
@@ -625,7 +625,7 @@ test.describe('Wallet Scanner', () => {
     });
     await mockGroupsRoute(page);
     await page.goto('/en/traders');
-    await expect(page.getByRole('button', { name: 'Filters', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: /Filters/ })).toBeVisible();
     await expect(page.getByText('Smart Money')).toBeVisible();
     await expect.poll(() => bodies.length).toBe(1);
     expect(bodies[0]).toMatchObject({
@@ -813,7 +813,7 @@ test.describe('Wallet Scanner', () => {
     await page.goto('/en/traders');
     await applyFilters(page);
     await page.getByLabel('Select 0x1234567890abcdef1234567890abcdef12345678').click();
-    await page.getByRole('button', { name: 'Add to group (1)', exact: true }).click();
+    await page.getByRole('button', { name: 'Add to group', exact: true }).first().click();
     await expect(page.getByText('Add wallets to group')).toBeVisible();
     await expect(page.locator('[data-slot="dialog-content"]').getByText('Main')).toBeVisible();
     await page.locator('[data-slot="dialog-content"]').getByRole('radio', { name: /Main/ }).click();
@@ -993,7 +993,7 @@ test.describe('Wallet Scanner', () => {
     await page.goto('/en/traders');
     await applyFilters(page);
     await expect(page.getByText('Smart Money')).toBeVisible();
-    await expect(page.getByText('Stale')).toBeVisible();
+    await expect(page.getByRole('img', { name: 'Stale' })).toBeVisible();
   });
 });
 
@@ -1103,10 +1103,10 @@ test.describe('Trader Detail', () => {
     await page.getByLabel('ROI from (%)').fill('25');
     await page.getByRole('button', { name: 'Apply', exact: true }).click();
     await expect(page.getByText('Smart Money')).toBeVisible();
-    await page.getByRole('button', { name: 'View detail' }).click();
+    await page.getByRole('button', { name: 'View', exact: true }).click();
     await expect(page).toHaveURL(/\/traders\/0x[0-9a-f]+/i, { timeout: 15000 });
     await expect(page.getByRole('heading', { name: 'Smart Money' })).toBeVisible();
-    await expect(page.getByText('Leaderboard')).toBeVisible();
+    await expect(page.getByRole('img', { name: 'Leaderboard' })).toBeVisible();
     await page.getByRole('button', { name: 'Back to scanner' }).click();
     await expect(page).toHaveURL(/\/traders(\?|$)/);
     await expect(page).toHaveURL(/roi_min=25/);
