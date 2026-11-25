@@ -240,7 +240,10 @@
     "notifyInApp": "Thông báo trong app",
     "notifyTelegram": "Thông báo Telegram",
     "deleteGroup": "Xóa nhóm",
-    "duplicateGroup": "Nhân bản nhóm"
+    "duplicateGroup": "Nhân bản nhóm",
+    "selectedGroupsCount": "Đã chọn {count} (2-10)",
+    "removeGroup": "Xóa",
+    "sharedWallets": "ví chung"
   },
   "traders": {
     "title": "Quét trader",

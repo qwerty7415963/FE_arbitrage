@@ -240,7 +240,10 @@
     "notifyInApp": "In-app notification",
     "notifyTelegram": "Telegram notification",
     "deleteGroup": "Delete group",
-    "duplicateGroup": "Duplicate group"
+    "duplicateGroup": "Duplicate group",
+    "selectedGroupsCount": "{count} selected (2-10)",
+    "removeGroup": "Remove",
+    "sharedWallets": "shared wallets"
   },
   "traders": {
     "title": "Trader Scanner",

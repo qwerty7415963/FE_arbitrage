@@ -75,7 +75,7 @@ export function GroupsTable({
                     <Star className={cn('h-4 w-4', favorite && 'fill-current text-amber-500')} />
                   </button>
                 </td>
-                <td className="p-2" title={t('description')}>
+                <td className="p-2" title={row.description ?? ''}>
                   <div className="font-medium">{row.name}</div>
                   <div className="text-muted-foreground text-xs">{row.description ?? '—'}</div>
                 </td>

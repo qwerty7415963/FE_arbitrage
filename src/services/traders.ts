@@ -480,15 +480,6 @@ export async function markAllGroupAlertEventsRead(id: string): Promise<void> {
   });
 }
 
-export async function getGroupAlertsUnreadCount(): Promise<number> {
-  const res = await apiClient<ApiResponse<Record<string, unknown>>>(
-    `/api/v1/trader-alerts/unread-count`,
-  );
-  const data = res.data ?? {};
-  const v = data.count ?? data.unread_count ?? data.unread ?? data.total ?? 0;
-  return typeof v === 'number' ? v : 0;
-}
-
 export async function getGroupsCompare(
   groupIds: string[],
   period: '1D' | '7D' | '30D' | '90D' | 'ALL' = '30D',

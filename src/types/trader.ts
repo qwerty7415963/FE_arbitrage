@@ -287,6 +287,7 @@ export interface GroupAlertEventsPage {
   next_cursor: string | null;
   has_more: boolean;
   partial?: boolean;
+  unread_count?: number;
 }
 
 export interface GroupCompareStats {
