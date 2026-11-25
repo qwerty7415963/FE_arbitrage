@@ -227,6 +227,123 @@ export interface GroupPositionsResponse {
   positions: GroupPosition[];
 }
 
+export interface GroupActivityEvent {
+  id: number;
+  type: string;
+  occurred_at: string;
+  venue: string;
+  wallet_address: string;
+  coin: string;
+  size_delta: number | null;
+  price: number | null;
+  realized_pnl: number | null;
+  meta?: Record<string, unknown>;
+}
+export interface GroupActivityPage {
+  items: GroupActivityEvent[];
+  next_cursor: string | null;
+  has_more: boolean;
+  partial: boolean;
+  sources: { trades: boolean; fills: boolean; transfers: boolean };
+}
+
+export interface GroupAlert {
+  id: string;
+  group_id: string;
+  user_id: string;
+  name: string;
+  type: string;
+  params: Record<string, unknown>;
+  enabled: boolean;
+  cooldown_seconds: number;
+  notify_in_app: boolean;
+  notify_telegram: boolean;
+  last_condition_met: boolean;
+  last_value: number | null;
+  last_triggered_at: string | null;
+  last_evaluated_at: string | null;
+  created_at: string;
+  updated_at: string;
+  unread_events?: number;
+}
+
+export interface GroupAlertsListResponse {
+  alerts: GroupAlert[];
+  unread_events: number;
+}
+
+export interface GroupAlertEvent {
+  id: string;
+  alert_id: string;
+  group_id: string;
+  type: string;
+  payload: Record<string, unknown>;
+  triggered_at: string;
+  read_at: string | null;
+}
+
+export interface GroupAlertEventsPage {
+  items: GroupAlertEvent[];
+  next_cursor: string | null;
+  has_more: boolean;
+  partial?: boolean;
+}
+
+export interface GroupCompareStats {
+  period: string;
+  from: string;
+  to: string;
+  as_of: string;
+  data_status: 'empty' | 'ready' | 'partial' | 'stale' | 'error';
+  partial: boolean;
+  members_total: number;
+  members_with_data: number;
+  missing_wallets: number;
+  account_value: number | null;
+  total_notional: number | null;
+  unrealized_pnl: number | null;
+  realized_pnl: number | null;
+  roi: number | null;
+  win_rate: number | null;
+  volume: number | null;
+  profit_factor: number | null;
+  max_drawdown_pct: number | null;
+  open_positions: number;
+  trade_count: number;
+  definitions_version: number;
+}
+
+export interface GroupCompareGroup {
+  id: string;
+  name: string;
+  member_count: number;
+  stats: GroupCompareStats;
+}
+
+export interface GroupCompareSeriesPoint {
+  t: string;
+  roi_index: number | null;
+}
+
+export interface GroupCompareSeries {
+  group_id: string;
+  points: GroupCompareSeriesPoint[];
+}
+
+export interface GroupCompareOverlapPair {
+  a: string;
+  b: string;
+  shared_wallets: number;
+}
+
+export interface GroupCompareResponse {
+  period: '1D' | '7D' | '30D' | '90D' | 'ALL';
+  groups: GroupCompareGroup[];
+  series: GroupCompareSeries[];
+  overlap: { pairwise: GroupCompareOverlapPair[] };
+  warnings: string[];
+  as_of: string;
+}
 export interface GroupsOverview {
   total_groups: number;
   unique_wallets: number;

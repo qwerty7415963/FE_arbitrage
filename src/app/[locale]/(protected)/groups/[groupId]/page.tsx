@@ -35,6 +35,8 @@ import { CheckIcon, PencilIcon, RadarIcon, Trash2Icon, XIcon } from 'lucide-reac
 import { GroupForm } from '../_components/group-form';
 import { DeleteGroupDialog } from '../_components/delete-group-dialog';
 import { GroupPerformanceChart } from './_components/group-performance-chart';
+import { GroupActivityTimeline } from './_components/group-activity-timeline';
+import { GroupAlertsPanel } from './_components/group-alerts-panel';
 import { Pagination } from '@/components/shared/pagination';
 
 const PAGE_SIZE = 10;
@@ -62,11 +64,14 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
   const [editNote, setEditNote] = useState('');
   const [isSavingEdit, setIsSavingEdit] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [tab, setTab] = useState<'overview' | 'members'>('members');
+  const [tab, setTab] = useState<'overview' | 'members' | 'activity' | 'alerts'>('members');
   const [groupStats, setGroupStats] = useState<GroupStats | null>(null);
   const [isLoadingStats, setIsLoadingStats] = useState(false);
+  const [statsError, setStatsError] = useState<unknown>(null);
+  const [statsRefresh, setStatsRefresh] = useState(0);
   const [statsPeriod, setStatsPeriod] = useState<'1D' | '7D' | '30D' | '90D' | 'ALL'>('30D');
   const [positions, setPositions] = useState<GroupPositionsResponse | null>(null);
+  const [expandedCoins, setExpandedCoins] = useState<Set<string>>(new Set());
   const [isLoadingPositions, setIsLoadingPositions] = useState(false);
   const [isLoadingMembers, setIsLoadingMembers] = useState(true);
   const [membersError, setMembersError] = useState<unknown>(null);
@@ -135,19 +140,22 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
     async function loadStats() {
       if (!isAuthenticated) {
         setGroupStats(null);
+        setStatsError(null);
         return;
       }
       setIsLoadingStats(true);
+      setStatsError(null);
       try {
         setGroupStats(await getGroupStats(groupId, statsPeriod));
-      } catch {
+      } catch (err) {
         setGroupStats(null);
+        setStatsError(err);
       } finally {
         setIsLoadingStats(false);
       }
     }
     loadStats();
-  }, [groupId, isAuthenticated, statsPeriod]);
+  }, [groupId, isAuthenticated, statsPeriod, statsRefresh]);
 
   useEffect(() => {
     async function loadPositions() {
@@ -362,6 +370,20 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
         >
           {t('members')}
         </Button>
+        <Button
+          variant={tab === 'activity' ? 'default' : 'ghost'}
+          size="sm"
+          onClick={() => setTab('activity')}
+        >
+          {t('activity')}
+        </Button>
+        <Button
+          variant={tab === 'alerts' ? 'default' : 'ghost'}
+          size="sm"
+          onClick={() => setTab('alerts')}
+        >
+          {t('alerts')}
+        </Button>
       </div>
 
       {tab === 'overview' && (
@@ -380,34 +402,60 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
           </div>
           {isLoadingStats ? (
             <Skeleton className="h-20 w-full" />
-          ) : groupStats ? (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {(
-                [
-                  [t('accountValue'), formatUsd(groupStats.account_value) ?? NULL_DISPLAY],
-                  [t('unrealizedPnl'), formatSignedUsd(groupStats.unrealized_pnl)],
-                  [t('realizedPnl'), formatSignedUsd(groupStats.realized_pnl)],
-                  [
-                    t('roi'),
-                    formatSignedPercent(groupStats.roi != null ? groupStats.roi * 100 : null) ??
-                      NULL_DISPLAY,
-                  ],
-                  [t('volume'), formatUsd(groupStats.volume) ?? NULL_DISPLAY],
-                  [
-                    t('winRate'),
-                    formatPercent(groupStats.win_rate != null ? groupStats.win_rate * 100 : null) ??
-                      NULL_DISPLAY,
-                  ],
-                  [t('profitFactor'), formatDecimal(groupStats.profit_factor) ?? NULL_DISPLAY],
-                  [t('maxDrawdown'), formatPercent(groupStats.max_drawdown_pct) ?? NULL_DISPLAY],
-                ] as [string, string][]
-              ).map(([label, value]) => (
-                <div key={label} className="rounded-md border p-2">
-                  <div className="text-muted-foreground text-xs">{label}</div>
-                  <div className="font-medium tabular-nums">{value}</div>
-                </div>
-              ))}
+          ) : statsError ? (
+            <div className="bg-destructive/10 text-destructive rounded-md p-3 text-sm">
+              {t('unknownError')}{' '}
+              <Button variant="link" size="sm" onClick={() => setStatsRefresh((n) => n + 1)}>
+                {t('retry')}
+              </Button>
             </div>
+          ) : groupStats ? (
+            <>
+              <div className="text-muted-foreground flex flex-wrap gap-3 text-xs">
+                <span>
+                  {t('status')}: {groupStats.data_status}
+                </span>
+                {groupStats.partial ? <span>{t('partialData')}</span> : null}
+                <span>
+                  {t('missingWallets') ?? 'Missing'}: {groupStats.missing_wallets}
+                </span>
+                <span>
+                  {t('membersTotal') ?? 'Members'}: {groupStats.members_total}/
+                  {groupStats.members_with_data}
+                </span>
+                <span>
+                  {t('asOf') ?? 'As of'}: {groupStats.as_of}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                {(
+                  [
+                    [t('accountValue'), formatUsd(groupStats.account_value) ?? NULL_DISPLAY],
+                    [t('unrealizedPnl'), formatSignedUsd(groupStats.unrealized_pnl)],
+                    [t('realizedPnl'), formatSignedUsd(groupStats.realized_pnl)],
+                    [
+                      t('roi'),
+                      formatSignedPercent(groupStats.roi != null ? groupStats.roi * 100 : null) ??
+                        NULL_DISPLAY,
+                    ],
+                    [t('volume'), formatUsd(groupStats.volume) ?? NULL_DISPLAY],
+                    [
+                      t('winRate'),
+                      formatPercent(
+                        groupStats.win_rate != null ? groupStats.win_rate * 100 : null,
+                      ) ?? NULL_DISPLAY,
+                    ],
+                    [t('profitFactor'), formatDecimal(groupStats.profit_factor) ?? NULL_DISPLAY],
+                    [t('maxDrawdown'), formatPercent(groupStats.max_drawdown_pct) ?? NULL_DISPLAY],
+                  ] as [string, string][]
+                ).map(([label, value]) => (
+                  <div key={label} className="rounded-md border p-2">
+                    <div className="text-muted-foreground text-xs">{label}</div>
+                    <div className="font-medium tabular-nums">{value}</div>
+                  </div>
+                ))}
+              </div>
+            </>
           ) : (
             <div className="text-muted-foreground text-sm">{t('noMembers')}</div>
           )}
@@ -426,25 +474,123 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
                       <th className="p-2 text-right">{t('longExposure')}</th>
                       <th className="p-2 text-right">{t('shortExposure')}</th>
                       <th className="p-2 text-right">{t('netExposure')}</th>
+                      <th className="p-2 text-right">{t('grossNtl')}</th>
+                      <th className="p-2 text-right">{t('unrealizedPnl')}</th>
                       <th className="p-2 text-right">{t('walletCount')}</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {positions.positions.map((p) => (
-                      <tr key={p.coin} className="border-b last:border-0">
-                        <td className="p-2 font-medium">{p.coin}</td>
-                        <td className="p-2 text-right tabular-nums">
-                          {formatUsd(p.long_ntl) ?? NULL_DISPLAY}
-                        </td>
-                        <td className="p-2 text-right tabular-nums">
-                          {formatUsd(p.short_ntl) ?? NULL_DISPLAY}
-                        </td>
-                        <td className="p-2 text-right tabular-nums">
-                          {formatUsd(p.net_ntl) ?? NULL_DISPLAY}
-                        </td>
-                        <td className="p-2 text-right tabular-nums">{p.wallet_count}</td>
-                      </tr>
-                    ))}
+                    {positions.positions.map((p) => {
+                      const expanded = expandedCoins.has(p.coin);
+                      return (
+                        <>
+                          <tr
+                            key={p.coin}
+                            className="hover:bg-muted/40 cursor-pointer border-b last:border-0"
+                            onClick={() =>
+                              setExpandedCoins((prev) => {
+                                const next = new Set(prev);
+                                if (next.has(p.coin)) next.delete(p.coin);
+                                else next.add(p.coin);
+                                return next;
+                              })
+                            }
+                          >
+                            <td className="p-2 font-medium">{p.coin}</td>
+                            <td className="p-2 text-right tabular-nums">
+                              {formatUsd(p.long_ntl) ?? NULL_DISPLAY}
+                            </td>
+                            <td className="p-2 text-right tabular-nums">
+                              {formatUsd(p.short_ntl) ?? NULL_DISPLAY}
+                            </td>
+                            <td className="p-2 text-right tabular-nums">
+                              {formatUsd(p.net_ntl) ?? NULL_DISPLAY}
+                            </td>
+                            <td className="p-2 text-right tabular-nums">
+                              {formatUsd(p.gross_ntl) ?? NULL_DISPLAY}
+                            </td>
+                            <td className="p-2 text-right tabular-nums">
+                              {formatSignedUsd(p.unrealized_pnl)}
+                            </td>
+                            <td className="p-2 text-right tabular-nums">{p.wallet_count}</td>
+                          </tr>
+                          {expanded ? (
+                            <tr key={`${p.coin}-wallets`} className="bg-muted/20">
+                              <td colSpan={7} className="p-2">
+                                <table className="w-full text-xs">
+                                  <thead>
+                                    <tr className="border-b text-left">
+                                      <th className="p-1">{t('walletsList')}</th>
+                                      <th className="p-1">Side</th>
+                                      <th className="p-1 text-right">Size</th>
+                                      <th className="p-1 text-right">{t('entryPrice')}</th>
+                                      <th className="p-1 text-right">{t('markPrice')}</th>
+                                      <th className="p-1 text-right">{t('leverage')}</th>
+                                      <th className="p-1 text-right">{t('size')}</th>
+                                      <th className="p-1 text-right">{t('unrealizedPnl')}</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {p.wallets.map((w, idx) => (
+                                      <tr
+                                        key={`${w.wallet_address}-${idx}`}
+                                        className="border-b last:border-0"
+                                      >
+                                        <td className="p-1">
+                                          <Link
+                                            href={`/traders/${w.wallet_address}`}
+                                            className="hover:underline"
+                                          >
+                                            {w.wallet_address.slice(0, 6)}...
+                                            {w.wallet_address.slice(-4)}
+                                          </Link>
+                                        </td>
+                                        <td className="p-1">{w.side}</td>
+                                        <td className="p-1 text-right tabular-nums">{w.size}</td>
+                                        <td className="p-1 text-right tabular-nums">
+                                          {formatUsd(w.entry_price) ?? NULL_DISPLAY}
+                                        </td>
+                                        <td className="p-1 text-right tabular-nums">
+                                          {formatUsd(w.mark_price) ?? NULL_DISPLAY}
+                                        </td>
+                                        <td className="p-1 text-right tabular-nums">
+                                          {w.leverage ?? NULL_DISPLAY}
+                                        </td>
+                                        <td className="p-1 text-right tabular-nums">
+                                          {formatUsd(w.position_value) ?? NULL_DISPLAY}
+                                        </td>
+                                        <td className="p-1 text-right tabular-nums">
+                                          {formatSignedUsd(w.unrealized_pnl)}
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </td>
+                            </tr>
+                          ) : null}
+                        </>
+                      );
+                    })}
+                    <tr className="bg-muted/30 border-t font-medium">
+                      <td className="p-2">{t('totalNotional')}</td>
+                      <td className="p-2 text-right tabular-nums">
+                        {formatUsd(positions.totals.long_ntl) ?? NULL_DISPLAY}
+                      </td>
+                      <td className="p-2 text-right tabular-nums">
+                        {formatUsd(positions.totals.short_ntl) ?? NULL_DISPLAY}
+                      </td>
+                      <td className="p-2 text-right tabular-nums">
+                        {formatUsd(positions.totals.net_ntl) ?? NULL_DISPLAY}
+                      </td>
+                      <td className="p-2 text-right tabular-nums">
+                        {formatUsd(positions.totals.gross_ntl) ?? NULL_DISPLAY}
+                      </td>
+                      <td className="p-2 text-right tabular-nums">{NULL_DISPLAY}</td>
+                      <td className="p-2 text-right tabular-nums">
+                        {positions.totals.open_positions}
+                      </td>
+                    </tr>
                   </tbody>
                 </table>
               </div>
@@ -635,6 +781,10 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
           )}
         </>
       )}
+
+      {tab === 'activity' && <GroupActivityTimeline groupId={groupId} />}
+
+      {tab === 'alerts' && <GroupAlertsPanel groupId={groupId} />}
 
       <GroupForm open={formOpen} onOpenChange={setFormOpen} group={group} onSuccess={setGroup} />
       <DeleteGroupDialog

@@ -1217,3 +1217,198 @@ test.describe('Trader Detail', () => {
     await expect(page.getByText(/Partial data/)).toBeVisible();
   });
 });
+
+test.describe('Group Alerts', () => {
+  test('alerts tab shows empty state', async ({ page }) => {
+    await seedAuth(page);
+    await page.route('**/api/v1/trader-groups/g1', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          data: {
+            id: 'g1',
+            user_id: 'u1',
+            name: 'Main',
+            description: null,
+            member_count: 0,
+            notify_enabled: false,
+          },
+        }),
+      }),
+    );
+    await page.route('**/api/v1/trader-groups/g1/members*', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, data: [] }),
+      }),
+    );
+    await page.route('**/api/v1/trader-groups/g1/alerts*', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, data: [] }),
+      }),
+    );
+    await page.route('**/api/v1/trader-groups/g1/alert-events*', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          data: { items: [], next_cursor: null, has_more: false, unread_count: 0 },
+        }),
+      }),
+    );
+    await page.goto('/en/groups/g1');
+    await page.getByRole('button', { name: 'Alerts' }).click();
+    await expect(page.getByText('No alerts yet')).toBeVisible();
+  });
+});
+
+test.describe('Group Compare', () => {
+  test('compare page renders selected groups', async ({ page }) => {
+    await seedAuth(page);
+    await page.route('**/api/v1/trader-groups**', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          data: [
+            {
+              id: 'g1',
+              name: 'Alpha',
+              member_count: 1,
+              is_favorite: false,
+              account_value: 100,
+              unrealized_pnl: 1,
+              roi: 0.1,
+              volume: 10,
+              open_positions: 1,
+              win_rate: 0.5,
+              updated_at: new Date().toISOString(),
+              data_status: 'ready',
+              partial: false,
+              missing_wallets: 0,
+            },
+            {
+              id: 'g2',
+              name: 'Beta',
+              member_count: 1,
+              is_favorite: false,
+              account_value: 200,
+              unrealized_pnl: 2,
+              roi: 0.2,
+              volume: 20,
+              open_positions: 2,
+              win_rate: 0.6,
+              updated_at: new Date().toISOString(),
+              data_status: 'ready',
+              partial: false,
+              missing_wallets: 0,
+            },
+          ],
+          meta: { total: 2, page: 1, total_pages: 1, limit: 20 },
+        }),
+      }),
+    );
+    await page.route('**/api/v1/trader-groups/compare', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          data: {
+            period: '30D',
+            groups: [
+              {
+                id: 'g1',
+                name: 'Alpha',
+                member_count: 1,
+                stats: {
+                  period: '30D',
+                  from: '2026-10-01',
+                  to: '2026-11-01',
+                  as_of: new Date().toISOString(),
+                  data_status: 'ready',
+                  partial: false,
+                  members_total: 1,
+                  members_with_data: 1,
+                  missing_wallets: 0,
+                  account_value: 100,
+                  total_notional: 50,
+                  unrealized_pnl: 1,
+                  realized_pnl: 2,
+                  roi: 0.1,
+                  win_rate: 0.5,
+                  volume: 10,
+                  profit_factor: 1.5,
+                  max_drawdown_pct: 5,
+                  open_positions: 1,
+                  trade_count: 3,
+                  definitions_version: 1,
+                },
+              },
+              {
+                id: 'g2',
+                name: 'Beta',
+                member_count: 1,
+                stats: {
+                  period: '30D',
+                  from: '2026-10-01',
+                  to: '2026-11-01',
+                  as_of: new Date().toISOString(),
+                  data_status: 'ready',
+                  partial: false,
+                  members_total: 1,
+                  members_with_data: 1,
+                  missing_wallets: 0,
+                  account_value: 200,
+                  total_notional: 60,
+                  unrealized_pnl: 2,
+                  realized_pnl: 3,
+                  roi: 0.2,
+                  win_rate: 0.6,
+                  volume: 20,
+                  profit_factor: 1.6,
+                  max_drawdown_pct: 4,
+                  open_positions: 2,
+                  trade_count: 4,
+                  definitions_version: 1,
+                },
+              },
+            ],
+            series: [
+              {
+                group_id: 'g1',
+                points: [
+                  { t: '2026-10-01T00:00:00Z', roi_index: 100 },
+                  { t: '2026-11-01T00:00:00Z', roi_index: 110 },
+                ],
+              },
+              {
+                group_id: 'g2',
+                points: [
+                  { t: '2026-10-01T00:00:00Z', roi_index: 100 },
+                  { t: '2026-11-01T00:00:00Z', roi_index: 120 },
+                ],
+              },
+            ],
+            overlap: { pairwise: [] },
+            warnings: [],
+            as_of: new Date().toISOString(),
+          },
+        }),
+      }),
+    );
+    await page.goto('/en/groups/compare');
+    await page.getByLabel('Alpha').check();
+    await page.getByLabel('Beta').check();
+    await page.getByRole('button', { name: 'Compare' }).click();
+    await expect(page.getByRole('columnheader', { name: 'Alpha' })).toBeVisible();
+    await expect(page.getByRole('columnheader', { name: 'Beta' })).toBeVisible();
+  });
+});

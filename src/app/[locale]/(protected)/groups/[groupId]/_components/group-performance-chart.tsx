@@ -30,7 +30,12 @@ export function GroupPerformanceChart({ groupId }: GroupPerformanceChartProps) {
     let cancelled = false;
     getGroupPerformance(groupId, range)
       .then((res) => {
-        if (!cancelled) setData(res);
+        if (!cancelled) {
+          setData(res);
+          if (!res.metric_availability?.cumulative_realized_pnl) {
+            setMetric('roi');
+          }
+        }
       })
       .catch(() => {
         if (!cancelled) setData(null);
@@ -55,6 +60,12 @@ export function GroupPerformanceChart({ groupId }: GroupPerformanceChartProps) {
   }, [data, metric]);
 
   const hasPoints = points.length > 0;
+  const firstPointTime = hasPoints ? points[0].t : null;
+  const requestedFromTime = data?.from ? Date.parse(data.from) : NaN;
+  const showStartsAt =
+    firstPointTime != null &&
+    Number.isFinite(requestedFromTime) &&
+    firstPointTime > requestedFromTime;
   const values = points.map((p) => p.v);
   let min = hasPoints ? Math.min(...values) : 0;
   let max = hasPoints ? Math.max(...values) : 1;
@@ -100,10 +111,13 @@ export function GroupPerformanceChart({ groupId }: GroupPerformanceChartProps) {
         <div className="flex items-center gap-1">
           <button
             type="button"
+            disabled={!data?.metric_availability?.cumulative_realized_pnl}
             onClick={() => setMetric('pnl')}
             className={cn(
               'rounded-md px-2 py-1 text-xs',
               metric === 'pnl' ? 'bg-muted font-medium' : 'text-muted-foreground',
+              !data?.metric_availability?.cumulative_realized_pnl &&
+                'cursor-not-allowed opacity-40',
             )}
           >
             {t('chartCumulativePnl')}
@@ -126,7 +140,11 @@ export function GroupPerformanceChart({ groupId }: GroupPerformanceChartProps) {
       ) : !hasPoints ? (
         <div className="text-muted-foreground flex h-[180px] items-center justify-center text-sm">
           {t('insufficientData')}
-          {data?.insufficient_data && data.from ? ` (${t('chartStartsAt')} ${data.from})` : ''}
+          {showStartsAt && firstPointTime
+            ? ` (${t('chartStartsAt')} ${new Date(firstPointTime).toLocaleDateString()})`
+            : data?.insufficient_data && data.from
+              ? ` (${t('chartStartsAt')} ${new Date(data.from).toLocaleDateString()})`
+              : ''}
         </div>
       ) : (
         <>
@@ -158,9 +176,14 @@ export function GroupPerformanceChart({ groupId }: GroupPerformanceChartProps) {
               vectorEffect="non-scaling-stroke"
             />
           </svg>
+          {showStartsAt && firstPointTime ? (
+            <div className="text-muted-foreground text-[10px]">
+              {t('chartStartsAt')} {new Date(firstPointTime).toLocaleDateString()}
+            </div>
+          ) : null}
           <div className="text-muted-foreground flex justify-between text-[10px]">
-            <span>{data?.from}</span>
-            <span>{data?.to}</span>
+            <span>{data?.from ? new Date(data.from).toLocaleDateString() : ''}</span>
+            <span>{data?.to ? new Date(data.to).toLocaleDateString() : ''}</span>
           </div>
         </>
       )}

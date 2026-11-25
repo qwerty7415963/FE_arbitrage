@@ -38,7 +38,11 @@ import {
   type GroupsOverview,
   type GroupPerformanceResponse,
   type GroupPositionsResponse,
+  type GroupActivityPage,
   type GroupStats,
+  type GroupAlert,
+  type GroupAlertEventsPage,
+  type GroupCompareResponse,
   type TraderMember,
   type TraderOverview,
   type TraderOverviewSeries,
@@ -371,6 +375,128 @@ export async function getGroupPositions(id: string): Promise<GroupPositionsRespo
   const res = await apiClient<ApiResponse<GroupPositionsResponse>>(
     `${TRADER_GROUPS_BASE}/${id}/positions`,
   );
+  if (!res.data) throw new Error('No data returned');
+  return res.data;
+}
+
+export async function getGroupActivity(
+  id: string,
+  params: { limit?: number; cursor?: string; wallet?: string; asset?: string; type?: string } = {},
+): Promise<GroupActivityPage> {
+  const sp = new URLSearchParams();
+  if (params.limit) sp.set('limit', String(params.limit));
+  if (params.cursor) sp.set('cursor', params.cursor);
+  if (params.wallet) sp.set('wallet', params.wallet);
+  if (params.asset) sp.set('asset', params.asset);
+  if (params.type) sp.set('type', params.type);
+  const res = await apiClient<ApiResponse<GroupActivityPage>>(
+    `${TRADER_GROUPS_BASE}/${id}/activity?${sp.toString()}`,
+  );
+  if (!res.data) throw new Error('No data returned');
+  return res.data;
+}
+export async function getGroupAlerts(id: string): Promise<GroupAlert[]> {
+  const res = await apiClient<ApiResponse<GroupAlert[]>>(`${TRADER_GROUPS_BASE}/${id}/alerts`);
+  if (!res.data) throw new Error('No data returned');
+  return res.data;
+}
+
+export async function createGroupAlert(
+  id: string,
+  input: {
+    name: string;
+    type: string;
+    params?: Record<string, unknown>;
+    enabled?: boolean;
+    cooldown_seconds?: number;
+    notify_in_app?: boolean;
+    notify_telegram?: boolean;
+  },
+): Promise<GroupAlert> {
+  const res = await apiClient<ApiResponse<GroupAlert>>(`${TRADER_GROUPS_BASE}/${id}/alerts`, {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+  if (!res.data) throw new Error('No data returned');
+  return res.data;
+}
+
+export async function updateGroupAlert(
+  alertId: string,
+  input: Partial<{
+    name: string;
+    type: string;
+    params: Record<string, unknown>;
+    enabled: boolean;
+    cooldown_seconds: number;
+    notify_in_app: boolean;
+    notify_telegram: boolean;
+  }>,
+): Promise<GroupAlert> {
+  const res = await apiClient<ApiResponse<GroupAlert>>(
+    `${TRADER_GROUPS_BASE.replace('trader-groups', 'trader-alerts')}/${alertId}`,
+    {
+      method: 'PATCH',
+      body: JSON.stringify(input),
+    },
+  );
+  if (!res.data) throw new Error('No data returned');
+  return res.data;
+}
+
+export async function deleteGroupAlert(alertId: string): Promise<void> {
+  await apiClient(`${TRADER_GROUPS_BASE.replace('trader-groups', 'trader-alerts')}/${alertId}`, {
+    method: 'DELETE',
+  });
+}
+
+export async function getGroupAlertEvents(
+  id: string,
+  params: { unread?: boolean; limit?: number; cursor?: string } = {},
+): Promise<GroupAlertEventsPage> {
+  const sp = new URLSearchParams();
+  if (params.unread) sp.set('unread', 'true');
+  if (params.limit) sp.set('limit', String(params.limit));
+  if (params.cursor) sp.set('cursor', params.cursor);
+  const res = await apiClient<ApiResponse<GroupAlertEventsPage>>(
+    `${TRADER_GROUPS_BASE}/${id}/alert-events?${sp.toString()}`,
+  );
+  if (!res.data) throw new Error('No data returned');
+  return res.data;
+}
+
+export async function markGroupAlertEventRead(eventId: string): Promise<void> {
+  await apiClient(
+    `${TRADER_GROUPS_BASE.replace('trader-groups', 'trader-alert-events')}/${eventId}/read`,
+    {
+      method: 'POST',
+    },
+  );
+}
+
+export async function markAllGroupAlertEventsRead(id: string): Promise<void> {
+  await apiClient(`${TRADER_GROUPS_BASE}/${id}/alert-events/read-all`, {
+    method: 'POST',
+  });
+}
+
+export async function getGroupAlertsUnreadCount(): Promise<number> {
+  const res = await apiClient<ApiResponse<Record<string, unknown>>>(
+    `/api/v1/trader-alerts/unread-count`,
+  );
+  const data = res.data ?? {};
+  const v = data.count ?? data.unread_count ?? data.unread ?? data.total ?? 0;
+  return typeof v === 'number' ? v : 0;
+}
+
+export async function getGroupsCompare(
+  groupIds: string[],
+  period: '1D' | '7D' | '30D' | '90D' | 'ALL' = '30D',
+): Promise<GroupCompareResponse> {
+  const res = await apiClient<ApiResponse<GroupCompareResponse>>(`${TRADER_GROUPS_BASE}/compare`, {
+    method: 'POST',
+    body: JSON.stringify({ group_ids: groupIds, period }),
+  });
   if (!res.data) throw new Error('No data returned');
   return res.data;
 }

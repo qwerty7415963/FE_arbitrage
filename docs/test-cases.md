@@ -992,3 +992,22 @@ reviewing diffs â€” never blindly.
 | ScannerFiltersPanel    | tests/unit/components/scanner-filters-panel.test.tsx | docked/sheet, presets, checkbox                         |
 | TraderTable (redesign) | tests/unit/components/trader-table.test.tsx          | columns, split bar, view action                         |
 | Visual snapshots       | tests/e2e/visual.spec.ts                             | scanner default/results/narrow/filters-open regenerated |
+
+---
+
+## Wallet Groups v2.1 — FE-2
+
+### Activity tab
+
+- Detail page tab "Activity" renders timeline with filters (wallet/asset/type) and load more.
+
+### Alerts tab
+
+- List alerts with enable/disable toggle.
+- Create/edit alert dialog persists name/type/params/cooldown/notify flags.
+- Delete alert removes row.
+- History list with mark read / mark all read and unread badge.
+
+### Compare page
+
+- `/groups/compare` supports multi-select 2-10 groups, range 7D/30D/90D/ALL, multi-line ROI chart, metrics table with best/worst highlight, remove group.
