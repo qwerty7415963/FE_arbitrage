@@ -1,6 +1,7 @@
 'use client';
 
 import { use, useCallback, useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Link, useRouter } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
@@ -35,6 +36,7 @@ import { CheckIcon, PencilIcon, RadarIcon, Trash2Icon, XIcon } from 'lucide-reac
 import { GroupForm } from '../_components/group-form';
 import { DeleteGroupDialog } from '../_components/delete-group-dialog';
 import { GroupPerformanceChart } from './_components/group-performance-chart';
+import { GroupExposure } from './_components/group-exposure';
 import { GroupActivityTimeline } from './_components/group-activity-timeline';
 import { GroupAlertsPanel } from './_components/group-alerts-panel';
 import { Pagination } from '@/components/shared/pagination';
@@ -64,8 +66,24 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
   const [editNote, setEditNote] = useState('');
   const [isSavingEdit, setIsSavingEdit] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [tab, setTab] = useState<'overview' | 'members' | 'activity' | 'alerts'>('members');
+  const searchParams = useSearchParams();
+  const [tab, setTab] = useState<'overview' | 'positions' | 'members' | 'activity' | 'alerts'>(
+    () => {
+      const t = searchParams?.get('tab') ?? null;
+      if (
+        t === 'overview' ||
+        t === 'positions' ||
+        t === 'members' ||
+        t === 'activity' ||
+        t === 'alerts'
+      ) {
+        return t;
+      }
+      return 'overview';
+    },
+  );
   const [groupStats, setGroupStats] = useState<GroupStats | null>(null);
+  const [statsFetchedAt, setStatsFetchedAt] = useState<number | null>(null);
   const [isLoadingStats, setIsLoadingStats] = useState(false);
   const [statsError, setStatsError] = useState<unknown>(null);
   const [statsRefresh, setStatsRefresh] = useState(0);
@@ -146,7 +164,9 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
       setIsLoadingStats(true);
       setStatsError(null);
       try {
-        setGroupStats(await getGroupStats(groupId, statsPeriod));
+        const s = await getGroupStats(groupId, statsPeriod);
+        setGroupStats(s);
+        setStatsFetchedAt(Date.now());
       } catch (err) {
         setGroupStats(null);
         setStatsError(err);
@@ -325,6 +345,26 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
           <p className="text-muted-foreground text-sm">
             {t('walletCount')}: {group.member_count}
           </p>
+          <div className="mt-1 flex items-center gap-2 text-xs">
+            <span className="bg-muted rounded-full px-2 py-0.5">
+              {t('status')}: {groupStats?.data_status ?? '—'}
+            </span>
+            {groupStats?.as_of ? (
+              <span className="text-muted-foreground">
+                {t('updatedAgo', {
+                  minutes: Math.max(
+                    0,
+                    Math.round(
+                      ((statsFetchedAt ?? 0) - Date.parse(groupStats.as_of ?? '')) / 60000,
+                    ),
+                  ),
+                })}
+              </span>
+            ) : null}
+            <Button size="sm" variant="outline" onClick={() => setStatsRefresh((n) => n + 1)}>
+              {t('refresh')}
+            </Button>
+          </div>
         </div>
         <div className="flex items-center gap-3">
           <label className="flex items-center gap-2 text-sm">
@@ -356,14 +396,17 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
       </div>
 
       <div className="flex gap-2 border-b pb-1" role="tablist" aria-label={t('title')}>
-        {(['overview', 'members', 'activity', 'alerts'] as const).map((id) => (
+        {(['overview', 'positions', 'members', 'activity', 'alerts'] as const).map((id) => (
           <Button
             key={id}
             role="tab"
             aria-selected={tab === id}
             variant={tab === id ? 'default' : 'ghost'}
             size="sm"
-            onClick={() => setTab(id)}
+            onClick={() => {
+              setTab(id);
+              router.replace(`/groups/${groupId}?tab=${id}`);
+            }}
           >
             {t(id)}
           </Button>
@@ -384,6 +427,7 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
               </Button>
             ))}
           </div>
+          <GroupExposure groupId={groupId} period={statsPeriod} />
           {isLoadingStats ? (
             <Skeleton className="h-20 w-full" />
           ) : statsError ? (
@@ -408,14 +452,19 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
                   {groupStats.members_with_data}
                 </span>
                 <span>
-                  {t('asOf') ?? 'As of'}: {groupStats.as_of}
+                  {t('asOf') ?? 'As of'}: {groupStats.as_of ?? '—'}
                 </span>
               </div>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                 {(
                   [
                     [t('accountValue'), formatUsd(groupStats.account_value) ?? NULL_DISPLAY],
-                    [t('unrealizedPnl'), formatSignedUsd(groupStats.unrealized_pnl)],
+                    [
+                      t('unrealizedPnl'),
+                      groupStats.unrealized_pnl != null
+                        ? formatSignedUsd(groupStats.unrealized_pnl)
+                        : 'N/A',
+                    ],
                     [t('realizedPnl'), formatSignedUsd(groupStats.realized_pnl)],
                     [
                       t('roi'),
@@ -425,15 +474,30 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
                     [t('volume'), formatUsd(groupStats.volume) ?? NULL_DISPLAY],
                     [
                       t('winRate'),
-                      formatPercent(
-                        groupStats.win_rate != null ? groupStats.win_rate * 100 : null,
-                      ) ?? NULL_DISPLAY,
+                      groupStats.win_rate != null
+                        ? groupStats.win_count != null && groupStats.loss_count != null
+                          ? `${formatPercent(groupStats.win_rate * 100) ?? NULL_DISPLAY} (${groupStats.win_count}/${groupStats.win_count + groupStats.loss_count})`
+                          : (formatPercent(groupStats.win_rate * 100) ?? NULL_DISPLAY)
+                        : NULL_DISPLAY,
                     ],
-                    [t('profitFactor'), formatDecimal(groupStats.profit_factor) ?? NULL_DISPLAY],
+                    [
+                      t('profitFactor'),
+                      groupStats.profit_factor != null
+                        ? (formatDecimal(groupStats.profit_factor) ?? NULL_DISPLAY)
+                        : t('profitFactorNa'),
+                    ],
                     [t('maxDrawdown'), formatPercent(groupStats.max_drawdown_pct) ?? NULL_DISPLAY],
                   ] as [string, string][]
                 ).map(([label, value]) => (
-                  <div key={label} className="rounded-md border p-2">
+                  <div
+                    key={label}
+                    className="rounded-md border p-2"
+                    title={
+                      label === t('unrealizedPnl') && groupStats.unrealized_pnl == null
+                        ? t('upnlNaTooltip')
+                        : undefined
+                    }
+                  >
                     <div className="text-muted-foreground text-xs">{label}</div>
                     <div className="font-medium tabular-nums">{value}</div>
                   </div>
@@ -443,8 +507,12 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
           ) : (
             <div className="text-muted-foreground text-sm">{t('noMembers')}</div>
           )}
-          <GroupPerformanceChart groupId={groupId} />
+          <GroupPerformanceChart groupId={groupId} period={statsPeriod} />
+        </div>
+      )}
 
+      {tab === 'positions' && (
+        <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
             <h2 className="text-lg font-semibold">{t('positions')}</h2>
             {isLoadingPositions ? (
@@ -510,6 +578,10 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
                                       <th className="p-1 text-right">{t('entryPrice')}</th>
                                       <th className="p-1 text-right">{t('markPrice')}</th>
                                       <th className="p-1 text-right">{t('leverage')}</th>
+                                      <th className="p-1 text-right">{t('liquidationPrice')}</th>
+                                      <th className="p-1 text-right">
+                                        {t('distanceToLiquidation')}
+                                      </th>
                                       <th className="p-1 text-right">{t('size')}</th>
                                       <th className="p-1 text-right">{t('unrealizedPnl')}</th>
                                     </tr>
@@ -529,7 +601,21 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
                                             {w.wallet_address.slice(-4)}
                                           </Link>
                                         </td>
-                                        <td className="p-1">{w.side}</td>
+                                        <td className="p-1">
+                                          <span>{w.side}</span>
+                                          {w.distance_to_liquidation_pct != null &&
+                                          w.distance_to_liquidation_pct <= 10 ? (
+                                            <span
+                                              className={
+                                                w.distance_to_liquidation_pct <= 5
+                                                  ? 'bg-destructive/10 text-destructive ml-1 rounded px-1'
+                                                  : 'bg-warning/10 text-warning ml-1 rounded px-1'
+                                              }
+                                            >
+                                              {w.distance_to_liquidation_pct.toFixed(2)}%
+                                            </span>
+                                          ) : null}
+                                        </td>
                                         <td className="p-1 text-right tabular-nums">{w.size}</td>
                                         <td className="p-1 text-right tabular-nums">
                                           {formatUsd(w.entry_price) ?? NULL_DISPLAY}
@@ -539,6 +625,14 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
                                         </td>
                                         <td className="p-1 text-right tabular-nums">
                                           {w.leverage ?? NULL_DISPLAY}
+                                        </td>
+                                        <td className="p-1 text-right tabular-nums">
+                                          {formatUsd(w.liquidation_price) ?? NULL_DISPLAY}
+                                        </td>
+                                        <td className="p-1 text-right tabular-nums">
+                                          {w.distance_to_liquidation_pct != null
+                                            ? `${w.distance_to_liquidation_pct.toFixed(2)}%`
+                                            : NULL_DISPLAY}
                                         </td>
                                         <td className="p-1 text-right tabular-nums">
                                           {formatUsd(w.position_value) ?? NULL_DISPLAY}
@@ -579,7 +673,7 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
                 </table>
               </div>
             ) : (
-              <div className="text-muted-foreground text-sm">{t('noMembers')}</div>
+              <div className="text-muted-foreground text-sm">{t('noOpenPositions')}</div>
             )}
           </div>
         </div>

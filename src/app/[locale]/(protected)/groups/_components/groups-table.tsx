@@ -114,7 +114,15 @@ export function GroupsTable({
                 <TableCell className="text-right tabular-nums">
                   {formatUsd(row.volume) ?? '—'}
                 </TableCell>
-                <TableCell className="text-right tabular-nums">{row.open_positions}</TableCell>
+                <TableCell className="text-right tabular-nums">
+                  <a
+                    href={`/groups/${row.id}?tab=positions`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="hover:underline"
+                  >
+                    {row.open_positions}
+                  </a>
+                </TableCell>
                 <TableCell className="text-right tabular-nums">
                   {formatPercent(row.win_rate != null ? row.win_rate * 100 : null) ?? '—'}
                 </TableCell>

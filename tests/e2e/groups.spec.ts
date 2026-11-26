@@ -444,21 +444,21 @@ test.describe('Group Detail Membership', () => {
 
   test('lists member wallets automatically', async ({ page }) => {
     await mockDetail(page, [mockMember]);
-    await page.goto('/en/groups/g1');
+    await page.goto('/en/groups/g1?tab=members');
     await expect(page.getByText('0x1234...5678')).toBeVisible();
     await expect(page.getByText('+12.50%')).toBeVisible();
   });
 
   test('shows display name and alias', async ({ page }) => {
     await mockDetail(page, [mockMember]);
-    await page.goto('/en/groups/g1');
+    await page.goto('/en/groups/g1?tab=members');
     await expect(page.getByText('Smart Money')).toBeVisible();
     await expect(page.getByText('whale-1')).toBeVisible();
   });
 
   test('shows empty state when there are no members', async ({ page }) => {
     await mockDetail(page, []);
-    await page.goto('/en/groups/g1');
+    await page.goto('/en/groups/g1?tab=members');
     await expect(page.getByText('No members yet')).toBeVisible();
   });
 
@@ -476,7 +476,7 @@ test.describe('Group Detail Membership', () => {
       }
       return route.fallback();
     });
-    await page.goto('/en/groups/g1');
+    await page.goto('/en/groups/g1?tab=members');
     await expect(page.getByText('0x1234...5678')).toBeVisible();
     await page.getByRole('button', { name: 'Remove member' }).click();
     await expect.poll(() => deletes).toBe(1);
@@ -484,7 +484,7 @@ test.describe('Group Detail Membership', () => {
 
   test('links to global scanner', async ({ page }) => {
     await mockDetail(page, [mockMember]);
-    await page.goto('/en/groups/g1');
+    await page.goto('/en/groups/g1?tab=members');
     await expect(page.getByRole('link', { name: /Scan for more wallets/ })).toHaveAttribute(
       'href',
       /\/traders\?group=g1/,
@@ -507,7 +507,7 @@ test.describe('Group Detail Membership', () => {
       gets += 1;
       return route.fallback();
     });
-    await page.goto('/en/groups/g1');
+    await page.goto('/en/groups/g1?tab=members');
     await expect(page.getByText('0x1234...5678')).toBeVisible();
     await page
       .getByRole('button', { name: 'Edit member 0x1234567890abcdef1234567890abcdef12345678' })
@@ -562,7 +562,7 @@ test.describe('Group Detail Membership', () => {
         body: JSON.stringify({ success: true, data: members }),
       });
     });
-    await page.goto('/en/groups/g1');
+    await page.goto('/en/groups/g1?tab=members');
     await expect(page.getByText('0xaaaa...aaaa')).toBeVisible();
     await expect(page.getByText('0xbbbb...bbbb')).toBeVisible();
     const row = page.getByText('0xaaaa...aaaa').locator('xpath=ancestor::tr[1]');
@@ -1259,7 +1259,7 @@ test.describe('Group Alerts', () => {
         }),
       }),
     );
-    await page.goto('/en/groups/g1');
+    await page.goto('/en/groups/g1?tab=members');
     await page.getByRole('tab', { name: 'Alerts' }).click();
     await expect(page.getByText('No alerts yet')).toBeVisible();
   });

@@ -69,6 +69,7 @@ export const sampleGroupStats: GroupStats = {
   from: '2026-10-24',
   to: '2026-11-23',
   as_of: '2026-11-23T10:00:00Z',
+  evaluated_at: '2026-11-23T10:00:00Z',
   data_status: 'ready',
   partial: false,
   members_total: 12,
@@ -79,13 +80,16 @@ export const sampleGroupStats: GroupStats = {
   unrealized_pnl: -12.34,
   realized_pnl: 440.5,
   roi: 0.0431,
+  win_count: 21,
+  loss_count: 5,
+  breakeven_count: 2,
+  trade_count: 120,
   win_rate: 0.53,
   volume: 500000,
   profit_factor: 1.8,
   max_drawdown_pct: 7.2,
   open_positions: 4,
-  trade_count: 120,
-  definitions_version: 1,
+  definitions_version: 2,
 };
 
 export const sampleGroupPerformance: GroupPerformanceResponse = {
@@ -126,11 +130,15 @@ export const sampleGroupPositions: GroupPositionsResponse = {
       wallets: [
         {
           wallet_address: '0xabc123',
+          display_name: 'Smart Money',
+          alias: 'whale-1',
           side: 'LONG',
           size: 1.2,
           entry_price: 60000,
           mark_price: 61000,
           leverage: 3,
+          liquidation_price: 55000,
+          distance_to_liquidation_pct: 9.84,
           position_value: 73200,
           unrealized_pnl: 1200,
           as_of: '2026-11-23T10:00:00Z',

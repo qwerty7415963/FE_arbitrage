@@ -145,11 +145,22 @@ export interface GroupListItem {
   missing_wallets: number;
 }
 
+export interface GroupStatsWallet {
+  wallet_address: string;
+  venue: string;
+  data_status: 'empty' | 'ready' | 'partial' | 'stale' | 'error';
+  as_of: string | null;
+  has_positions: boolean;
+  has_equity: boolean;
+  missing_reason: string | null;
+}
+
 export interface GroupStats {
   period: string;
   from: string;
   to: string;
-  as_of: string;
+  as_of: string | null;
+  evaluated_at: string;
   data_status: 'empty' | 'ready' | 'partial' | 'stale' | 'error';
   partial: boolean;
   members_total: number;
@@ -160,13 +171,17 @@ export interface GroupStats {
   unrealized_pnl: number | null;
   realized_pnl: number | null;
   roi: number | null;
+  win_count: number;
+  loss_count: number;
+  breakeven_count: number;
+  trade_count: number;
   win_rate: number | null;
   volume: number | null;
   profit_factor: number | null;
   max_drawdown_pct: number | null;
   open_positions: number;
-  trade_count: number;
   definitions_version: number;
+  wallets?: GroupStatsWallet[];
 }
 
 export interface GroupPerformancePoint {
@@ -190,11 +205,15 @@ export interface GroupPerformanceResponse {
 
 export interface GroupPositionWallet {
   wallet_address: string;
+  display_name: string | null;
+  alias: string | null;
   side: 'LONG' | 'SHORT';
   size: number;
   entry_price: number | null;
   mark_price: number | null;
   leverage: number | null;
+  liquidation_price: number | null;
+  distance_to_liquidation_pct: number | null;
   position_value: number | null;
   unrealized_pnl: number | null;
   as_of: string;
@@ -225,6 +244,26 @@ export interface GroupPositionsResponse {
     open_positions: number;
   };
   positions: GroupPosition[];
+}
+
+export interface GroupExposureRow {
+  coin: string;
+  long_ntl: number;
+  short_ntl: number;
+  net_ntl: number;
+  gross_ntl: number;
+  long_wallets: number;
+  short_wallets: number;
+  avg_leverage: number | null;
+}
+
+export interface GroupExposureResponse {
+  period: string;
+  as_of: string;
+  data_status: 'empty' | 'ready' | 'partial' | 'stale' | 'error';
+  partial: boolean;
+  missing_wallets: number;
+  rows: GroupExposureRow[];
 }
 
 export interface GroupActivityEvent {
@@ -294,7 +333,8 @@ export interface GroupCompareStats {
   period: string;
   from: string;
   to: string;
-  as_of: string;
+  as_of: string | null;
+  evaluated_at?: string;
   data_status: 'empty' | 'ready' | 'partial' | 'stale' | 'error';
   partial: boolean;
   members_total: number;
@@ -305,12 +345,15 @@ export interface GroupCompareStats {
   unrealized_pnl: number | null;
   realized_pnl: number | null;
   roi: number | null;
+  win_count: number;
+  loss_count: number;
+  breakeven_count: number;
+  trade_count: number;
   win_rate: number | null;
   volume: number | null;
   profit_factor: number | null;
   max_drawdown_pct: number | null;
   open_positions: number;
-  trade_count: number;
   definitions_version: number;
 }
 

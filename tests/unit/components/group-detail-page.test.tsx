@@ -11,6 +11,10 @@ import {
   listGroupMembers,
   removeGroupMembers,
   updateGroupMembers,
+  getGroupStats,
+  getGroupPositions,
+  getGroupPerformance,
+  getGroupExposure,
 } from '@/services/traders';
 import { getStatus } from '@/services/telegram';
 import enMessages from '@/messages/en.json';
@@ -21,6 +25,10 @@ vi.mock('@/services/traders', () => ({
   removeGroupMembers: vi.fn(),
   updateGroupMembers: vi.fn(),
   updateTraderGroup: vi.fn(),
+  getGroupStats: vi.fn(),
+  getGroupPositions: vi.fn(),
+  getGroupPerformance: vi.fn(),
+  getGroupExposure: vi.fn(),
 }));
 vi.mock('@/services/telegram', () => ({
   getStatus: vi.fn(),
@@ -32,7 +40,10 @@ vi.mock('@/i18n/navigation', () => ({
   Link: ({ children, href }: { children: React.ReactNode; href: string }) => (
     <a href={href}>{children}</a>
   ),
-  useRouter: () => ({ push: vi.fn() }),
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
+}));
+vi.mock('next/navigation', () => ({
+  useSearchParams: () => new URLSearchParams('tab=members'),
 }));
 
 vi.mock('@/lib/stores/auth', () => {
@@ -130,6 +141,27 @@ describe('GroupDetailPage', () => {
     vi.restoreAllMocks();
     vi.mocked(getTraderGroup).mockResolvedValue(group);
     vi.mocked(listGroupMembers).mockResolvedValue(members);
+    vi.mocked(getGroupStats).mockResolvedValue(null as never);
+    vi.mocked(getGroupPositions).mockResolvedValue(null as never);
+    vi.mocked(getGroupPerformance).mockResolvedValue({
+      period: '30D',
+      granularity: 'daily',
+      from: '2026-01-01T00:00:00Z',
+      to: '2026-01-02T00:00:00Z',
+      partial: false,
+      missing_wallets: 0,
+      insufficient_data: false,
+      metric_availability: { account_value: true, cumulative_realized_pnl: true, roi: true },
+      points: [],
+    } as never);
+    vi.mocked(getGroupExposure).mockResolvedValue({
+      period: '30D',
+      as_of: '',
+      data_status: 'ready',
+      partial: false,
+      missing_wallets: 0,
+      rows: [],
+    } as never);
     vi.mocked(getStatus).mockResolvedValue({
       connected: false,
       tg_username: null,

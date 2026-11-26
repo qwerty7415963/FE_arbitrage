@@ -175,6 +175,8 @@
     "entryPrice": "Giá vào",
     "markPrice": "Giá mark",
     "leverage": "Đòn bẩy",
+    "liquidationPrice": "Giá thanh lý",
+    "distanceToLiquidation": "Cách thanh lý",
     "size": "Kích thước",
     "lastTrade": "Giao dịch cuối",
     "lastUpdated": "Cập nhật cuối",
@@ -249,7 +251,14 @@
     "duplicateGroup": "Nhân bản nhóm",
     "selectedGroupsCount": "Đã chọn {count} (2-10)",
     "removeGroup": "Xóa",
-    "sharedWallets": "ví chung"
+    "sharedWallets": "ví chung",
+    "refresh": "Làm mới",
+    "updatedAgo": "{minutes} phút trước",
+    "noOpenPositions": "Không có vị thế mở",
+    "upnlNaTooltip": "N/A: không có dữ liệu vị thế",
+    "profitFactorNa": "N/A (mẫu < 10)",
+    "avgLeverage": "Đòn bẩy TB",
+    "longShort": "Long/Short"
   },
   "traders": {
     "title": "Quét trader",

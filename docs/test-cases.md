@@ -1012,3 +1012,11 @@ reviewing diffs â€” never blindly.
 ### Compare page
 
 - `/groups/compare` supports multi-select 2-10 groups, range 7D/30D/90D/ALL, multi-line ROI chart, metrics table with best/worst highlight, remove group.
+
+## Wallet Groups Phase 1-2
+
+- Group detail header shows status badge, updated X min ago, Refresh.
+- Overview includes Net exposure block (group-exposure).
+- Positions tab renders grouped positions with liquidation warnings.
+- Win Rate displays count fraction; PF null shows sample message.
+- Chart uses shared period, crops x-axis, breaks nulls, local time.

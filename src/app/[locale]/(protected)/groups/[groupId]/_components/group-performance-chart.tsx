@@ -11,17 +11,17 @@ import { cn } from 'cn';
 type Range = '1D' | '7D' | '30D' | '90D' | 'ALL';
 type Metric = 'pnl' | 'roi';
 
-const RANGES: Range[] = ['1D', '7D', '30D', '90D', 'ALL'];
 const W = 600;
 const H = 180;
 
 export interface GroupPerformanceChartProps {
   groupId: string;
+  period?: '1D' | '7D' | '30D' | '90D' | 'ALL';
 }
 
-export function GroupPerformanceChart({ groupId }: GroupPerformanceChartProps) {
+export function GroupPerformanceChart({ groupId, period }: GroupPerformanceChartProps) {
   const t = useTranslations('groups');
-  const [range, setRange] = useState<Range>('30D');
+  const range: Range = (period as Range) ?? '30D';
   const [metric, setMetric] = useState<Metric>('pnl');
   const [hovered, setHovered] = useState<number | null>(null);
   const [data, setData] = useState<GroupPerformanceResponse | null>(null);
@@ -49,25 +49,32 @@ export function GroupPerformanceChart({ groupId }: GroupPerformanceChartProps) {
     };
   }, [groupId, range]);
 
-  const points = useMemo(() => {
-    const rows = (data?.points ?? [])
-      .map((p) => ({
-        t: Date.parse(p.t),
-        v: metric === 'pnl' ? p.cumulative_realized_pnl : p.roi_index,
-      }))
-      .filter((p) => Number.isFinite(p.v) && Number.isFinite(p.t)) as { t: number; v: number }[];
+  const rawPoints = useMemo(() => {
+    const rows = (data?.points ?? []).map((p) => ({
+      t: Date.parse(p.t),
+      v: metric === 'pnl' ? p.cumulative_realized_pnl : p.roi_index,
+    }));
     rows.sort((a, b) => a.t - b.t);
     return rows;
   }, [data, metric]);
 
-  const hasPoints = points.length > 0;
-  const firstPointTime = hasPoints ? points[0].t : null;
+  const finitePoints = useMemo(
+    () =>
+      rawPoints.filter((p) => Number.isFinite(p.t) && Number.isFinite(p.v)) as {
+        t: number;
+        v: number;
+      }[],
+    [rawPoints],
+  );
+
+  const hasPoints = finitePoints.length > 0;
+  const firstPointTime = hasPoints ? finitePoints[0].t : null;
   const requestedFromTime = data?.from ? Date.parse(data.from) : NaN;
   const showStartsAt =
     firstPointTime != null &&
     Number.isFinite(requestedFromTime) &&
     firstPointTime > requestedFromTime;
-  const values = points.map((p) => p.v);
+  const values = finitePoints.map((p) => p.v);
   let min = hasPoints ? Math.min(...values) : 0;
   let max = hasPoints ? Math.max(...values) : 1;
   if (metric === 'pnl') {
@@ -79,36 +86,30 @@ export function GroupPerformanceChart({ groupId }: GroupPerformanceChartProps) {
   min -= pad;
   max += pad;
 
-  const x = (i: number) => (points.length <= 1 ? 0 : (i / (points.length - 1)) * W);
+  const tMin = hasPoints ? finitePoints[0].t : 0;
+  const tMax = hasPoints ? finitePoints[finitePoints.length - 1].t : 1;
+  const xOf = (t: number) => (tMax === tMin ? W / 2 : ((t - tMin) / (tMax - tMin)) * W);
   const y = (v: number) => H - ((v - min) / (max - min)) * H;
-  const path = points
-    .map((p, i) => `${i === 0 ? 'M' : 'L'}${x(i).toFixed(1)},${y(p.v).toFixed(1)}`)
-    .join(' ');
-  const last = points.length > 0 ? points[points.length - 1].v : null;
+
+  let path = '';
+  let prevFinite = false;
+  for (const p of rawPoints) {
+    if (typeof p.v !== 'number' || !Number.isFinite(p.v)) {
+      prevFinite = false;
+      continue;
+    }
+    const v = p.v;
+    const cmd = prevFinite ? 'L' : 'M';
+    path += `${cmd}${xOf(p.t).toFixed(1)},${y(v).toFixed(1)} `;
+    prevFinite = true;
+  }
+  const last = hasPoints ? finitePoints[finitePoints.length - 1].v : null;
+  const points = finitePoints;
 
   return (
     <div className="bg-surface border-border-subtle flex flex-col gap-3 rounded-lg border p-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-1">
-          {RANGES.map((r) => (
-            <button
-              key={r}
-              type="button"
-              onClick={() => {
-                setLoading(true);
-                setRange(r);
-              }}
-              className={cn(
-                'rounded-md px-2 py-1 text-xs',
-                range === r
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:text-foreground',
-              )}
-            >
-              {r === 'ALL' ? t('rangeAll') : r}
-            </button>
-          ))}
-        </div>
+        <span className="text-muted-foreground text-xs">{range}</span>
         <div className="flex items-center gap-1">
           <button
             type="button"
@@ -196,8 +197,8 @@ export function GroupPerformanceChart({ groupId }: GroupPerformanceChartProps) {
             {hovered !== null && points[hovered] ? (
               <>
                 <line
-                  x1={x(hovered)}
-                  x2={x(hovered)}
+                  x1={xOf(points[hovered].t)}
+                  x2={xOf(points[hovered].t)}
                   y1={0}
                   y2={H}
                   className="stroke-chart-crosshair"
@@ -207,7 +208,7 @@ export function GroupPerformanceChart({ groupId }: GroupPerformanceChartProps) {
                 />
                 {(() => {
                   const point = points[hovered];
-                  const cx = x(hovered);
+                  const cx = xOf(point.t);
                   const cy = y(point.v);
                   const tooltipWidth = 120;
                   const tooltipHeight = 34;
@@ -233,7 +234,7 @@ export function GroupPerformanceChart({ groupId }: GroupPerformanceChartProps) {
                         fontSize="11"
                         className="fill-chart-tooltip-text"
                       >
-                        {new Date(point.t).toLocaleDateString()}
+                        {new Date(point.t).toLocaleString()}
                       </text>
                       <text
                         x={tooltipX + 6}
@@ -257,7 +258,7 @@ export function GroupPerformanceChart({ groupId }: GroupPerformanceChartProps) {
             {points.map((point, index) => (
               <circle
                 key={index}
-                cx={x(index)}
+                cx={xOf(point.t)}
                 cy={y(point.v)}
                 r={6}
                 className="fill-transparent"
@@ -274,8 +275,12 @@ export function GroupPerformanceChart({ groupId }: GroupPerformanceChartProps) {
             </div>
           ) : null}
           <div className="text-chart-axis flex justify-between text-[11px]">
-            <span>{data?.from ? new Date(data.from).toLocaleDateString() : ''}</span>
-            <span>{data?.to ? new Date(data.to).toLocaleDateString() : ''}</span>
+            <span>{firstPointTime ? new Date(firstPointTime).toLocaleString() : ''}</span>
+            <span>
+              {finitePoints.length
+                ? new Date(finitePoints[finitePoints.length - 1].t).toLocaleString()
+                : ''}
+            </span>
           </div>
         </>
       )}

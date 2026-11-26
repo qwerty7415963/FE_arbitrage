@@ -175,6 +175,8 @@
     "entryPrice": "Entry",
     "markPrice": "Mark",
     "leverage": "Leverage",
+    "liquidationPrice": "Liq Price",
+    "distanceToLiquidation": "Dist to Liq",
     "size": "Size",
     "lastTrade": "Last Trade",
     "lastUpdated": "Last Updated",
@@ -249,7 +251,14 @@
     "duplicateGroup": "Duplicate group",
     "selectedGroupsCount": "{count} selected (2-10)",
     "removeGroup": "Remove",
-    "sharedWallets": "shared wallets"
+    "sharedWallets": "shared wallets",
+    "refresh": "Refresh",
+    "updatedAgo": "{minutes} min ago",
+    "noOpenPositions": "No open positions",
+    "upnlNaTooltip": "N/A: no position data",
+    "profitFactorNa": "N/A (sample < 10)",
+    "avgLeverage": "Avg Leverage",
+    "longShort": "Long/Short"
   },
   "traders": {
     "title": "Trader Scanner",

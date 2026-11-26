@@ -38,6 +38,7 @@ import {
   type GroupsOverview,
   type GroupPerformanceResponse,
   type GroupPositionsResponse,
+  type GroupExposureResponse,
   type GroupActivityPage,
   type GroupStats,
   type GroupAlert,
@@ -374,6 +375,17 @@ export async function getGroupPerformance(
 export async function getGroupPositions(id: string): Promise<GroupPositionsResponse> {
   const res = await apiClient<ApiResponse<GroupPositionsResponse>>(
     `${TRADER_GROUPS_BASE}/${id}/positions`,
+  );
+  if (!res.data) throw new Error('No data returned');
+  return res.data;
+}
+
+export async function getGroupExposure(
+  id: string,
+  period: '1D' | '7D' | '30D' | '90D' | 'ALL' = '30D',
+): Promise<GroupExposureResponse> {
+  const res = await apiClient<ApiResponse<GroupExposureResponse>>(
+    `${TRADER_GROUPS_BASE}/${id}/exposure?period=${period}`,
   );
   if (!res.data) throw new Error('No data returned');
   return res.data;
