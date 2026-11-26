@@ -277,7 +277,7 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
   if (groupGate === 'expired') {
     return (
       <div className="flex flex-1 flex-col gap-4 p-4 lg:p-6">
-        <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-200">
+        <div className="border-warning/30 bg-warning-subtle text-warning rounded-md border p-3 text-sm">
           {t('sessionExpired')}{' '}
           <Button variant="link" size="sm" onClick={() => setConnectModalOpen(true)}>
             {tc('reconnect')}
@@ -355,35 +355,19 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
         </div>
       </div>
 
-      <div className="flex gap-2 border-b pb-1">
-        <Button
-          variant={tab === 'overview' ? 'default' : 'ghost'}
-          size="sm"
-          onClick={() => setTab('overview')}
-        >
-          {t('overview')}
-        </Button>
-        <Button
-          variant={tab === 'members' ? 'default' : 'ghost'}
-          size="sm"
-          onClick={() => setTab('members')}
-        >
-          {t('members')}
-        </Button>
-        <Button
-          variant={tab === 'activity' ? 'default' : 'ghost'}
-          size="sm"
-          onClick={() => setTab('activity')}
-        >
-          {t('activity')}
-        </Button>
-        <Button
-          variant={tab === 'alerts' ? 'default' : 'ghost'}
-          size="sm"
-          onClick={() => setTab('alerts')}
-        >
-          {t('alerts')}
-        </Button>
+      <div className="flex gap-2 border-b pb-1" role="tablist" aria-label={t('title')}>
+        {(['overview', 'members', 'activity', 'alerts'] as const).map((id) => (
+          <Button
+            key={id}
+            role="tab"
+            aria-selected={tab === id}
+            variant={tab === id ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => setTab(id)}
+          >
+            {t(id)}
+          </Button>
+        ))}
       </div>
 
       {tab === 'overview' && (
@@ -623,7 +607,7 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
 
           {membersError ? (
             membersGate === 'expired' ? (
-              <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-200">
+              <div className="border-warning/30 bg-warning-subtle text-warning rounded-md border p-3 text-sm">
                 {t('sessionExpired')}{' '}
                 <Button variant="link" size="sm" onClick={() => setConnectModalOpen(true)}>
                   {tc('reconnect')}

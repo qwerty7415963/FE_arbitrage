@@ -39,7 +39,7 @@ export function AppLayout({ children }: AppLayoutProps) {
         {sessionExpired && (
           <div
             role="status"
-            className="flex items-center justify-between gap-3 border-b border-amber-500/40 bg-amber-500/10 px-4 py-2 text-sm text-amber-200 lg:px-6"
+            className="border-warning/40 bg-warning-subtle text-warning flex items-center justify-between gap-3 border-b px-4 py-2 text-sm lg:px-6"
           >
             <span>{t('sessionExpired')}</span>
             <Button variant="ghost" size="sm" onClick={dismissSessionExpired}>

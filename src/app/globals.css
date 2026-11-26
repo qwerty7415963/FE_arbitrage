@@ -3,6 +3,10 @@
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
 
+@source not "./docs";
+@source not "./test-results";
+@source not "./playwright-report";
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -19,6 +23,9 @@
   --color-sidebar-primary: var(--sidebar-primary);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar: var(--sidebar);
+  --color-chart-8: var(--chart-8);
+  --color-chart-7: var(--chart-7);
+  --color-chart-6: var(--chart-6);
   --color-chart-5: var(--chart-5);
   --color-chart-4: var(--chart-4);
   --color-chart-3: var(--chart-3);
@@ -28,8 +35,8 @@
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
+  --color-accent-foreground: var(--interactive-hover);
+  --color-accent: var(--interactive-hover);
   --color-muted-foreground: var(--muted-foreground);
   --color-label: var(--label);
   --color-muted: var(--muted);
@@ -42,6 +49,74 @@
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
   --color-freshness: var(--freshness);
+
+  --color-surface: var(--surface);
+  --color-surface-secondary: var(--surface-secondary);
+  --color-surface-tertiary: var(--surface-tertiary);
+  --color-elevated: var(--elevated);
+  --color-overlay: var(--overlay);
+  --color-border-subtle: var(--border-subtle);
+  --color-border-strong: var(--border-strong);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-text-disabled: var(--text-disabled);
+  --color-text-inverse: var(--text-inverse);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-active: var(--primary-active);
+  --color-primary-subtle: var(--primary-subtle);
+  --color-primary-text: var(--primary-text);
+  --color-primary-border: var(--primary-border);
+  --color-accent-brand: var(--accent);
+  --color-accent-subtle: var(--accent-subtle);
+  --color-accent-brand-foreground: var(--accent-foreground);
+  --color-interactive-hover: var(--interactive-hover);
+  --color-interactive-active: var(--interactive-active);
+  --color-focus-ring: var(--focus-ring);
+  --color-selection: var(--selection);
+  --color-disabled-background: var(--disabled-background);
+  --color-disabled-foreground: var(--disabled-foreground);
+  --color-success: var(--success);
+  --color-success-subtle: var(--success-subtle);
+  --color-warning: var(--warning);
+  --color-warning-subtle: var(--warning-subtle);
+  --color-danger: var(--danger);
+  --color-danger-subtle: var(--danger-subtle);
+  --color-info: var(--info);
+  --color-info-subtle: var(--info-subtle);
+  --color-financial-positive: var(--financial-positive);
+  --color-financial-positive-subtle: var(--financial-positive-subtle);
+  --color-financial-negative: var(--financial-negative);
+  --color-financial-negative-subtle: var(--financial-negative-subtle);
+  --color-financial-neutral: var(--financial-neutral);
+  --color-direction-long: var(--direction-long);
+  --color-direction-short: var(--direction-short);
+  --color-trade-buy: var(--trade-buy);
+  --color-trade-sell: var(--trade-sell);
+  --color-funding-positive: var(--funding-positive);
+  --color-funding-negative: var(--funding-negative);
+  --color-position-active: var(--position-active);
+  --color-position-inactive: var(--position-inactive);
+  --color-wallet-ready: var(--wallet-ready);
+  --color-wallet-syncing: var(--wallet-syncing);
+  --color-wallet-stale: var(--wallet-stale);
+  --color-wallet-error: var(--wallet-error);
+  --color-alert-critical: var(--alert-critical);
+  --color-alert-warning: var(--alert-warning);
+  --color-alert-info: var(--alert-info);
+  --color-alert-success: var(--alert-success);
+  --color-chart-grid: var(--chart-grid);
+  --color-chart-axis: var(--chart-axis);
+  --color-chart-crosshair: var(--chart-crosshair);
+  --color-chart-tooltip-bg: var(--chart-tooltip-bg);
+  --color-chart-tooltip-border: var(--chart-tooltip-border);
+  --color-chart-tooltip-text: var(--chart-tooltip-text);
+  --color-chart-inactive: var(--chart-inactive);
+  --color-chart-selected: var(--chart-selected);
+  --color-chart-positive-area: var(--chart-positive-area);
+  --color-chart-negative-area: var(--chart-negative-area);
+  --color-chart-volume: var(--chart-volume);
+
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -52,40 +127,261 @@
 }
 
 :root {
-  --freshness: #e0a94a;
-  --background: #040605;
-  --foreground: #ffffff;
-  --card: #121714;
-  --card-foreground: #ffffff;
-  --popover: #121714;
-  --popover-foreground: #ffffff;
-  --primary: #55d396;
-  --primary-foreground: #040605;
-  --secondary: #169a50;
-  --secondary-foreground: #ffffff;
-  --muted: #272c2a;
-  --muted-foreground: #8a9b93;
-  --label: #a6b7ae;
-  --accent: #169a50;
-  --accent-foreground: #ffffff;
-  --destructive: #ef4444;
-  --border: #2a302d;
-  --input: #2a302d;
-  --ring: #55d396;
+  color-scheme: light;
+
+  --background: #F3F5EF;
+  --foreground: #141812;
+  --surface: #FAFBF7;
+  --surface-secondary: #F0F2EA;
+  --surface-tertiary: #E9ECE2;
+  --elevated: #FFFFFF;
+  --overlay: rgba(20, 24, 18, 0.32);
+  --border: #D5DACB;
+  --border-subtle: #E2E6DB;
+  --border-strong: #828D76;
+
+  --text-primary: #141812;
+  --text-secondary: #3D453A;
+  --text-muted: #5E685A;
+  --text-disabled: #8B9386;
+  --text-inverse: #F7F9F3;
+
+  --primary: #B7E85A;
+  --primary-hover: #C6F26E;
+  --primary-active: #A9DB4A;
+  --primary-subtle: #EDF6D6;
+  --primary-foreground: #101210;
+  --primary-text: #4F6B12;
+  --primary-border: #5F7D18;
+  --accent: #177A6B;
+  --accent-subtle: #E0F0EA;
+  --accent-foreground: #F7F9F3;
+
+  --interactive-hover: #EDF0E7;
+  --interactive-active: #E3E8D9;
+  --focus-ring: #4F6B12;
+  --selection: #E3F2C4;
+  --disabled-background: #E9ECE2;
+  --disabled-foreground: #8B9386;
+
+  --success: #177A4D;
+  --success-subtle: #E3F2E9;
+  --warning: #8A6A12;
+  --warning-subtle: #F6EED6;
+  --danger: #C43D3D;
+  --danger-subtle: #F7E3E2;
+  --info: #2F6FA3;
+  --info-subtle: #E3EEF7;
+
+  --financial-positive: #177A4D;
+  --financial-positive-subtle: #E3F2E9;
+  --financial-negative: #C43D3D;
+  --financial-negative-subtle: #F7E3E2;
+  --financial-neutral: #5E685A;
+  --direction-long: #177A4D;
+  --direction-short: #B85C50;
+  --trade-buy: #177A4D;
+  --trade-sell: #C43D3D;
+  --funding-positive: #177A4D;
+  --funding-negative: #C43D3D;
+  --position-active: #4F6B12;
+  --position-inactive: #5E685A;
+  --wallet-ready: #177A4D;
+  --wallet-syncing: #2F6FA3;
+  --wallet-stale: #8A6A12;
+  --wallet-error: #C43D3D;
+  --alert-critical: #C43D3D;
+  --alert-warning: #8A6A12;
+  --alert-info: #2F6FA3;
+  --alert-success: #177A4D;
+
+  --chart-1: #4F6B12;
+  --chart-2: #2F6FA3;
+  --chart-3: #8A6A12;
+  --chart-4: #6B4FA1;
+  --chart-5: #1E8E5A;
+  --chart-6: #B03A3A;
+  --chart-7: #177A6B;
+  --chart-8: #6F7868;
+
+  --chart-grid: rgba(94, 104, 90, 0.18);
+  --chart-axis: #5E685A;
+  --chart-crosshair: #5E685A;
+  --chart-tooltip-bg: #FFFFFF;
+  --chart-tooltip-border: #D5DACB;
+  --chart-tooltip-text: #141812;
+  --chart-inactive: #B8C1AC;
+  --chart-selected: #141812;
+  --chart-positive-area: rgba(23, 122, 77, 0.12);
+  --chart-negative-area: rgba(196, 61, 61, 0.12);
+  --chart-volume: rgba(79, 107, 18, 0.18);
+
+  --freshness: var(--warning);
   --radius: 0.625rem;
-  --sidebar: #080b09;
-  --sidebar-foreground: #ffffff;
-  --sidebar-primary: #55d396;
-  --sidebar-primary-foreground: #040605;
-  --sidebar-accent: #272c2a;
-  --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: #2a302d;
-  --sidebar-ring: #55d396;
-  --chart-1: #55d396;
-  --chart-2: #169a50;
-  --chart-3: #272c2a;
-  --chart-4: #8a9b93;
-  --chart-5: #0c100e;
+
+  --card: var(--surface);
+  --card-foreground: var(--foreground);
+  --popover: var(--elevated);
+  --popover-foreground: var(--foreground);
+  --secondary: var(--surface-secondary);
+  --secondary-foreground: var(--text-primary);
+  --muted: var(--surface-tertiary);
+  --muted-foreground: var(--text-muted);
+  --label: var(--text-secondary);
+  --destructive: var(--danger);
+  --destructive-foreground: var(--text-inverse);
+  --input: var(--border-strong);
+  --ring: var(--focus-ring);
+
+  --sidebar: var(--surface);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--surface-secondary);
+  --sidebar-accent-foreground: var(--text-primary);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--focus-ring);
+
+  --landing-surface: var(--background);
+  --landing-surface-2: var(--surface);
+  --landing-border: var(--border);
+  --landing-ink: var(--foreground);
+  --landing-muted: var(--text-muted);
+  --landing-accent: var(--primary);
+  --landing-positive: var(--financial-positive);
+  --landing-negative: var(--financial-negative);
+  --landing-ribbon: var(--primary);
+  --landing-ribbon-soft: var(--primary-subtle);
+  --landing-grid: var(--border-subtle);
+}
+
+.dark {
+  color-scheme: dark;
+
+  --background: #101210;
+  --foreground: #F0F3EB;
+  --surface: #191D19;
+  --surface-secondary: #1E231E;
+  --surface-tertiary: #232923;
+  --elevated: #242A24;
+  --overlay: rgba(8, 10, 8, 0.64);
+  --border: #343D32;
+  --border-subtle: #29312A;
+  --border-strong: #66755E;
+
+  --text-primary: #F0F3EB;
+  --text-secondary: #C2C9BA;
+  --text-muted: #929A8D;
+  --text-disabled: #6A7266;
+  --text-inverse: #101210;
+
+  --primary: #C1F36B;
+  --primary-hover: #D3FA86;
+  --primary-active: #AEE25C;
+  --primary-subtle: #2A331F;
+  --primary-foreground: #101210;
+  --primary-text: #C1F36B;
+  --primary-border: #66755E;
+  --accent: #8FD9C4;
+  --accent-subtle: #1B2B27;
+  --accent-foreground: #101210;
+
+  --interactive-hover: #232A22;
+  --interactive-active: #2C352A;
+  --focus-ring: #C1F36B;
+  --selection: #3A4A2A;
+  --disabled-background: #1E231E;
+  --disabled-foreground: #6A7266;
+
+  --success: #6DCE91;
+  --success-subtle: #1B2E22;
+  --warning: #E8C15A;
+  --warning-subtle: #332B17;
+  --danger: #F07878;
+  --danger-subtle: #3A1F1F;
+  --info: #7FB3D9;
+  --info-subtle: #1B2933;
+
+  --financial-positive: #6DCE91;
+  --financial-positive-subtle: #1B2E22;
+  --financial-negative: #F07878;
+  --financial-negative-subtle: #3A1F1F;
+  --financial-neutral: #929A8D;
+  --direction-long: #6DCE91;
+  --direction-short: #E88C7D;
+  --trade-buy: #6DCE91;
+  --trade-sell: #F07878;
+  --funding-positive: #6DCE91;
+  --funding-negative: #F07878;
+  --position-active: #C1F36B;
+  --position-inactive: #929A8D;
+  --wallet-ready: #6DCE91;
+  --wallet-syncing: #7FB3D9;
+  --wallet-stale: #E8C15A;
+  --wallet-error: #F07878;
+  --alert-critical: #F07878;
+  --alert-warning: #E8C15A;
+  --alert-info: #7FB3D9;
+  --alert-success: #6DCE91;
+
+  --chart-1: #C1F36B;
+  --chart-2: #7FB3D9;
+  --chart-3: #E8C15A;
+  --chart-4: #C9A7EB;
+  --chart-5: #6DCE91;
+  --chart-6: #F49C9C;
+  --chart-7: #8FD9C4;
+  --chart-8: #B8B8B8;
+
+  --chart-grid: rgba(148, 160, 141, 0.16);
+  --chart-axis: #929A8D;
+  --chart-crosshair: #929A8D;
+  --chart-tooltip-bg: #242A24;
+  --chart-tooltip-border: #343D32;
+  --chart-tooltip-text: #F0F3EB;
+  --chart-inactive: #4F5C48;
+  --chart-selected: #F0F3EB;
+  --chart-positive-area: rgba(109, 206, 145, 0.18);
+  --chart-negative-area: rgba(240, 120, 120, 0.18);
+  --chart-volume: rgba(193, 243, 107, 0.24);
+
+  --freshness: var(--warning);
+  --radius: 0.625rem;
+
+  --card: var(--surface);
+  --card-foreground: var(--foreground);
+  --popover: var(--elevated);
+  --popover-foreground: var(--foreground);
+  --secondary: var(--surface-secondary);
+  --secondary-foreground: var(--text-primary);
+  --muted: var(--surface-tertiary);
+  --muted-foreground: var(--text-muted);
+  --label: var(--text-secondary);
+  --destructive: var(--danger);
+  --destructive-foreground: var(--text-inverse);
+  --input: var(--border-strong);
+  --ring: var(--focus-ring);
+
+  --sidebar: var(--surface);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--surface-secondary);
+  --sidebar-accent-foreground: var(--text-primary);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--focus-ring);
+
+  --landing-surface: var(--background);
+  --landing-surface-2: var(--surface);
+  --landing-border: var(--border);
+  --landing-ink: var(--foreground);
+  --landing-muted: var(--text-muted);
+  --landing-accent: var(--primary);
+  --landing-positive: var(--financial-positive);
+  --landing-negative: var(--financial-negative);
+  --landing-ribbon: var(--primary);
+  --landing-ribbon-soft: var(--primary-subtle);
+  --landing-grid: var(--border-subtle);
 }
 
 @layer base {
@@ -100,14 +396,14 @@
   }
 }
 
-/* ── Custom scrollbar (thin, trackless, auto-show on overflow) ── */
+/* Custom scrollbar (thin, trackless, auto-show on overflow) */
 /* Firefox */
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(138, 155, 147, 0.35) transparent;
+  scrollbar-color: var(--text-muted) transparent;
 }
 *:hover {
-  scrollbar-color: rgba(85, 211, 150, 0.6) transparent;
+  scrollbar-color: var(--primary-text) transparent;
 }
 
 /* WebKit (Chrome/Edge/Safari) */
@@ -119,11 +415,11 @@
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(138, 155, 147, 0.35);
+  background: var(--text-muted);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(85, 211, 150, 0.6);
+  background: var(--primary-text);
 }
 ::-webkit-scrollbar-corner {
   background: transparent;
@@ -133,20 +429,6 @@
   ::-webkit-scrollbar-thumb {
     transition: none;
   }
-}
-
-:root {
-  --landing-surface: #0b100d;
-  --landing-surface-2: #0f1512;
-  --landing-border: #2a302d;
-  --landing-ink: #e9efea;
-  --landing-muted: #8a9b93;
-  --landing-accent: #55d396;
-  --landing-positive: #55d396;
-  --landing-negative: #ef4444;
-  --landing-ribbon: #55d396;
-  --landing-ribbon-soft: rgba(85, 211, 150, 0.16);
-  --landing-grid: rgba(42, 48, 45, 0.6);
 }
 
 @keyframes landing-ticker {
@@ -168,9 +450,9 @@
   }
 }
 
-/* App density: 16px default -> 15px at default browser size. */
+/* App density: base 17px. */
 html {
-  font-size: 93.75%;
+  font-size: 17px;
 }
 
 /* Header controls keep their original 16px-based sizing. */

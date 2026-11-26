@@ -7,6 +7,7 @@ import { config } from '@/lib/wagmi';
 import { onUnauthorized } from '@/lib/auth-events';
 import { useAuthStore } from '@/lib/stores/auth';
 import { WagmiAuthSync } from '@/components/shared/auth/wagmi-auth-sync';
+import { ThemeSync } from '@/components/shared/theme/theme-sync';
 
 interface SessionExpiredContextValue {
   sessionExpired: boolean;
@@ -63,6 +64,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <WagmiProvider config={config}>
       <WagmiAuthSync />
+      <ThemeSync />
       <QueryClientProvider client={queryClient}>
         <SessionExpiredContext.Provider value={sessionExpiredValue}>
           {children}

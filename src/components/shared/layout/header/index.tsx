@@ -7,6 +7,7 @@ import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { ConnectWalletButton } from '@/components/shared/auth/connect-wallet-button';
 import { LanguageSwitcher } from '@/components/shared/language-switcher';
+import { ThemeToggle } from '@/components/shared/theme/theme-toggle';
 
 export function Header() {
   const { toggleSidebar } = useAppStore();
@@ -32,10 +33,11 @@ export function Header() {
           <span className="text-lg font-semibold">{t('appName')}</span>
         </Link>
 
-        <div className="preserve-control-size ml-auto hidden lg:flex">
+        <div className="preserve-control-size ml-auto hidden items-center gap-2 lg:flex">
           <div className="language-switcher">
             <LanguageSwitcher />
           </div>
+          <ThemeToggle />
           <ConnectWalletButton />
         </div>
       </div>

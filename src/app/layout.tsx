@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Script from 'next/script';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 
@@ -13,17 +14,26 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Arbitrage',
-  description: 'Arbitrage Trading Platform',
+  title: 'HyperScan AI',
+  description: 'Arbitrage intelligence. Read the wallet before the trade.',
 };
+
+const themeInitScript = `(function(){try{var stored=localStorage.getItem('hyperscan.theme');var mode='dark';if(stored){try{var parsed=JSON.parse(stored);if(parsed&&parsed.state&&parsed.state.mode){mode=parsed.state.mode;}else if(typeof parsed==='string'){mode=parsed;}}catch(e){mode=stored;}}var resolved=mode;if(mode==='system'){resolved=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}document.documentElement.classList.toggle('dark',resolved==='dark');document.documentElement.style.colorScheme=resolved;}catch(e){}})();`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
       suppressHydrationWarning
-      className={`dark ${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full flex-col">{children}</body>
+      <body className="flex min-h-full flex-col">
+        <Script
+          id="theme-init"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{ __html: themeInitScript }}
+        />
+        {children}
+      </body>
     </html>
   );
 }

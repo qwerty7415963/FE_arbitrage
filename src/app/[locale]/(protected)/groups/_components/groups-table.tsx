@@ -5,6 +5,14 @@ import { Star, Pencil, Trash2 } from 'lucide-react';
 import { cn } from 'cn';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
   formatUsd,
   formatSignedUsd,
   formatPercent,
@@ -37,72 +45,74 @@ export function GroupsTable({
       </div>
     );
   return (
-    <table className="w-full text-sm">
-      <thead>
-        <tr className="border-b text-left">
-          <th className="p-2">{t('favorite')}</th>
-          <th className="p-2">{t('name')}</th>
-          <th className="p-2 text-right">{t('walletCount')}</th>
-          <th className="p-2 text-right">{t('accountValue')}</th>
-          <th className="p-2 text-right">{t('unrealizedPnl')}</th>
-          <th className="p-2 text-right">{t('roi')}</th>
-          <th className="p-2 text-right">{t('volume')}</th>
-          <th className="p-2 text-right">{t('openPositions')}</th>
-          <th className="p-2 text-right">{t('winRate')}</th>
-          <th className="p-2 text-right">{t('updated')}</th>
-          <th className="p-2 text-right">{t('actions')}</th>
-        </tr>
-      </thead>
-      <tbody>
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead className="w-10">{t('favorite')}</TableHead>
+          <TableHead className="bg-surface sticky left-10">{t('name')}</TableHead>
+          <TableHead className="text-right">{t('walletCount')}</TableHead>
+          <TableHead className="text-right">{t('accountValue')}</TableHead>
+          <TableHead className="text-right">{t('unrealizedPnl')}</TableHead>
+          <TableHead className="text-right">{t('roi')}</TableHead>
+          <TableHead className="text-right">{t('volume')}</TableHead>
+          <TableHead className="text-right">{t('openPositions')}</TableHead>
+          <TableHead className="text-right">{t('winRate')}</TableHead>
+          <TableHead className="text-right">{t('updated')}</TableHead>
+          <TableHead className="text-right">{t('actions')}</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
         {groups.length === 0 ? (
-          <tr>
-            <td colSpan={11} className="text-muted-foreground p-2 text-center">
+          <TableRow>
+            <TableCell colSpan={11} className="text-muted-foreground text-center">
               {t('noGroups')}
-            </td>
-          </tr>
+            </TableCell>
+          </TableRow>
         ) : (
           groups.map((row) => {
             const favorite = !!row.is_favorite;
             return (
-              <tr key={row.id} className="border-b">
-                <td className="p-2">
+              <TableRow key={row.id}>
+                <TableCell className="w-10">
                   <button
                     type="button"
                     aria-label={t('favorite')}
                     onClick={() => onToggleFavorite(row.id, !favorite)}
                     className="text-muted-foreground hover:text-foreground"
                   >
-                    <Star className={cn('h-4 w-4', favorite && 'fill-current text-amber-500')} />
+                    <Star className={cn('h-4 w-4', favorite && 'text-warning fill-current')} />
                   </button>
-                </td>
-                <td className="p-2" title={row.description ?? ''}>
+                </TableCell>
+                <TableCell className="bg-surface sticky left-10" title={row.description ?? ''}>
                   <div className="font-medium">{row.name}</div>
                   <div className="text-muted-foreground text-xs">{row.description ?? '—'}</div>
-                </td>
-                <td className="p-2 text-right tabular-nums">{row.member_count}</td>
-                <td className="p-2 text-right tabular-nums">
+                </TableCell>
+                <TableCell className="text-right tabular-nums">{row.member_count}</TableCell>
+                <TableCell className="text-right tabular-nums">
                   {formatUsd(row.account_value) ?? '—'}
-                </td>
-                <td
+                </TableCell>
+                <TableCell
                   className={cn(
-                    'p-2 text-right tabular-nums',
-                    (row.unrealized_pnl ?? 0) >= 0 ? 'text-emerald-400' : 'text-destructive',
+                    'text-right font-medium tabular-nums opacity-[0.88]',
+                    (row.unrealized_pnl ?? 0) >= 0 ? 'text-financial-positive' : 'text-destructive',
                   )}
                 >
                   {formatSignedUsd(row.unrealized_pnl)}
-                </td>
-                <td className="p-2 text-right tabular-nums">
+                </TableCell>
+                <TableCell className="text-right tabular-nums">
                   {formatSignedPercent(row.roi != null ? row.roi * 100 : null) ?? '—'}
-                </td>
-                <td className="p-2 text-right tabular-nums">{formatUsd(row.volume) ?? '—'}</td>
-                <td className="p-2 text-right tabular-nums">{row.open_positions}</td>
-                <td className="p-2 text-right tabular-nums">
+                </TableCell>
+                <TableCell className="text-right tabular-nums">
+                  {formatUsd(row.volume) ?? '—'}
+                </TableCell>
+                <TableCell className="text-right tabular-nums">{row.open_positions}</TableCell>
+                <TableCell className="text-right tabular-nums">
                   {formatPercent(row.win_rate != null ? row.win_rate * 100 : null) ?? '—'}
-                </td>
-                <td className="text-muted-foreground p-2 text-right text-xs">
+                </TableCell>
+                <TableCell className="text-muted-foreground text-right text-xs">
                   {row.updated_at ? new Date(row.updated_at).toLocaleDateString() : '—'}
-                </td>
-                <td className="p-2">
+                </TableCell>
+                <TableCell className="text-right">
                   <div className="flex justify-end gap-1">
                     <button
                       type="button"
@@ -121,13 +131,13 @@ export function GroupsTable({
                       <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             );
           })
         )}
-      </tbody>
-    </table>
+      </TableBody>
+    </Table>
   );
 }
 

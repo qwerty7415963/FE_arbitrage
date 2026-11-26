@@ -135,7 +135,7 @@ export default function GroupsPage() {
         <>
           {error ? (
             gate === 'expired' ? (
-              <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-200">
+              <div className="border-warning/30 bg-warning-subtle text-warning rounded-md border p-3 text-sm">
                 {t('sessionExpired')}{' '}
                 <Button variant="link" size="sm" onClick={() => setConnectModalOpen(true)}>
                   {tCommon('reconnect')}

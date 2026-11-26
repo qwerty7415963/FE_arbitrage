@@ -61,7 +61,10 @@ export function MarketSnapshotRibbon(props: MarketSnapshotRibbonProps) {
   ];
 
   return (
-    <div data-testid="market-snapshot-ribbon" className="bg-card rounded-xl border p-4">
+    <div
+      data-testid="market-snapshot-ribbon"
+      className="bg-surface border-border-subtle rounded-xl border p-4"
+    >
       <div className="grid grid-cols-4 gap-2">
         <div />
         <div className="text-muted-foreground text-xs font-medium">{t('long')}</div>
@@ -81,8 +84,8 @@ export function MarketSnapshotRibbon(props: MarketSnapshotRibbonProps) {
         {totalNotional > 0 ? (
           <>
             <div className="bg-muted flex h-2 overflow-hidden rounded-full">
-              <div className="bg-emerald-500" style={{ width: `${longPct}%` }} />
-              <div className="bg-rose-500" style={{ width: `${shortPct}%` }} />
+              <div className="bg-direction-long" style={{ width: `${longPct}%` }} />
+              <div className="bg-direction-short" style={{ width: `${shortPct}%` }} />
             </div>
             <div className="mt-1 flex justify-between text-xs">
               <span>{longPct}%</span>

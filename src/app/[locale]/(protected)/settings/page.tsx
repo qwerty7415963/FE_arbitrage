@@ -8,6 +8,7 @@ import { useTelegramStatus, useTelegramLink, useTelegramUnlink } from '@/hooks/u
 import { useAuthGate } from '@/hooks/use-auth-gate';
 import { useAuthStore } from '@/lib/stores/auth';
 import { ConnectWalletButton } from '@/components/shared/auth/connect-wallet-button';
+import { ThemeToggle } from '@/components/shared/theme/theme-toggle';
 import type { TelegramLinkResponse } from '@/services/telegram';
 import { ApiError } from '@/infrastructure/api-client';
 import { mapErrorCode } from '@/lib/error-mapping';
@@ -116,6 +117,14 @@ export default function SettingsPage() {
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 lg:p-6">
       <h1 className="text-2xl font-bold">{t('title')}</h1>
+
+      <div className="rounded-lg border p-4">
+        <h2 className="text-lg font-semibold">{tc('theme') ?? 'Theme'}</h2>
+        <p className="text-muted-foreground mt-1 text-sm">{tc('toggleTheme') ?? 'Toggle theme'}</p>
+        <div className="mt-3">
+          <ThemeToggle />
+        </div>
+      </div>
 
       <div className="rounded-lg border p-4">
         <h2 className="text-lg font-semibold">{tn('title')}</h2>

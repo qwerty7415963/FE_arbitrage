@@ -67,14 +67,14 @@ export function BucketHeader(props: BucketHeaderProps) {
       </div>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <h1 className="text-xl font-semibold">{title}</h1>
+          <h1 className="text-2xl font-semibold">{title}</h1>
           <span
             className={
               'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ' +
               (color === 'emerald'
-                ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
+                ? 'bg-financial-positive-subtle text-financial-positive'
                 : color === 'rose'
-                  ? 'bg-rose-500/15 text-rose-600 dark:text-rose-400'
+                  ? 'bg-financial-negative-subtle text-financial-negative'
                   : 'bg-muted text-muted-foreground')
             }
             data-testid="sentiment-badge"

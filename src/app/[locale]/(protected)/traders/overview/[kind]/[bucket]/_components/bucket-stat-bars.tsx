@@ -29,7 +29,7 @@ export function BucketStatBars(props: BucketStatBarsProps) {
   return (
     <div
       data-testid="bucket-stat-bars"
-      className="bg-card flex flex-col gap-4 rounded-xl border p-4 shadow-sm"
+      className="bg-surface border-border-subtle flex flex-col gap-4 rounded-xl border p-4"
     >
       <div>
         <div className="text-muted-foreground mb-1 flex items-center justify-between text-xs font-semibold tracking-wide uppercase">
@@ -37,12 +37,12 @@ export function BucketStatBars(props: BucketStatBarsProps) {
         </div>
         <div className="bg-muted flex h-3 w-full overflow-hidden rounded-full">
           <div
-            className="h-full bg-emerald-500"
+            className="bg-financial-positive h-full"
             style={{ width: `${Math.max(0, Math.min(100, pnl.pct_profit * 100))}%` }}
             data-testid="pnl-profit-bar"
           />
           <div
-            className="h-full bg-rose-500"
+            className="bg-financial-negative h-full"
             style={{ width: `${Math.max(0, Math.min(100, pnl.pct_loss * 100))}%` }}
             data-testid="pnl-loss-bar"
           />
@@ -62,12 +62,12 @@ export function BucketStatBars(props: BucketStatBarsProps) {
         </div>
         <div className="bg-muted flex h-3 w-full overflow-hidden rounded-full">
           <div
-            className="h-full bg-emerald-500"
+            className="bg-direction-long h-full"
             style={{ width: `${longPct}%` }}
             data-testid="notional-long-bar"
           />
           <div
-            className="h-full bg-rose-500"
+            className="bg-direction-short h-full"
             style={{ width: `${shortPct}%` }}
             data-testid="notional-short-bar"
           />

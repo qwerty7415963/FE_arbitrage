@@ -139,7 +139,7 @@ export function WalletStatementHeader({
     unrealized === null || unrealized === 0
       ? undefined
       : unrealized > 0
-        ? 'text-primary'
+        ? 'text-financial-positive'
         : 'text-destructive';
   const marginUsage =
     hasAccountValue && totalMargin !== null ? (totalMargin / accountValue) * 100 : null;
@@ -167,18 +167,21 @@ export function WalletStatementHeader({
   ].filter((part): part is string => part !== null);
 
   return (
-    <section aria-label={title} className="bg-card flex flex-col gap-4 rounded-xl border p-4">
+    <section
+      aria-label={title}
+      className="bg-surface border-border-subtle flex flex-col gap-4 rounded-xl border p-4"
+    >
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto]">
         <div className="flex flex-col gap-3">
           <div className="flex items-start gap-3">
             <span
               aria-hidden
-              className="bg-primary/10 text-primary flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-lg font-bold"
+              className="bg-primary-subtle text-primary-text flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-lg font-semibold"
             >
               {initial}
             </span>
             <div className="flex min-w-0 flex-1 flex-col gap-1">
-              <h1 className="truncate text-xl font-bold">{title}</h1>
+              <h1 className="truncate text-xl font-semibold">{title}</h1>
               <CopyAddress address={registry.wallet_address} short={false} />
               <div className="flex flex-wrap items-center gap-1.5">
                 <span className="bg-muted text-foreground rounded-full px-2 py-0.5 text-xs font-medium capitalize">
@@ -189,7 +192,7 @@ export function WalletStatementHeader({
                     role="img"
                     aria-label={t('sourceLeaderboard')}
                     title={t('sourceLeaderboard')}
-                    className="bg-primary/10 text-primary flex h-6 w-6 items-center justify-center rounded-full"
+                    className="bg-primary-subtle text-primary-text flex h-6 w-6 items-center justify-center rounded-full"
                   >
                     <TrophyIcon className="h-3.5 w-3.5" aria-hidden />
                   </span>
@@ -289,7 +292,7 @@ export function WalletStatementHeader({
               <div
                 className={cn(
                   'h-full rounded-full',
-                  marginUsage > 70 ? 'bg-amber-500' : 'bg-primary',
+                  marginUsage > 70 ? 'bg-warning' : 'bg-primary',
                 )}
                 style={{ width: `${Math.min(100, Math.max(0, marginUsage))}%` }}
               />

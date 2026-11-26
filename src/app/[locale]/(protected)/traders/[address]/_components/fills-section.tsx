@@ -102,8 +102,8 @@ export function FillsSection({ walletAddress, enabled = true }: FillsSectionProp
                       className={cn(
                         'rounded px-1.5 py-0.5 text-xs font-medium',
                         tone === 'positive'
-                          ? 'bg-primary/10 text-primary'
-                          : 'bg-destructive/10 text-destructive',
+                          ? 'bg-trade-buy/10 text-trade-buy'
+                          : 'bg-trade-sell/10 text-trade-sell',
                       )}
                     >
                       {t(fill.side === 'BUY' ? 'buy' : 'sell')}
@@ -116,7 +116,7 @@ export function FillsSection({ walletAddress, enabled = true }: FillsSectionProp
                   <TableCell className="text-right tabular-nums">
                     {formatUsd(fill.price) ?? '—'}
                   </TableCell>
-                  <TableCell className="text-right tabular-nums">
+                  <TableCell className="text-right font-medium tabular-nums opacity-[0.88]">
                     {formatSignedUsd(fill.closed_pnl)}
                   </TableCell>
                   <TableCell className="text-right tabular-nums">

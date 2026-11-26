@@ -108,6 +108,7 @@ export function PortfolioChart({
   const t = useTranslations('traders');
   const [range, setRange] = useState<PortfolioRange>('ALL');
   const [metric, setMetric] = useState<Metric>('pnl');
+  const [hovered, setHovered] = useState<number | null>(null);
   const clipId = `portfolio-${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`;
 
   const points = selectPoints(series?.[range], metric);
@@ -150,7 +151,7 @@ export function PortfolioChart({
   const xTickIndexes = tickIndexes(points.length, X_TICKS);
 
   return (
-    <div className="bg-card flex flex-col gap-3 rounded-xl border p-4 shadow-sm">
+    <div className="bg-surface border-border-subtle flex flex-col gap-3 rounded-xl border p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="border-input bg-background inline-flex overflow-hidden rounded-lg border">
           {MODES.map((value) => {
@@ -242,7 +243,7 @@ export function PortfolioChart({
           ) : (
             <>
               <div className="flex gap-2">
-                <div className="text-muted-foreground flex h-44 w-16 shrink-0 flex-col justify-between text-right text-[10px] tabular-nums">
+                <div className="text-chart-axis flex h-44 w-16 shrink-0 flex-col justify-between text-right text-[11px] tabular-nums">
                   {yTicks.map((value, index) => (
                     <span key={index}>{formatUsd(value) ?? '—'}</span>
                   ))}
@@ -254,7 +255,9 @@ export function PortfolioChart({
                   className="h-44 w-full"
                   role="img"
                   aria-label={title}
+                  onMouseLeave={() => setHovered(null)}
                 >
+                  {' '}
                   {yTicks.map((value, index) => {
                     const y =
                       CHART_HEIGHT -
@@ -266,13 +269,12 @@ export function PortfolioChart({
                         x2={CHART_WIDTH}
                         y1={y}
                         y2={y}
-                        className="stroke-border/40"
+                        className="stroke-chart-grid"
                         strokeWidth={1}
                         vectorEffect="non-scaling-stroke"
                       />
                     );
                   })}
-
                   {metric === 'pnl' ? (
                     <>
                       <defs>
@@ -285,14 +287,14 @@ export function PortfolioChart({
                       </defs>
                       <path
                         d={areaPath}
-                        className="fill-primary"
-                        fillOpacity={0.2}
+                        className="fill-financial-positive"
+                        fillOpacity={0.18}
                         clipPath={`url(#${clipId}-above)`}
                       />
                       <path
                         d={areaPath}
-                        className="fill-destructive"
-                        fillOpacity={0.2}
+                        className="fill-financial-negative"
+                        fillOpacity={0.18}
                         clipPath={`url(#${clipId}-below)`}
                       />
                       <line
@@ -300,7 +302,7 @@ export function PortfolioChart({
                         x2={CHART_WIDTH}
                         y1={zeroY}
                         y2={zeroY}
-                        className="stroke-muted-foreground/50"
+                        className="stroke-chart-crosshair"
                         strokeWidth={1}
                         strokeDasharray="4 4"
                         vectorEffect="non-scaling-stroke"
@@ -308,7 +310,7 @@ export function PortfolioChart({
                       <path
                         d={linePath}
                         fill="none"
-                        className="stroke-primary"
+                        className="stroke-financial-positive"
                         strokeWidth={2}
                         vectorEffect="non-scaling-stroke"
                         clipPath={`url(#${clipId}-above)`}
@@ -316,7 +318,7 @@ export function PortfolioChart({
                       <path
                         d={linePath}
                         fill="none"
-                        className="stroke-destructive"
+                        className="stroke-financial-negative"
                         strokeWidth={2}
                         vectorEffect="non-scaling-stroke"
                         clipPath={`url(#${clipId}-below)`}
@@ -324,22 +326,100 @@ export function PortfolioChart({
                     </>
                   ) : (
                     <>
-                      <path d={areaPath} className="fill-primary" fillOpacity={0.15} />
+                      <path d={areaPath} className="fill-chart-1" fillOpacity={0.15} />
                       <path
                         d={linePath}
                         fill="none"
-                        className="stroke-primary"
+                        className="stroke-chart-1"
                         strokeWidth={2}
                         vectorEffect="non-scaling-stroke"
                       />
                     </>
                   )}
+                  {hasPoints && domain && hovered !== null && coordinates[hovered] ? (
+                    <>
+                      <line
+                        x1={coordinates[hovered].x}
+                        x2={coordinates[hovered].x}
+                        y1={0}
+                        y2={CHART_HEIGHT}
+                        className="stroke-chart-crosshair"
+                        strokeWidth={1}
+                        strokeDasharray="4 4"
+                        vectorEffect="non-scaling-stroke"
+                      />
+                      {(() => {
+                        const point = points[hovered];
+                        const coord = coordinates[hovered];
+                        const tooltipWidth = 120;
+                        const tooltipHeight = 34;
+                        const tooltipX = Math.max(
+                          0,
+                          Math.min(CHART_WIDTH - tooltipWidth - 4, coord.x + 8),
+                        );
+                        const tooltipY = Math.max(
+                          0,
+                          Math.min(CHART_HEIGHT - tooltipHeight - 4, coord.y - tooltipHeight - 8),
+                        );
+                        return (
+                          <g>
+                            <rect
+                              x={tooltipX}
+                              y={tooltipY}
+                              width={tooltipWidth}
+                              height={tooltipHeight}
+                              rx={4}
+                              className="fill-chart-tooltip-bg stroke-chart-tooltip-border"
+                              strokeWidth={1}
+                            />
+                            <text
+                              x={tooltipX + 6}
+                              y={tooltipY + 13}
+                              fontSize="10"
+                              className="fill-chart-tooltip-text"
+                            >
+                              {new Date(parseTime(point.time)).toLocaleDateString()}
+                            </text>
+                            <text
+                              x={tooltipX + 6}
+                              y={tooltipY + 27}
+                              fontSize="11"
+                              className={
+                                metric === 'pnl'
+                                  ? point.value >= 0
+                                    ? 'fill-financial-positive'
+                                    : 'fill-financial-negative'
+                                  : 'fill-chart-1'
+                              }
+                            >
+                              {metric === 'pnl'
+                                ? formatSignedUsd(point.value)
+                                : (formatUsd(point.value) ?? '—')}
+                            </text>
+                          </g>
+                        );
+                      })()}
+                    </>
+                  ) : null}
+                  {coordinates.map((coord, index) => (
+                    <circle
+                      key={`hover-${index}`}
+                      cx={coord.x}
+                      cy={coord.y}
+                      r={8}
+                      className="fill-transparent"
+                      onMouseEnter={() => setHovered(index)}
+                      onMouseLeave={() => setHovered(null)}
+                      onFocus={() => setHovered(index)}
+                      onBlur={() => setHovered(null)}
+                    />
+                  ))}
                 </svg>
               </div>
 
               <div className="flex gap-2">
                 <div className="w-16 shrink-0" aria-hidden="true" />
-                <div className="text-muted-foreground flex w-full justify-between text-[10px] tabular-nums">
+                <div className="text-chart-axis flex w-full justify-between text-[11px] tabular-nums">
                   {xTickIndexes.map((index) => (
                     <span key={`${points[index].time}-${index}`}>
                       {formatAxisTime(points[index].time, range)}

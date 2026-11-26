@@ -61,7 +61,7 @@ export function ActivityFeed({ items, live, connection = null }: ActivityFeedPro
     return (
       <section
         aria-label={t('recentActivity')}
-        className="bg-card flex flex-col gap-2 rounded-xl border p-4 shadow-sm"
+        className="bg-surface border-border-subtle flex flex-col gap-2 rounded-xl border p-4"
       >
         <h2 className="text-sm font-semibold">{t('recentActivity')}</h2>
         <div className="flex flex-col gap-2" role="status" aria-label={t('loading')}>
@@ -75,12 +75,12 @@ export function ActivityFeed({ items, live, connection = null }: ActivityFeedPro
   return (
     <section
       aria-label={t('recentActivity')}
-      className="bg-card flex flex-col gap-3 rounded-xl border p-4 shadow-sm"
+      className="bg-surface border-border-subtle flex flex-col gap-3 rounded-xl border p-4"
     >
       <div className="flex items-center gap-2">
         <h2 className="text-sm font-semibold">{t('recentActivity')}</h2>
         {showLive && (
-          <span className="bg-primary/10 text-primary rounded-full px-2 py-0.5 text-xs font-medium">
+          <span className="bg-primary-subtle text-primary-text rounded-full px-2 py-0.5 text-xs font-medium">
             {t('live')}
           </span>
         )}
@@ -105,7 +105,7 @@ export function ActivityFeed({ items, live, connection = null }: ActivityFeedPro
                 >
                   <span
                     aria-hidden
-                    className="bg-primary/10 text-primary mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md"
+                    className="bg-primary-subtle text-primary-text mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md"
                   >
                     <PlusIcon className="h-3.5 w-3.5" />
                   </span>
@@ -147,8 +147,8 @@ export function ActivityFeed({ items, live, connection = null }: ActivityFeedPro
                     className={cn(
                       'mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md',
                       tone === 'positive'
-                        ? 'bg-primary/10 text-primary'
-                        : 'bg-destructive/10 text-destructive',
+                        ? 'bg-direction-long/10 text-direction-long'
+                        : 'bg-direction-short/10 text-direction-short',
                     )}
                   >
                     <ArrowDownUpIcon className="h-3.5 w-3.5" />
@@ -158,7 +158,7 @@ export function ActivityFeed({ items, live, connection = null }: ActivityFeedPro
                       <span
                         className={cn(
                           'font-semibold',
-                          tone === 'positive' ? 'text-primary' : 'text-destructive',
+                          tone === 'positive' ? 'text-direction-long' : 'text-direction-short',
                         )}
                       >
                         {t(labelKey)}
@@ -191,7 +191,7 @@ export function ActivityFeed({ items, live, connection = null }: ActivityFeedPro
               >
                 <span
                   aria-hidden
-                  className="bg-primary/10 text-primary mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md"
+                  className="bg-primary-subtle text-primary-text mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md"
                 >
                   <CheckIcon className="h-3.5 w-3.5" />
                 </span>
@@ -201,7 +201,7 @@ export function ActivityFeed({ items, live, connection = null }: ActivityFeedPro
                     <span
                       className={cn(
                         'font-medium',
-                        tone === 'positive' ? 'text-primary' : 'text-destructive',
+                        tone === 'positive' ? 'text-direction-long' : 'text-direction-short',
                       )}
                     >
                       {t(trade.side === 'LONG' ? 'long' : 'short')}
@@ -214,9 +214,9 @@ export function ActivityFeed({ items, live, connection = null }: ActivityFeedPro
                       className={cn(
                         'tabular-nums',
                         trade.net_pnl > 0
-                          ? 'text-primary'
+                          ? 'text-financial-positive'
                           : trade.net_pnl < 0
-                            ? 'text-destructive'
+                            ? 'text-financial-negative'
                             : undefined,
                       )}
                     >

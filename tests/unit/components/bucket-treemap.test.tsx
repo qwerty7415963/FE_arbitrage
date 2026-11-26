@@ -90,8 +90,8 @@ describe('BucketTreemap', () => {
   it('tints tiles by upnl sign', () => {
     renderTreemap();
 
-    expect(getTile('BTC').className).toContain('bg-emerald-500/15');
-    expect(getTile('ETH').className).toContain('bg-rose-500/15');
+    expect(getTile('BTC').className).toContain('bg-financial-positive-subtle');
+    expect(getTile('ETH').className).toContain('bg-financial-negative-subtle');
     expect(getTile('SOL').className).toContain('bg-muted');
   });
 

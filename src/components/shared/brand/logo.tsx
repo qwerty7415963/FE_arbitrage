@@ -44,7 +44,7 @@ export function Logo({
         letterSpacing="-0.02em"
       >
         <tspan fill="currentColor">Hyper</tspan>
-        <tspan fill="var(--primary, #55d396)">Scan</tspan>
+        <tspan fill="var(--primary, #C1F36B)">Scan</tspan>
         <tspan fill="currentColor"> AI</tspan>
       </text>
     </svg>
@@ -81,10 +81,10 @@ export function LogoMark({
       <title>{ariaLabel}</title>
       <rect x="5" y="4" width="6" height="24" rx="2" fill="currentColor" />
       <rect x="21" y="4" width="6" height="24" rx="2" fill="currentColor" />
-      <path d="M8 16 C12 9 20 9 24 16 C20 23 12 23 8 16 Z" fill="var(--primary, #55d396)" />
+      <path d="M8 16 C12 9 20 9 24 16 C20 23 12 23 8 16 Z" fill="var(--primary, #C1F36B)" />
       <path
         d="M8 16 H24"
-        stroke="var(--background, #040605)"
+        stroke="var(--background, #101210)"
         strokeWidth="1.5"
         strokeLinecap="round"
       />

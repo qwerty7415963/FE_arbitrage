@@ -4,7 +4,7 @@ import { ConnectWalletButton } from '@/components/shared/auth/connect-wallet-but
 
 export function SidebarFooter() {
   return (
-    <div className="border-t p-4 lg:hidden">
+    <div className="border-border-subtle border-t p-4 lg:hidden">
       <ConnectWalletButton />
     </div>
   );

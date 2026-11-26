@@ -1263,7 +1263,7 @@ test.describe('Group Alerts', () => {
       }),
     );
     await page.goto('/en/groups/g1');
-    await page.getByRole('button', { name: 'Alerts' }).click();
+    await page.getByRole('tab', { name: 'Alerts' }).click();
     await expect(page.getByText('No alerts yet')).toBeVisible();
   });
 });

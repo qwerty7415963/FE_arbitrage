@@ -117,28 +117,28 @@ export function FundingTable({ pairs }: FundingTableProps) {
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-1.5">
-                    <span className="inline-block h-2 w-2 rounded-sm bg-emerald-500" />
-                    <span className="text-emerald-500">{t('long')}</span>
+                    <span className="bg-direction-long inline-block h-2 w-2 rounded-sm" />
+                    <span className="text-direction-long">{t('long')}</span>
                     <span>{longVenueName}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <span className="inline-block h-2 w-2 rounded-sm bg-rose-500" />
-                    <span className="text-rose-500">{t('short')}</span>
+                    <span className="bg-direction-short inline-block h-2 w-2 rounded-sm" />
+                    <span className="text-direction-short">{t('short')}</span>
                     <span>{shortVenueName}</span>
                   </div>
                 </TableCell>
                 <TableCell className="font-mono text-xs">
                   <div className="flex items-center gap-1.5">
                     <span>{longFunding}</span>
-                    <span className="rounded border px-1 text-[10px]">{longInterval}</span>
+                    <span className="rounded border px-1 text-[11px]">{longInterval}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span>{shortFunding}</span>
-                    <span className="rounded border px-1 text-[10px]">{shortInterval}</span>
+                    <span className="rounded border px-1 text-[11px]">{shortInterval}</span>
                   </div>
                 </TableCell>
                 <TableCell
-                  className={`font-mono ${Number.isFinite(spreadValue) && spreadValue! > 0 ? 'text-primary' : 'text-destructive'}`}
+                  className={`font-mono ${Number.isFinite(spreadValue) && spreadValue! > 0 ? 'text-financial-positive' : 'text-destructive'}`}
                 >
                   {spreadPrefix}
                   {formatFundingSpread(spreadValue)}

@@ -49,11 +49,11 @@ function sentimentColor(s: string | null | undefined): string {
     case 'very_bullish':
     case 'bullish':
     case 'slightly_bullish':
-      return 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400';
+      return 'bg-financial-positive-subtle text-financial-positive';
     case 'very_bearish':
     case 'bearish':
     case 'slightly_bearish':
-      return 'bg-rose-500/15 text-rose-600 dark:text-rose-400';
+      return 'bg-financial-negative-subtle text-financial-negative';
     default:
       return 'bg-muted text-muted-foreground';
   }
@@ -108,10 +108,10 @@ export function OverviewCard(props: OverviewCardProps) {
         if (e.key === 'Enter') (e.currentTarget as HTMLAnchorElement).click();
       }}
     >
-      <div className="bg-card hover:bg-muted/40 rounded-xl border p-4 shadow-sm transition-colors">
+      <div className="bg-surface hover:bg-interactive-hover border-border-subtle rounded-xl border p-4 transition-colors">
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2">
-            <Icon className="text-primary h-5 w-5 shrink-0" />
+            <Icon className="text-primary-text h-5 w-5 shrink-0" />
             <div>
               <h3 className="text-sm leading-tight font-semibold">{title}</h3>
               {subtitle ? <p className="text-muted-foreground text-xs">{subtitle}</p> : null}
@@ -143,7 +143,7 @@ export function OverviewCard(props: OverviewCardProps) {
 
         <div className="bg-muted mt-2 h-2 w-full overflow-hidden rounded-full">
           <div
-            className="h-full bg-emerald-500"
+            className="bg-direction-long h-full"
             style={{ width: Math.max(0, Math.min(100, longRatio * 100)) + '%' }}
             data-testid="split-bar"
           />

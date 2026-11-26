@@ -32,15 +32,15 @@ export function LongShortBar({
       aria-label={label}
       data-testid="long-short-bar"
     >
-      <div className="bg-muted flex h-2 w-full overflow-hidden rounded-full">
+      <div className="bg-surface-tertiary flex h-2 w-full overflow-hidden rounded-full">
         <div
-          className="bg-primary"
+          className="bg-direction-long"
           style={{ width: `${long}%` }}
           aria-label={longLabel}
           aria-hidden="true"
         />
         <div
-          className="bg-blue-500"
+          className="bg-direction-short"
           style={{ width: `${short}%` }}
           aria-label={shortLabel}
           aria-hidden="true"

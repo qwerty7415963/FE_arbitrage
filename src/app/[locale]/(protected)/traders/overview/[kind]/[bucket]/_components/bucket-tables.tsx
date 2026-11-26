@@ -270,19 +270,23 @@ export function BucketTables(props: BucketTablesProps) {
                       <TableCell>{formatUsd(r.position_value) ?? '—'}</TableCell>
                       <TableCell>{formatPercent(r.win_rate, 1) ?? '—'}</TableCell>
                       <TableCell>{formatUsd(r.volume_range) ?? '—'}</TableCell>
-                      <TableCell>{formatUsd(r.realized_pnl) ?? '—'}</TableCell>
-                      <TableCell>{formatUsd(r.sum_upnl) ?? '—'}</TableCell>
+                      <TableCell className="font-medium tabular-nums opacity-[0.88]">
+                        {formatUsd(r.realized_pnl) ?? '—'}
+                      </TableCell>
+                      <TableCell className="font-medium tabular-nums opacity-[0.88]">
+                        {formatUsd(r.sum_upnl) ?? '—'}
+                      </TableCell>
                       <TableCell>
                         <span
                           className={
                             r.bias === 'very_bullish' ||
                             r.bias === 'bullish' ||
                             r.bias === 'slightly_bullish'
-                              ? 'text-emerald-600 dark:text-emerald-400'
+                              ? 'text-financial-positive'
                               : r.bias === 'very_bearish' ||
                                   r.bias === 'bearish' ||
                                   r.bias === 'slightly_bearish'
-                                ? 'text-rose-600 dark:text-rose-400'
+                                ? 'text-financial-negative'
                                 : 'text-muted-foreground'
                           }
                         >
@@ -426,7 +430,7 @@ export function BucketTables(props: BucketTablesProps) {
                             />
                             {stripDexPrefix(r.market)}
                             {r.market.toUpperCase().startsWith('XYZ:') && (
-                              <span className="bg-foreground/10 shrink-0 rounded px-1 text-[8px] font-medium tracking-wide uppercase">
+                              <span className="bg-foreground/10 shrink-0 rounded px-1 text-[11px] font-medium tracking-wide uppercase">
                                 {t('treemap.tradfi')}
                               </span>
                             )}
@@ -438,11 +442,11 @@ export function BucketTables(props: BucketTablesProps) {
                               r.sentiment === 'very_bullish' ||
                               r.sentiment === 'bullish' ||
                               r.sentiment === 'slightly_bullish'
-                                ? 'text-emerald-600 dark:text-emerald-400'
+                                ? 'text-financial-positive'
                                 : r.sentiment === 'very_bearish' ||
                                     r.sentiment === 'bearish' ||
                                     r.sentiment === 'slightly_bearish'
-                                  ? 'text-rose-600 dark:text-rose-400'
+                                  ? 'text-financial-negative'
                                   : 'text-muted-foreground'
                             }
                           >

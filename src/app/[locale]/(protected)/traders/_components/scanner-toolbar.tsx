@@ -78,7 +78,7 @@ export function ScannerToolbar({
   }
 
   return (
-    <div className="bg-background sticky top-0 z-20 -mx-4 mb-2 border-b px-4 pt-3 pb-3 backdrop-blur lg:-mx-6 lg:px-6">
+    <div className="bg-background border-border-subtle sticky top-0 z-20 -mx-4 mb-2 border-b px-4 py-3 backdrop-blur lg:-mx-6 lg:px-6">
       <div className="flex flex-col gap-3">
         {resultText && (
           <div className="flex items-center gap-2">

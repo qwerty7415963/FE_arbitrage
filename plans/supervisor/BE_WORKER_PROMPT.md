@@ -32,7 +32,7 @@ Implement the backend for `<feature>` strictly against `plans/<feature>/contract
 
 ## Report (impl checkpoint)
 
-Use `plans/supervisor/CHECKPOINT_SCHEMA.md` (Impl checkpoint). Include:
+Use `plans/supervisor/ORCHESTRATOR_V2.md (Appendix A)` (Impl checkpoint). Include:
 Feature | Contract version | Branch | Commit SHA (human later) | Files changed | Endpoints implemented | Tests run | Evidence | Known risks.
 
 ## Stop conditions

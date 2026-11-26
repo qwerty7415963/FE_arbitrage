@@ -10,6 +10,7 @@ export interface OverviewSparklineProps {
   height?: number;
   className?: string;
   color?: string;
+  tone?: 'positive' | 'negative' | 'neutral';
 }
 
 export function OverviewSparkline({
@@ -17,8 +18,18 @@ export function OverviewSparkline({
   width = 120,
   height = 32,
   className,
-  color = 'currentColor',
+  color,
+  tone,
 }: OverviewSparklineProps) {
+  const resolvedColor =
+    color ??
+    (tone === 'positive'
+      ? 'var(--financial-positive)'
+      : tone === 'negative'
+        ? 'var(--financial-negative)'
+        : tone === 'neutral'
+          ? 'var(--financial-neutral)'
+          : 'currentColor');
   const t = useTranslations('traders');
   const points = useMemo(() => {
     if (!series || series.length === 0) return '';
@@ -51,7 +62,7 @@ export function OverviewSparkline({
           y1={height / 2}
           x2={width}
           y2={height / 2}
-          stroke="currentColor"
+          stroke="var(--chart-crosshair)"
           strokeOpacity={0.2}
           strokeDasharray="2 2"
         />
@@ -69,7 +80,7 @@ export function OverviewSparkline({
       aria-label={t('sparkline')}
       data-testid="overview-sparkline"
     >
-      <polyline points={points} fill="none" stroke={color} strokeWidth={1.5} />
+      <polyline points={points} fill="none" stroke={resolvedColor} strokeWidth={1.5} />
     </svg>
   );
 }

@@ -21,7 +21,10 @@ export function MarketHeader(props: MarketHeaderProps) {
   const indexPrice = formatPrice(header?.index_price);
   const marketOi = formatUsd(header?.market_oi);
   return (
-    <div data-testid="market-header" className="bg-card rounded-xl border p-4">
+    <div
+      data-testid="market-header"
+      className="bg-surface border-border-subtle rounded-xl border p-4"
+    >
       <div className="flex items-center gap-2">
         <AssetIcon
           symbol={market}
@@ -60,7 +63,7 @@ export function MarketHeader(props: MarketHeaderProps) {
       <div className="mt-3 flex items-center gap-2 text-sm">
         <span className="text-muted-foreground">{t('marketDetail.marketOi')}:</span>
         <span className="font-medium">{marketOi ?? '�?"'}</span>
-        <span className="rounded bg-amber-500/15 px-1 text-[10px] text-amber-600">HL · 30s</span>
+        <span className="bg-warning-subtle text-warning rounded px-1 text-[11px]">HL · 30s</span>
       </div>
     </div>
   );

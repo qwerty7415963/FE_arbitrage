@@ -55,7 +55,7 @@ const STATUS_LABEL_KEYS: Record<DataStatus, string> = {
 };
 
 const STATUS_CLASSES: Record<DataStatus, string> = {
-  ready: 'text-primary',
+  ready: 'text-wallet-ready',
   syncing: 'text-muted-foreground',
   stale: 'text-freshness',
   error: 'text-destructive',
@@ -150,10 +150,10 @@ export function TraderTable({
   return (
     <div className="relative w-full touch-manipulation">
       <Table>
-        <TableHeader className="bg-card sticky top-0 z-10">
+        <TableHeader className="bg-surface-secondary sticky top-0 z-10">
           <TableRow>
             {selectable && (
-              <TableHead className="bg-card">
+              <TableHead className="bg-surface-secondary">
                 <input
                   type="checkbox"
                   aria-label={t('selectAll')}
@@ -167,7 +167,7 @@ export function TraderTable({
             <TableHead className="bg-card w-10 text-right tabular-nums">
               <span className="sr-only">{t('colRank')}</span>
             </TableHead>
-            <TableHead className="bg-card sticky left-0 border-r shadow-sm">
+            <TableHead className="bg-surface border-border-subtle sticky left-0 border-r">
               {t('colTrader')}
             </TableHead>
             {SORTABLE_COLUMNS.map((c) => sortableHead(c.key, t(c.labelKey)))}
@@ -236,9 +236,9 @@ export function TraderTable({
                   </TableCell>
                 )}
                 <TableCell className="text-right tabular-nums">{index + 1}</TableCell>
-                <TableCell className="bg-card sticky left-0 border-r shadow-sm">
+                <TableCell className="bg-surface border-border-subtle sticky left-0 border-r">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 text-sm font-semibold text-white">
+                    <div className="bg-surface-tertiary text-text-primary flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold">
                       {firstChar}
                     </div>
                     <div className="min-w-0">
@@ -264,8 +264,8 @@ export function TraderTable({
                 </TableCell>
                 <TableCell
                   className={cn(
-                    'text-right tabular-nums',
-                    (pnl ?? 0) >= 0 ? 'text-primary' : 'text-destructive',
+                    'text-right font-medium tabular-nums opacity-[0.88]',
+                    (pnl ?? 0) >= 0 ? 'text-financial-positive' : 'text-destructive',
                   )}
                 >
                   {pnl === null || pnl === undefined

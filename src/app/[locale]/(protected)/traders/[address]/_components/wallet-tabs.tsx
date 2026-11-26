@@ -76,7 +76,7 @@ export function WalletTabs({
   return (
     <div id="wallet-tabs" className="flex scroll-mt-4 flex-col gap-3">
       <div
-        className="bg-card flex flex-wrap gap-1 rounded-xl border p-1.5 shadow-sm"
+        className="bg-surface border-border-subtle flex flex-wrap gap-1 rounded-xl border p-1.5"
         role="tablist"
         aria-label={t('walletTabs')}
       >
@@ -94,7 +94,7 @@ export function WalletTabs({
               className={cn(
                 'rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
                 active
-                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  ? 'bg-primary text-primary-foreground'
                   : 'text-muted-foreground hover:bg-muted hover:text-foreground',
               )}
             >

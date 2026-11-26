@@ -257,7 +257,7 @@ export function AddToTraderGroupModal({
         )}
 
         {added !== null && (
-          <div className="bg-primary/10 text-primary rounded-md p-3 text-sm">
+          <div className="bg-primary-subtle text-primary-text rounded-md p-3 text-sm">
             {t('addMembersResult', { added })}
           </div>
         )}

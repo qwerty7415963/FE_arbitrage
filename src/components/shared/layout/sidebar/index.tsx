@@ -11,7 +11,12 @@ interface SidebarProps {
 
 export function Sidebar({ className }: SidebarProps) {
   return (
-    <aside className={cn('bg-background flex h-full w-64 flex-col border-r', className)}>
+    <aside
+      className={cn(
+        'bg-surface border-border-subtle flex h-full w-64 flex-col border-r',
+        className,
+      )}
+    >
       <SidebarHeader />
       <SidebarNav />
       <SidebarFooter />

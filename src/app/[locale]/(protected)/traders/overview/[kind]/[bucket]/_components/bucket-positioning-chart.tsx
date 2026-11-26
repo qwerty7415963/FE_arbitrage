@@ -141,8 +141,8 @@ export function BucketPositioningChart(props: BucketPositioningChartProps) {
     latestLong === null || latestLong === 0.5
       ? 'text-muted-foreground'
       : latestLong > 0.5
-        ? 'text-emerald-500'
-        : 'text-rose-500';
+        ? 'text-direction-long'
+        : 'text-direction-short';
 
   const xAt = (index: number): number =>
     PAD_LEFT + (points.length === 1 ? PLOT_WIDTH / 2 : (index / (points.length - 1)) * PLOT_WIDTH);
@@ -190,7 +190,7 @@ export function BucketPositioningChart(props: BucketPositioningChartProps) {
   return (
     <div
       data-testid="bucket-positioning-chart"
-      className="bg-card flex h-full flex-col gap-2 rounded-xl border p-4 shadow-sm"
+      className="bg-surface border-border-subtle flex h-full flex-col gap-2 rounded-xl border p-4"
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="text-sm font-medium">{title}</h3>
@@ -252,7 +252,7 @@ export function BucketPositioningChart(props: BucketPositioningChartProps) {
               x2={PAD_LEFT + PLOT_WIDTH}
               y1={yAt(value)}
               y2={yAt(value)}
-              className="stroke-border/20"
+              className="stroke-chart-grid"
               strokeWidth={1}
               vectorEffect="non-scaling-stroke"
             />
@@ -261,20 +261,20 @@ export function BucketPositioningChart(props: BucketPositioningChartProps) {
           <path
             data-testid="positioning-long-area"
             d={longAreaPath}
-            className="fill-emerald-500"
+            className="fill-direction-long"
             fillOpacity={0.25}
           />
           <path
             data-testid="positioning-short-area"
             d={shortAreaPath}
-            className="fill-rose-500"
+            className="fill-direction-short"
             fillOpacity={0.25}
           />
           <path
             data-testid="positioning-long-line"
             d={boundaryPath}
             fill="none"
-            className="stroke-emerald-500"
+            className="stroke-direction-long"
             strokeWidth={1.5}
             vectorEffect="non-scaling-stroke"
           />
@@ -282,7 +282,7 @@ export function BucketPositioningChart(props: BucketPositioningChartProps) {
             data-testid="positioning-short-line"
             d={boundaryPath}
             fill="none"
-            className="stroke-rose-500"
+            className="stroke-direction-short"
             strokeWidth={1.5}
             strokeDasharray="5 4"
             vectorEffect="non-scaling-stroke"
@@ -314,8 +314,8 @@ export function BucketPositioningChart(props: BucketPositioningChartProps) {
               x={CHART_WIDTH - 4}
               y={yAt(value) + 3}
               textAnchor="end"
-              fontSize="10"
-              className="fill-muted-foreground"
+              fontSize="11"
+              className="fill-chart-axis"
             >
               {Math.round(value * 100)}%
             </text>
@@ -330,8 +330,8 @@ export function BucketPositioningChart(props: BucketPositioningChartProps) {
               textAnchor={
                 position === 0 ? 'start' : position === xTickIndexes.length - 1 ? 'end' : 'middle'
               }
-              fontSize="10"
-              className="fill-muted-foreground"
+              fontSize="11"
+              className="fill-chart-axis"
             >
               {formatDateLabel(points[pointIndex].t, locale)}
             </text>
@@ -345,21 +345,31 @@ export function BucketPositioningChart(props: BucketPositioningChartProps) {
                 width={TOOLTIP_WIDTH}
                 height={TOOLTIP_HEIGHT}
                 rx={4}
-                className="fill-background stroke-border"
+                className="fill-chart-tooltip-bg stroke-chart-tooltip-border"
                 strokeWidth={1}
               />
               <text
                 x={tooltipX + 6}
                 y={tooltipY + 14}
-                fontSize="10"
-                className="fill-foreground font-medium"
+                fontSize="11"
+                className="fill-chart-tooltip-text font-medium"
               >
                 {formatDateLabel(tooltip.t, locale)}
               </text>
-              <text x={tooltipX + 6} y={tooltipY + 28} fontSize="10" className="fill-emerald-500">
+              <text
+                x={tooltipX + 6}
+                y={tooltipY + 28}
+                fontSize="11"
+                className="fill-direction-long"
+              >
                 {`${t('statBars.long')} ${(tooltip.long * 100).toFixed(1)}%`}
               </text>
-              <text x={tooltipX + 6} y={tooltipY + 42} fontSize="10" className="fill-rose-500">
+              <text
+                x={tooltipX + 6}
+                y={tooltipY + 42}
+                fontSize="11"
+                className="fill-direction-short"
+              >
                 {`${t('statBars.short')} ${(tooltip.short * 100).toFixed(1)}%`}
               </text>
             </g>

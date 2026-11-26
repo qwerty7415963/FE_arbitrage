@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchTraderPositions } from '@/services/traders';
 import { sortPositionsClient } from '@/lib/position-sort';
 import { subscribeWalletLive } from '@/lib/wallet-live';
@@ -46,6 +46,7 @@ export function useTraderPositions(
     retry: shouldRetryTraderQuery,
     retryDelay: traderRetryDelay,
     staleTime: 30_000,
+    placeholderData: keepPreviousData,
     refetchInterval: (q) => {
       if (q.state.status === 'error') return false;
       return wsLive ? 0 : 60_000;

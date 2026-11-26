@@ -229,7 +229,7 @@ describe('FundingTable', () => {
       );
       const row = container.querySelector('tbody tr');
       const cell = row?.querySelectorAll('td')[3];
-      expect(cell?.className).toContain('text-primary');
+      expect(cell?.className).toContain('text-financial-positive');
     });
 
     it('negative spread shows destructive color', () => {

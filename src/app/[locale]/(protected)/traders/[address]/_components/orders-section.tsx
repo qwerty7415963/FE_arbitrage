@@ -128,7 +128,7 @@ export function OrdersSection({ walletAddress, enabled = true }: OrdersSectionPr
                         className={cn(
                           'rounded px-1.5 py-0.5 text-xs font-medium',
                           tone === 'positive'
-                            ? 'bg-primary/10 text-primary'
+                            ? 'bg-trade-buy/10 text-trade-buy'
                             : 'bg-destructive/10 text-destructive',
                         )}
                       >

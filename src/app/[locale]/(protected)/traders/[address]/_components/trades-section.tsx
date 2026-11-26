@@ -205,8 +205,8 @@ export function TradesSection({ walletAddress, enabled = true }: TradesSectionPr
                         className={cn(
                           'rounded px-1.5 py-0.5 text-xs font-medium',
                           tone === 'positive'
-                            ? 'bg-primary/10 text-primary'
-                            : 'bg-destructive/10 text-destructive',
+                            ? 'bg-direction-long/10 text-direction-long'
+                            : 'bg-direction-short/10 text-direction-short',
                         )}
                       >
                         {t(trade.side === 'LONG' ? 'long' : 'short')}
@@ -245,9 +245,9 @@ export function TradesSection({ walletAddress, enabled = true }: TradesSectionPr
                     </TableCell>
                     <TableCell
                       className={cn(
-                        'text-right tabular-nums',
+                        'text-right font-medium tabular-nums opacity-[0.88]',
                         trade.net_pnl > 0
-                          ? 'text-primary'
+                          ? 'text-financial-positive'
                           : trade.net_pnl < 0
                             ? 'text-destructive'
                             : undefined,

@@ -227,7 +227,7 @@ describe('TraderOverview', () => {
     renderOverview();
     expect(screen.getAllByText('Very bullish').length).toBeGreaterThan(0);
     const badge = screen.getAllByTestId('sentiment-badge')[0];
-    expect(badge.className).toContain('emerald');
+    expect(badge.className).toContain('financial-positive');
   });
 
   it('shows long/short approx marker', () => {
@@ -336,8 +336,8 @@ describe('TraderOverview', () => {
   it('colors bearish sentiment rose and bullish emerald', () => {
     renderOverview();
     const badges = screen.getAllByTestId('sentiment-badge');
-    expect(badges[0].className).toContain('emerald');
-    expect(badges[5].className).toContain('rose');
+    expect(badges[0].className).toContain('financial-positive');
+    expect(badges[5].className).toContain('financial-negative');
   });
 
   it('handles null series and null min/max without crash', () => {

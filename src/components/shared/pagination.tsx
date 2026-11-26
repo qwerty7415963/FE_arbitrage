@@ -98,7 +98,7 @@ export function Pagination({
             value={safePageSize}
             disabled={disabled}
             onChange={(e) => onPageSizeChange(Number(e.target.value))}
-            className="border-input bg-background h-9 rounded-md border px-2 text-sm"
+            className="border-border-strong bg-surface text-text-primary h-9 rounded-md border px-2 text-sm"
           >
             {[20, 50, 100].map((size) => (
               <option key={size} value={size}>
@@ -143,9 +143,13 @@ export function Pagination({
               ) : (
                 <Button
                   key={page}
-                  variant={page === currentPage ? 'default' : 'outline'}
+                  variant="outline"
                   size="sm"
-                  className="min-w-8 justify-center"
+                  className={
+                    page === currentPage
+                      ? 'border-primary-border bg-primary-subtle text-primary-text hover:bg-primary-subtle min-w-8 justify-center'
+                      : 'min-w-8 justify-center'
+                  }
                   onClick={() => onPageChange(page)}
                   disabled={disabled}
                   aria-label={`${tc('page')} ${page}`}

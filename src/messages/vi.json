@@ -25,7 +25,12 @@
     "total": "TỔNG",
     "page": "Trang",
     "previousMonth": "Tháng trước",
-    "nextMonth": "Tháng sau"
+    "nextMonth": "Tháng sau",
+    "theme": "Giao diện",
+    "themeLight": "Sáng",
+    "themeDark": "Tối",
+    "themeSystem": "Hệ thống",
+    "toggleTheme": "Chuyển giao diện"
   },
   "auth": {
     "connectFailed": "Kết nối ví thất bại"
@@ -925,5 +930,12 @@
     "footer": {
       "disclaimer": "Không phải lời khuyên đầu tư."
     }
+  },
+  "theme": {
+    "light": "Sáng",
+    "dark": "Tối",
+    "system": "Hệ thống",
+    "toggle": "Chuyển giao diện",
+    "label": "Giao diện"
   }
 }

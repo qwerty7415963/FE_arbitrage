@@ -257,7 +257,9 @@ export function MarketWalletTable(props: MarketWalletTableProps) {
                   <TableCell>{formatUsd(r.volume) ?? '�?"'}</TableCell>
                   <TableCell>{r.trades}</TableCell>
                   <TableCell>{formatPercent(r.win_rate, 1) ?? '�?"'}</TableCell>
-                  <TableCell>{formatUsd(r.realized_pnl) ?? '�?"'}</TableCell>
+                  <TableCell className="font-medium tabular-nums opacity-[0.88]">
+                    {formatUsd(r.realized_pnl) ?? '�?"'}
+                  </TableCell>
                   <TableCell>{r.last_trade_at ?? '�?"'}</TableCell>
                 </TableRow>
               ))}

@@ -38,7 +38,7 @@ function PopoverContent({
         <PopoverPrimitive.Popup
           data-slot="popover-content"
           className={cn(
-            'bg-card text-card-foreground rounded-lg border shadow-lg outline-none',
+            'bg-elevated text-foreground border-border rounded-lg border shadow-lg outline-none',
             className,
           )}
           {...props}

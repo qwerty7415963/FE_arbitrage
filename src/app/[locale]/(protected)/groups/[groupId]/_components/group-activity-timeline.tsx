@@ -25,6 +25,11 @@ export function GroupActivityTimeline({ groupId }: GroupActivityTimelineProps) {
   const [cursor, setCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
   const [partial, setPartial] = useState(false);
+  const [sources, setSources] = useState<{
+    trades: boolean;
+    fills: boolean;
+    transfers: boolean;
+  } | null>(null);
   const [filterType, setFilterType] = useState('');
   const [filterWallet, setFilterWallet] = useState('');
   const [filterAsset, setFilterAsset] = useState('');
@@ -43,6 +48,7 @@ export function GroupActivityTimeline({ groupId }: GroupActivityTimelineProps) {
       setCursor(page.next_cursor);
       setHasMore(page.has_more);
       setPartial(page.partial);
+      setSources(page.sources ?? null);
     } catch (err) {
       setError(err);
     } finally {
@@ -73,6 +79,7 @@ export function GroupActivityTimeline({ groupId }: GroupActivityTimelineProps) {
       setCursor(page.next_cursor);
       setHasMore(page.has_more);
       setPartial(page.partial);
+      setSources(page.sources ?? sources);
     } catch (err) {
       setError(err);
     } finally {
@@ -163,6 +170,15 @@ export function GroupActivityTimeline({ groupId }: GroupActivityTimelineProps) {
           </ul>
           {partial ? (
             <span className="text-muted-foreground text-xs">{t('partialData')}</span>
+          ) : null}
+          {sources ? (
+            <span className="text-muted-foreground text-xs">
+              {t('sources') ?? 'Sources'}:{' '}
+              {Object.entries(sources)
+                .filter(([, v]) => v)
+                .map(([k]) => k)
+                .join(', ')}
+            </span>
           ) : null}
           {hasMore ? (
             <Button variant="outline" size="sm" onClick={loadMore} disabled={isLoading}>

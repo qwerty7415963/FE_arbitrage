@@ -50,15 +50,15 @@ describe('BucketPositioningChart', () => {
     const longArea = screen.getByTestId('positioning-long-area');
     const shortArea = screen.getByTestId('positioning-short-area');
 
-    expect(longArea.getAttribute('class')).toContain('fill-emerald-500');
-    expect(shortArea.getAttribute('class')).toContain('fill-rose-500');
+    expect(longArea.getAttribute('class')).toContain('fill-direction-long');
+    expect(shortArea.getAttribute('class')).toContain('fill-direction-short');
     expect(longArea.getAttribute('d')).toContain('Z');
     expect(shortArea.getAttribute('d')).toContain('Z');
     expect(screen.getByTestId('positioning-long-line').getAttribute('class')).toContain(
-      'stroke-emerald-500',
+      'stroke-direction-long',
     );
     expect(screen.getByTestId('positioning-short-line').getAttribute('class')).toContain(
-      'stroke-rose-500',
+      'stroke-direction-short',
     );
   });
 
@@ -68,7 +68,7 @@ describe('BucketPositioningChart', () => {
     expect(screen.getByText('Profitable Positioning')).toBeInTheDocument();
     expect(screen.getByTestId('chart-range-caption')).toHaveTextContent('30D · BULLISH');
     expect(screen.getByTestId('chart-long-caption')).toHaveTextContent('60.0% Long');
-    expect(screen.getByTestId('chart-long-caption').className).toContain('text-emerald-500');
+    expect(screen.getByTestId('chart-long-caption').className).toContain('text-direction-long');
   });
 
   it('renders VI bucket positioning title', () => {
@@ -85,7 +85,7 @@ describe('BucketPositioningChart', () => {
     renderChart({ detail: makeDetail(0.4) });
 
     expect(screen.getByTestId('chart-long-caption')).toHaveTextContent('40.0% Long');
-    expect(screen.getByTestId('chart-long-caption').className).toContain('text-rose-500');
+    expect(screen.getByTestId('chart-long-caption').className).toContain('text-direction-short');
   });
 
   it('renders five y-axis and five x-axis labels', () => {

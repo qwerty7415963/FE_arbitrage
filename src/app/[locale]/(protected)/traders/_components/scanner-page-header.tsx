@@ -38,9 +38,9 @@ export function ScannerPageHeader({
 
   return (
     <div className={cn('flex flex-col gap-1', className)} data-testid="scanner-page-header">
-      <h1 className="text-2xl font-bold">{title}</h1>
+      <h1 className="text-2xl font-semibold">{title}</h1>
       {subtitle ? <p className="text-muted-foreground text-sm">{subtitle}</p> : null}
-      <p className="text-muted-foreground text-sm">{t('lastUpdated', { time: time ?? '—' })}</p>
+      <p className="text-muted-foreground text-xs">{t('lastUpdated', { time: time ?? '—' })}</p>
     </div>
   );
 }

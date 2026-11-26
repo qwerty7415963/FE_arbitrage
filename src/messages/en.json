@@ -25,7 +25,12 @@
     "total": "TOTAL",
     "page": "Page",
     "previousMonth": "Previous month",
-    "nextMonth": "Next month"
+    "nextMonth": "Next month",
+    "theme": "Theme",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "themeSystem": "System",
+    "toggleTheme": "Toggle theme"
   },
   "auth": {
     "connectFailed": "Failed to connect wallet"
@@ -925,5 +930,12 @@
     "footer": {
       "disclaimer": "Not investment advice."
     }
+  },
+  "theme": {
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System",
+    "toggle": "Toggle theme",
+    "label": "Theme"
   }
 }

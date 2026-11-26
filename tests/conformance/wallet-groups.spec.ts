@@ -15,6 +15,38 @@ const MODE = process.env.CONFORMANCE_MODE ?? 'mock';
 const isMock = MODE === 'mock';
 
 async function seedAuth(page: Page) {
+  if (process.env.CONFORMANCE_MODE === 'real') {
+    // real BE: register+login to obtain a valid JWT
+    const email = `conf_${Date.now()}@test.com`;
+    await page.route('**/api/v1/auth/me', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          data: { id: 'u1', email, role: 'user', status: 'active', created_at: '' },
+        }),
+      }),
+    );
+    await page.goto('/');
+    await page.evaluate(
+      async ({ email }) => {
+        const r = await fetch('/api/v1/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password: 'testpass123' }),
+        });
+        const j = await r.json();
+        const token = j?.data?.access_token;
+        if (token) {
+          localStorage.setItem('access_token', token);
+          localStorage.setItem('refresh_token', j?.data?.refresh_token ?? 'test-refresh');
+        }
+      },
+      { email },
+    );
+    return;
+  }
   await page.addInitScript(() => {
     localStorage.setItem('access_token', 'test-token');
     localStorage.setItem('refresh_token', 'test-refresh');

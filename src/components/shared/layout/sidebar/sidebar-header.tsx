@@ -5,7 +5,7 @@ export function SidebarHeader() {
   const t = useTranslations('common');
 
   return (
-    <div className="flex h-16 items-center border-b px-4">
+    <div className="border-border-subtle flex h-16 items-center border-b px-4">
       <Link href="/" className="flex items-center gap-2">
         <div className="bg-primary text-primary-foreground flex h-8 w-8 items-center justify-center rounded-md">
           <span className="text-sm font-bold">A</span>

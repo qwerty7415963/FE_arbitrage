@@ -29,7 +29,7 @@ export function ConnectWalletButton() {
       <DropdownMenu>
         <DropdownMenuTrigger render={<div />} nativeButton={false}>
           <Button variant="outline" className="gap-2">
-            <div className="h-2 w-2 rounded-full bg-green-500" />
+            <div className="bg-success h-2 w-2 rounded-full" />
             {formatAddress(address)}
           </Button>
         </DropdownMenuTrigger>

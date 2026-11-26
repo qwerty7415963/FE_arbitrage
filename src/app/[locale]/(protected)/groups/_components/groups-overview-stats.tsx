@@ -28,7 +28,7 @@ export function GroupsOverviewStats({
     unrealizedPnl === null || unrealizedPnl === undefined || unrealizedPnl === 0
       ? undefined
       : unrealizedPnl > 0
-        ? 'text-primary'
+        ? 'text-financial-positive'
         : 'text-destructive';
 
   if (isLoading) {

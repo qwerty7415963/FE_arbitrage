@@ -71,8 +71,8 @@ export function SidebarNav() {
             className={cn(
               'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
               isActive
-                ? 'bg-primary/10 text-primary'
-                : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                ? 'bg-primary-subtle text-primary-text border-primary border-l-[3px]'
+                : 'text-text-muted hover:bg-interactive-hover hover:text-text-primary',
             )}
           >
             <Icon className="h-5 w-5 shrink-0" />

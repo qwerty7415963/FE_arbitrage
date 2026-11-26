@@ -30,8 +30,8 @@ const SENTIMENTS: OverviewSentiment[] = [
 type TileTone = 'positive' | 'negative' | 'neutral';
 
 const TONE_CLASS: Record<TileTone, string> = {
-  positive: 'bg-emerald-500/15 border-emerald-500/30 text-emerald-100',
-  negative: 'bg-rose-500/15 border-rose-500/30 text-rose-100',
+  positive: 'bg-financial-positive-subtle border-financial-positive/30 text-financial-positive',
+  negative: 'bg-financial-negative-subtle border-financial-negative/30 text-financial-negative',
   neutral: 'bg-muted border-border text-muted-foreground',
 };
 
@@ -163,7 +163,7 @@ function resolveLevel(wpx: number, hpx: number, area: number, hasSize: boolean):
       showIcon: true,
       symbolClass: 'text-[11px]',
       upnlClass: 'text-xs',
-      sentimentClass: 'text-[9px]',
+      sentimentClass: 'text-[11px]',
       padding: 'p-1.5',
       showSymbol: true,
       showUpnl: true,
@@ -265,7 +265,7 @@ export function BucketTreemap(props: BucketTreemapProps) {
     return (
       <div
         data-testid="bucket-treemap"
-        className="bg-card text-muted-foreground flex h-full min-h-[300px] w-full flex-col items-center justify-center rounded-xl border border-dashed p-4 text-sm lg:min-h-[360px]"
+        className="bg-surface text-muted-foreground flex h-full min-h-[300px] w-full flex-col items-center justify-center rounded-xl border border-dashed p-4 text-sm lg:min-h-[360px]"
       >
         {t('treemap.noData')}
       </div>
@@ -341,7 +341,7 @@ export function BucketTreemap(props: BucketTreemapProps) {
       data-testid="bucket-treemap"
       role="group"
       aria-label={t('treemap.title')}
-      className="bg-card relative flex h-full w-full flex-col overflow-hidden rounded-xl border p-1"
+      className="bg-surface border-border-subtle relative flex h-full w-full flex-col overflow-hidden rounded-xl border p-1"
     >
       {preloadUrls.map((href) => (
         <link key={href} rel="preload" as="image" href={href} />
@@ -407,7 +407,7 @@ export function BucketTreemap(props: BucketTreemapProps) {
                       </span>
                     )}
                     {tradfi && level.showSymbol && (
-                      <span className="bg-foreground/10 shrink-0 rounded px-1 text-[10px] font-medium tracking-wide uppercase">
+                      <span className="bg-foreground/10 shrink-0 rounded px-1 text-[11px] font-medium tracking-wide uppercase">
                         {t('treemap.tradfi')}
                       </span>
                     )}
@@ -417,7 +417,7 @@ export function BucketTreemap(props: BucketTreemapProps) {
                   <div className="min-w-0">
                     <div className={cn('truncate font-medium tabular-nums', level.upnlClass)}>
                       {signedUsd(upnl)}{' '}
-                      <span className="text-[9px] font-normal tracking-wide uppercase opacity-70">
+                      <span className="text-[11px] font-normal tracking-wide uppercase opacity-70">
                         {marketsSource === 'trades' ? t('treemap.realizedPnl') : t('treemap.upnl')}
                       </span>
                     </div>

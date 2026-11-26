@@ -33,7 +33,7 @@ export function CopyAddress({ address, short = true }: CopyAddressProps) {
         type="button"
         aria-label={t('copyAddress')}
         title={t('copyAddress')}
-        className="text-muted-foreground hover:text-foreground rounded p-0.5"
+        className="text-text-muted hover:text-text-primary focus-visible:ring-focus-ring rounded p-0.5 focus-visible:ring-2 focus-visible:outline-none"
         onClick={(e) => {
           e.stopPropagation();
           void handleCopy();

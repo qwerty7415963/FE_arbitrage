@@ -66,7 +66,7 @@ export function LandingPageView() {
       <section className="border-border bg-background relative overflow-hidden border-b">
         <div className="mx-auto grid w-full max-w-6xl gap-10 px-4 py-12 lg:grid-cols-[1.1fr_0.9fr] lg:px-6 lg:py-20">
           <div className="flex flex-col justify-center">
-            <p className="font-mono text-xs tracking-wide text-[var(--landing-muted)]">
+            <p className="font-mono text-xs tracking-wide text-[var(--text-muted)]">
               {t('hero.eyebrow')}
             </p>
             <h1 className="text-foreground mt-4 text-4xl leading-tight font-semibold tracking-tight sm:text-5xl">
@@ -92,14 +92,14 @@ export function LandingPageView() {
           </div>
 
           <div
-            className="rounded-2xl border border-[var(--landing-border)] bg-[var(--landing-surface)] p-5"
-            style={{ boxShadow: '0 0 0 1px var(--landing-border)' }}
+            className="rounded-2xl border border-[var(--border)] bg-[var(--background)] p-5"
+            style={{ boxShadow: '0 0 0 1px var(--border)' }}
           >
             <div className="flex items-center justify-between gap-3">
-              <h2 className="text-sm font-semibold text-[var(--landing-ink)]">
+              <h2 className="text-sm font-semibold text-[var(--foreground)]">
                 {t('liveDesk.title')}
               </h2>
-              <span className="rounded-full border border-[var(--landing-accent)]/40 bg-[var(--landing-accent)]/10 px-2 py-0.5 text-xs text-[var(--landing-accent)]">
+              <span className="rounded-full border border-[var(--primary-text)]/40 bg-[var(--primary-text)]/10 px-2 py-0.5 text-xs text-[var(--primary-text)]">
                 {t('liveDesk.label')}
               </span>
             </div>
@@ -107,7 +107,7 @@ export function LandingPageView() {
               {fundingRows.map((row) => (
                 <div
                   key={row.pair}
-                  className="bg-background flex items-center justify-between rounded-md border border-[var(--landing-border)] px-3 py-2 text-xs"
+                  className="bg-background flex items-center justify-between rounded-md border border-[var(--border)] px-3 py-2 text-xs"
                 >
                   <div>
                     <p className="text-foreground font-mono font-semibold tabular-nums">
@@ -116,7 +116,7 @@ export function LandingPageView() {
                     <p className="text-muted-foreground">{row.venue}</p>
                   </div>
                   <div className="text-right">
-                    <p className="font-mono text-[var(--landing-accent)] tabular-nums">
+                    <p className="font-mono text-[var(--primary-text)] tabular-nums">
                       {row.spread}
                     </p>
                     <p className="text-muted-foreground">{row.apr}</p>
@@ -124,7 +124,7 @@ export function LandingPageView() {
                 </div>
               ))}
             </div>
-            <div className="bg-background mt-4 rounded-md border border-[var(--landing-border)] p-3 text-xs">
+            <div className="bg-background mt-4 rounded-md border border-[var(--border)] p-3 text-xs">
               <p className="text-foreground font-mono">{t('liveDesk.dossierTitle')}</p>
               <p className="text-muted-foreground mt-1">{t('liveDesk.dossierBody')}</p>
             </div>
@@ -135,14 +135,14 @@ export function LandingPageView() {
           <svg viewBox="0 0 1200 80" preserveAspectRatio="none" className="h-full w-full">
             <path
               d="M0,40 C300,4 900,76 1200,40"
-              stroke="var(--landing-ribbon)"
+              stroke="var(--primary)"
               strokeWidth="10"
               fill="none"
               opacity="0.08"
             />
             <path
               d="M0,40 C300,4 900,76 1200,40"
-              stroke="var(--landing-ribbon)"
+              stroke="var(--primary)"
               strokeWidth="1.5"
               fill="none"
               opacity="0.55"
@@ -167,15 +167,15 @@ export function LandingPageView() {
         <div className="flex items-end justify-between gap-4">
           <h2 className="text-foreground text-2xl font-semibold">{t('productDemo.title')}</h2>
         </div>
-        <div className="mt-6 grid overflow-hidden rounded-lg border border-[var(--landing-border)] md:grid-cols-2">
-          <div className="bg-[var(--landing-surface)] p-5">
-            <h3 className="mb-4 font-mono text-sm font-semibold text-[var(--landing-ink)]">
+        <div className="mt-6 grid overflow-hidden rounded-lg border border-[var(--border)] md:grid-cols-2">
+          <div className="bg-[var(--background)] p-5">
+            <h3 className="mb-4 font-mono text-sm font-semibold text-[var(--foreground)]">
               {t('productDemo.scannerTitle')}
             </h3>
             <div className="overflow-x-auto">
               <table className="w-full text-xs">
                 <thead>
-                  <tr className="border-b border-[var(--landing-border)] text-left text-[var(--landing-muted)]">
+                  <tr className="border-b border-[var(--border)] text-left text-[var(--text-muted)]">
                     <th className="py-2 pr-3 font-medium">#</th>
                     <th className="py-2 pr-3 font-medium">Trader</th>
                     <th className="py-2 pr-3 text-right font-medium">ROI</th>
@@ -185,36 +185,33 @@ export function LandingPageView() {
                 </thead>
                 <tbody>
                   {scannerRows.map((row) => (
-                    <tr
-                      key={row.rank}
-                      className="border-b border-[var(--landing-border)] last:border-0"
-                    >
-                      <td className="py-2 pr-3 font-mono text-[var(--landing-muted)] tabular-nums">
+                    <tr key={row.rank} className="border-b border-[var(--border)] last:border-0">
+                      <td className="py-2 pr-3 font-mono text-[var(--text-muted)] tabular-nums">
                         {row.rank}
                       </td>
                       <td className="text-foreground py-2 pr-3 font-mono">{row.trader}</td>
-                      <td className="py-2 pr-3 text-right font-mono text-[var(--landing-accent)] tabular-nums">
+                      <td className="py-2 pr-3 text-right font-mono text-[var(--primary-text)] tabular-nums">
                         {row.roi}
                       </td>
                       <td className="text-foreground py-2 pr-3 text-right font-mono tabular-nums">
                         {row.win}
                       </td>
-                      <td className="py-2 text-right text-[var(--landing-muted)]">{row.status}</td>
+                      <td className="py-2 text-right text-[var(--text-muted)]">{row.status}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
           </div>
-          <div className="border-t border-[var(--landing-border)] bg-[var(--landing-surface-2)] p-5 md:border-t-0 md:border-l">
-            <h3 className="mb-4 font-mono text-sm font-semibold text-[var(--landing-ink)]">
+          <div className="border-t border-[var(--border)] bg-[var(--surface)] p-5 md:border-t-0 md:border-l">
+            <h3 className="mb-4 font-mono text-sm font-semibold text-[var(--foreground)]">
               {t('productDemo.fundingTitle')}
             </h3>
             <div className="space-y-2">
               {fundingRows.map((row) => (
                 <div
                   key={row.pair}
-                  className="bg-background flex items-center justify-between rounded-md border border-[var(--landing-border)] px-3 py-2 text-xs"
+                  className="bg-background flex items-center justify-between rounded-md border border-[var(--border)] px-3 py-2 text-xs"
                 >
                   <div>
                     <p className="text-foreground font-mono font-semibold tabular-nums">
@@ -223,7 +220,7 @@ export function LandingPageView() {
                     <p className="text-muted-foreground">{row.venue}</p>
                   </div>
                   <div className="text-right">
-                    <p className="font-mono text-[var(--landing-accent)] tabular-nums">
+                    <p className="font-mono text-[var(--primary-text)] tabular-nums">
                       {row.spread}
                     </p>
                     <p className="text-muted-foreground">{row.apr}</p>
@@ -236,10 +233,10 @@ export function LandingPageView() {
       </section>
 
       <section className="border-border bg-card/40 border-y">
-        <div className="mx-auto grid w-full max-w-6xl gap-0 md:grid-cols-4 md:divide-x md:divide-[var(--landing-border)]">
+        <div className="mx-auto grid w-full max-w-6xl gap-0 md:grid-cols-4 md:divide-x md:divide-[var(--border)]">
           {provenance.map((item) => (
             <div key={item.title} className="px-4 py-6">
-              <h3 className="font-mono text-sm font-semibold text-[var(--landing-accent)]">
+              <h3 className="font-mono text-sm font-semibold text-[var(--primary-text)]">
                 {item.title}
               </h3>
               <p className="text-muted-foreground mt-2 text-xs leading-relaxed">{item.copy}</p>
@@ -252,26 +249,26 @@ export function LandingPageView() {
         <h2 className="text-foreground text-2xl font-semibold">{t('whatItIs.title')}</h2>
         <div className="mt-6 grid gap-8 md:grid-cols-2">
           <div>
-            <h3 className="font-mono text-sm font-semibold text-[var(--landing-accent)]">
+            <h3 className="font-mono text-sm font-semibold text-[var(--primary-text)]">
               {t('whatItIs.isTitle')}
             </h3>
             <ul className="text-muted-foreground mt-3 space-y-2 text-sm leading-relaxed">
               {isItems.map((item, index) => (
                 <li key={index} className="flex gap-2">
-                  <span className="text-[var(--landing-accent)]">•</span>
+                  <span className="text-[var(--primary-text)]">•</span>
                   <span>{item}</span>
                 </li>
               ))}
             </ul>
           </div>
           <div>
-            <h3 className="font-mono text-sm font-semibold text-[var(--landing-muted)]">
+            <h3 className="font-mono text-sm font-semibold text-[var(--text-muted)]">
               {t('whatItIs.isntTitle')}
             </h3>
             <ul className="text-muted-foreground mt-3 space-y-2 text-sm leading-relaxed">
               {isntItems.map((item, index) => (
                 <li key={index} className="flex gap-2">
-                  <span className="text-[var(--landing-muted)]">•</span>
+                  <span className="text-[var(--text-muted)]">•</span>
                   <span>{item}</span>
                 </li>
               ))}
@@ -285,7 +282,7 @@ export function LandingPageView() {
         <div className="divide-border border-border mt-6 divide-y border-y">
           {features.map((feature) => (
             <div key={feature.key} className="grid gap-2 py-6 md:grid-cols-[200px_1fr]">
-              <h3 className="font-mono text-lg font-semibold text-[var(--landing-accent)]">
+              <h3 className="font-mono text-lg font-semibold text-[var(--primary-text)]">
                 {feature.title}
               </h3>
               <p className="text-muted-foreground text-sm leading-relaxed">{feature.copy}</p>
@@ -337,7 +334,7 @@ export function LandingPageView() {
       </section>
 
       <section className="mx-auto w-full max-w-6xl px-4 py-16 lg:px-6">
-        <div className="bg-card border border-[var(--landing-border)] p-8 text-center">
+        <div className="bg-card border border-[var(--border)] p-8 text-center">
           <h2 className="text-foreground text-2xl font-semibold">{t('finalCta.title')}</h2>
           <p className="text-muted-foreground mt-3 text-sm">{t('finalCta.copy')}</p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">

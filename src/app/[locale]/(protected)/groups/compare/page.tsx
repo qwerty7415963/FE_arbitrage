@@ -22,16 +22,16 @@ import { NULL_DISPLAY } from '@/components/shared/traders/trader-table';
 import { Link } from '@/i18n/navigation';
 
 const COLORS = [
-  '#60a5fa',
-  '#34d399',
-  '#f472b6',
-  '#fbbf24',
-  '#a78bfa',
-  '#fb7185',
-  '#22d3ee',
-  '#f97316',
-  '#84cc16',
-  '#e879f9',
+  'var(--chart-1)',
+  'var(--chart-2)',
+  'var(--chart-3)',
+  'var(--chart-4)',
+  'var(--chart-5)',
+  'var(--chart-6)',
+  'var(--chart-7)',
+  'var(--chart-8)',
+  'var(--info)',
+  'var(--warning)',
 ];
 
 type Period = '7D' | '30D' | '90D' | 'ALL';
@@ -46,6 +46,7 @@ export default function GroupsComparePage() {
   const [groupsError, setGroupsError] = useState<unknown>(null);
 
   const [selected, setSelected] = useState<string[]>([]);
+  const [hoveredGroup, setHoveredGroup] = useState<string | null>(null);
   const [period, setPeriod] = useState<Period>('30D');
   const [compareData, setCompareData] = useState<GroupCompareResponse | null>(null);
   const [isComparing, setIsComparing] = useState(false);
@@ -365,7 +366,7 @@ export default function GroupsComparePage() {
       ) : compareData ? (
         <>
           {compareData.warnings?.length ? (
-            <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-200">
+            <div className="border-warning/30 bg-warning-subtle text-warning rounded-md border p-3 text-sm">
               {compareData.warnings.join(' ')}
             </div>
           ) : null}
@@ -402,13 +403,15 @@ export default function GroupsComparePage() {
                     )
                     .join(' ');
                   const color = COLORS[idx % COLORS.length];
+                  const isActive = hoveredGroup === null || hoveredGroup === g.id;
                   return (
                     <path
                       key={g.id}
                       d={path}
                       fill="none"
                       stroke={color}
-                      strokeWidth={2}
+                      strokeWidth={isActive ? 2 : 1}
+                      opacity={isActive ? 1 : 0.35}
                       vectorEffect="non-scaling-stroke"
                     />
                   );
@@ -416,23 +419,33 @@ export default function GroupsComparePage() {
               </svg>
             )}
             <div className="mt-2 flex flex-wrap gap-3 text-xs">
-              {compareData.groups.map((g, idx) => (
-                <span key={g.id} className="flex items-center gap-1">
+              {compareData.groups.map((g, idx) => {
+                const isActive = hoveredGroup === null || hoveredGroup === g.id;
+                return (
                   <span
-                    className="inline-block h-2 w-4"
-                    style={{ background: COLORS[idx % COLORS.length] }}
-                  />
-                  {g.name}
-                  <button
-                    type="button"
-                    className="text-muted-foreground hover:text-foreground ml-1"
-                    onClick={() => removeGroup(g.id)}
-                    aria-label={`remove ${g.name}`}
+                    key={g.id}
+                    className={`flex items-center gap-1 transition-opacity ${
+                      isActive ? 'opacity-100' : 'opacity-40'
+                    }`}
+                    onMouseEnter={() => setHoveredGroup(g.id)}
+                    onMouseLeave={() => setHoveredGroup(null)}
                   >
-                    ×
-                  </button>
-                </span>
-              ))}
+                    <span
+                      className={`inline-block h-2 w-4 ${isActive ? 'ring-foreground/40 ring-1' : ''}`}
+                      style={{ background: COLORS[idx % COLORS.length] }}
+                    />
+                    {g.name}
+                    <button
+                      type="button"
+                      className="text-muted-foreground hover:text-foreground ml-1"
+                      onClick={() => removeGroup(g.id)}
+                      aria-label={`remove ${g.name}`}
+                    >
+                      ×
+                    </button>
+                  </span>
+                );
+              })}
             </div>
           </div>
 
@@ -472,7 +485,7 @@ export default function GroupsComparePage() {
                         return (
                           <td
                             key={compareData.groups[i].id}
-                            className={`p-2 text-right tabular-nums ${isBest ? 'font-semibold text-emerald-400' : isWorst ? 'text-destructive' : ''}`}
+                            className={`p-2 text-right tabular-nums ${isBest ? 'text-financial-positive font-semibold' : isWorst ? 'text-financial-negative' : ''}`}
                           >
                             {m.format(v)}
                           </td>
@@ -487,9 +500,15 @@ export default function GroupsComparePage() {
 
           {compareData.overlap?.pairwise?.length ? (
             <div className="text-muted-foreground text-xs">
-              {compareData.overlap.pairwise.map((p) => (
-                <div key={`${p.a}-${p.b}`}>shared wallets: {p.shared_wallets}</div>
-              ))}
+              {compareData.overlap.pairwise.map((p) => {
+                const nameA = compareData.groups.find((g) => g.id === p.a)?.name ?? p.a;
+                const nameB = compareData.groups.find((g) => g.id === p.b)?.name ?? p.b;
+                return (
+                  <div key={`${p.a}-${p.b}`}>
+                    {nameA} ↔ {nameB}: {p.shared_wallets} shared wallets
+                  </div>
+                );
+              })}
             </div>
           ) : null}
         </>
