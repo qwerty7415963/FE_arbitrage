@@ -150,7 +150,7 @@ export function TraderTable({
   return (
     <div className="relative w-full touch-manipulation">
       <Table>
-        <TableHeader className="bg-surface-secondary sticky top-0 z-10">
+        <TableHeader className="bg-surface-secondary static">
           <TableRow>
             {selectable && (
               <TableHead className="bg-surface-secondary">

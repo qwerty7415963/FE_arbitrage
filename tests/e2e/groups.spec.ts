@@ -738,12 +738,10 @@ test.describe('Wallet Scanner', () => {
     await page.goto('/en/traders');
     await applyFilters(page);
     await expect(page.getByText('0x1234...5678')).toBeVisible();
-    await expect(page.getByText('Page 1 of 2 · 2 results')).toBeVisible();
     await page.getByRole('button', { name: 'Page 2' }).click();
     await expect(page.getByText('0xbbbb...bbbb')).toBeVisible();
     expect(bodies[bodies.length - 1]).toMatchObject({ page: 2 });
     await expect(page.getByText('0x1234...5678')).toHaveCount(0);
-    await expect(page.getByText('Page 2 of 2 · 2 results')).toBeVisible();
     await expect(page).toHaveURL(/page=2/);
   });
 
@@ -968,11 +966,10 @@ test.describe('Wallet Scanner', () => {
     await expect(page.getByText('An error occurred, please try again')).toBeVisible();
     await openFilters(page);
     await expect(page.getByLabel('ROI from (%)')).toHaveValue('10');
-    // The filter sheet is non-modal and renders no backdrop, so the page-level
-    // Retry button stays clickable while the sheet is open; the sheet must not
-    // be closed (and the draft discarded) by clicking outside it.
+    // Filters are now a modal overlay, so close it before retrying the
+    // page-level request. The draft is preserved in component state.
+    await page.keyboard.press('Escape');
     await page.getByRole('button', { name: 'Retry' }).click();
-    await expect(page.getByLabel('ROI from (%)')).toBeVisible();
     await expect(page.getByText('Smart Money')).toBeVisible();
   });
 

@@ -15,11 +15,11 @@ import enMessages from '@/messages/en.json';
 function Harness({
   initialOpen = false,
   committed = defaultDraft(),
-  variant = 'sheet',
+  variant = 'modal',
 }: {
   initialOpen?: boolean;
   committed?: FilterDraft;
-  variant?: 'docked' | 'sheet';
+  variant?: 'modal' | 'sheet';
 }) {
   const [open, setOpen] = useState(initialOpen);
   const [draft, setDraft] = useState<FilterDraft>(committed);
@@ -63,10 +63,10 @@ describe('ScannerFiltersPanel', () => {
     expect(screen.getByText('Short win rate')).toBeInTheDocument();
   });
 
-  it('is a dialog labelled by its heading without aria-modal', () => {
+  it('is a modal dialog labelled by its heading', () => {
     render(<Harness initialOpen />);
     const dialog = screen.getByRole('dialog');
-    expect(dialog).not.toHaveAttribute('aria-modal');
+    expect(dialog).toHaveAttribute('aria-modal', 'true');
     const labelledBy = dialog.getAttribute('aria-labelledby');
     expect(labelledBy).toBeTruthy();
     expect(document.getElementById(labelledBy as string)).toHaveTextContent('Filter traders');

@@ -18,7 +18,6 @@ function renderToolbar(props: Partial<React.ComponentProps<typeof ScannerToolbar
     filtersCount: 0,
     disabled: false,
     onSaveFilter: vi.fn(),
-    resultText: null,
   };
   return render(
     <NextIntlClientProvider locale="en" messages={enMessages}>

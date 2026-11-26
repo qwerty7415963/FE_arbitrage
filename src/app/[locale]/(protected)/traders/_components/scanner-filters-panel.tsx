@@ -96,7 +96,7 @@ export interface ScannerFiltersPanelProps {
   sortBy: TraderSortBy;
   sortDirection: SortDirection;
   disabled?: boolean;
-  variant?: 'docked' | 'sheet';
+  variant?: 'modal' | 'sheet';
 }
 
 const PRESET_MIN_VALUES: Partial<Record<RangeKey, string[]>> = {
@@ -493,23 +493,27 @@ export function ScannerFiltersPanel({
     </form>
   );
 
-  if (variant === 'docked') {
-    if (!open) return null;
+  if (variant === 'modal') {
     return (
-      <div className="sticky top-4 rounded-lg border p-4">
-        <div className="flex items-center justify-between gap-2 pb-2">
-          <span className="text-sm font-medium">{t('filterSheet.title')}</span>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            aria-label={t('filterSheet.close')}
-            onClick={() => onOpenChange(false)}
-          >
-            <XIcon />
-          </Button>
-        </div>
-        {form}
-      </div>
+      <Sheet open={open} onOpenChange={onOpenChange} modal>
+        <SheetContent
+          side="right"
+          showCloseButton={false}
+          showOverlay
+          aria-modal="true"
+          className="bg-elevated w-full p-0 sm:w-[480px] sm:max-w-[480px]"
+        >
+          <div className="bg-elevated sticky top-0 z-10 flex items-center justify-between gap-2 border-b p-4">
+            <SheetTitle>{t('filterSheet.title')}</SheetTitle>
+            <SheetClose
+              render={<Button variant="ghost" size="icon-sm" aria-label={t('filterSheet.close')} />}
+            >
+              <XIcon />
+            </SheetClose>
+          </div>
+          {form}
+        </SheetContent>
+      </Sheet>
     );
   }
 

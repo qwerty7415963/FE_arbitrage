@@ -1,4 +1,4 @@
-﻿# Test Cases - Arbitrage FE
+# Test Cases - Arbitrage FE
 
 > Single source of truth cho test cases. Cáº­p nháº­t file nÃ y khi thÃªm feature má»›i.
 
@@ -414,12 +414,12 @@
 | filters toggle       | aria-expanded + aria-controls, callback          |
 | result count         | resultText shown when provided                   |
 
-#### `traders/_components/filter-sheet.tsx` (16 tests)
+#### `traders/_components/scanner-filters-panel.tsx` (16 tests)
 
 | Test                           | Description                                                |
 | ------------------------------ | ---------------------------------------------------------- |
 | three clusters + nine metrics  | Performance/Scale/Order bias, no Group cluster             |
-| dialog, no aria-modal          | Sheet labelled by heading, "Close without applying"        |
+| modal dialog                   | aria-modal, labelled by heading, "Close without applying"  |
 | reveal min/max via Custom      | Preset â†’ Custom reveals the from/to pair                 |
 | preset sets min                | Win rate â‰¥60% â†’ from = 60                              |
 | preset reopens as preset       | Applied preset still a preset, not Custom                  |
@@ -697,12 +697,12 @@
 
 ### Accessibility / Keyboard / Visual / Performance
 
-| ID   | File                    | Coverage                                                                                                                                                                                                                 |
-| ---- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| A1-9 | `accessibility.spec.ts` | axe wcag2a+aa: scanner (default/results/error), detail, groups+dialog, add modal, open filter sheet Ã—2 locales + active chip                                                                                            |
-| K1-5 | `keyboard.spec.ts`      | Tab order, Enter-to-sort, focus trap + Escape, filter sheet Escape + focus return, narrow scroll                                                                                                                         |
-| V1-9 | `visual.spec.ts`        | Baselines (frozen clock): scanner Ã—4, filter sheet open (whole-page viewport, not `fullPage`; sheet portals to `<body>`), detail, groups, narrow Ã—2 â€” baselines regenerated 2026-11-20 after the pagination redesign |
-| P1-3 | `performance.spec.ts`   | Numbered page (20 rows, Page 1 of 5) <15s, slow-search keeps rows, 500-member group pages                                                                                                                                |
+| ID   | File                    | Coverage                                                                                                                                                                                         |
+| ---- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| A1-9 | `accessibility.spec.ts` | axe wcag2a+aa: scanner (default/results/error), detail, groups+dialog, add modal, open filter sheet Ã—2 locales + active chip                                                                    |
+| K1-5 | `keyboard.spec.ts`      | Tab order, Enter-to-sort, focus trap + Escape, filter sheet Escape + focus return, narrow scroll                                                                                                 |
+| V1-9 | `visual.spec.ts`        | Baselines (frozen clock): scanner A-4, filter modal open desktop (whole-page viewport, not `fullPage`; modal portals to `<body>`), detail, groups, narrow A-2 - baselines regenerated 2026-11-26 |
+| P1-3 | `performance.spec.ts`   | Numbered page (20 rows, Page 1 of 5) <15s, slow-search keeps rows, 500-member group pages                                                                                                        |
 
 ---
 
@@ -966,6 +966,7 @@ reviewing diffs â€” never blindly.
 - 2026-11-22: Bucket i18n fix: VI labels for wallet count, bucket labels, stat bars, chart, treemap, columns, market detail, profit factor, sparkline, funding columns; component title/source label logic; stat bars en-US formatting.
 - 2026-11-22: Wallet live regression L8: late empty-error trades bootstrap/refetch keeps cached REST rows; unit tests in use-trader-trades.test.tsx and E2E wallet-live.spec.ts.
 - 2026-11-22: Marketing landing revised to hybrid Linear restraint + Hyperliquid ticker: spread ribbon device, market ticker, product demo split, provenance strip, what it is/isn't, feature ledger, how it works, metric band, FAQ, final CTA. Semantic landing tokens in globals.css. Tests: landing-page (2), landing.spec.ts (2).
+- 2026-11-26: Graphite & Acid Lime design system + scanner Filters modal: desktop Filters opens a modal above the table (not docked beside it), table width unchanged; theme toggle light/dark/system. Tests: scanner-filters-panel (16), scanner-filters-modal.spec.ts, accessibility 9; visual baselines regenerated.
 
 ### Landing page (marketing)
 

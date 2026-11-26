@@ -104,17 +104,6 @@ function ScannerContent() {
   const [addOpen, setAddOpen] = useState(false);
   const [addMembers, setAddMembers] = useState<MemberInput[]>([]);
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [isDesktop, setIsDesktop] = useState(
-    () => typeof window !== 'undefined' && window.innerWidth >= 1024,
-  );
-  useEffect(() => {
-    if (typeof window === 'undefined' || !window.matchMedia) return;
-    const mq = window.matchMedia('(min-width: 1024px)');
-    const update = () => setIsDesktop(mq.matches);
-    update();
-    mq.addEventListener('change', update);
-    return () => mq.removeEventListener('change', update);
-  }, []);
   const abortRef = useRef<AbortController | null>(null);
   const requestIdRef = useRef(0);
   const lastRequestRef = useRef<{ query: TraderSearchQuery } | null>(null);
@@ -442,14 +431,6 @@ function ScannerContent() {
   const start = total === 0 ? 0 : (currentPage - 1) * pageSize + 1;
   const end = total === 0 ? 0 : Math.min(currentPage * pageSize, total);
 
-  const resultText = hasSearched
-    ? t('resultsPaged', {
-        current: currentPage,
-        total: totalPages,
-        count: total.toLocaleString('en-US'),
-      })
-    : null;
-
   const filtersCount = deriveActiveFilters(
     form,
     (key) => t(key),
@@ -471,25 +452,22 @@ function ScannerContent() {
         filtersCount={filtersCount}
         disabled={isSearching}
         onSaveFilter={handleSaveFilter}
-        resultText={resultText}
       />
 
-      {!isDesktop && (
-        <ScannerFiltersPanel
-          variant="sheet"
-          open={filtersOpen}
-          onOpenChange={setFiltersOpen}
-          draft={form}
-          onApply={applyDraft}
-          onResetFilters={handleResetFilters}
-          onApplySavedSearch={handleApplySavedSearch}
-          sortBy={sortBy}
-          sortDirection={sortDirection}
-          disabled={isSearching}
-        />
-      )}
+      <ScannerFiltersPanel
+        variant="modal"
+        open={filtersOpen}
+        onOpenChange={setFiltersOpen}
+        draft={form}
+        onApply={applyDraft}
+        onResetFilters={handleResetFilters}
+        onApplySavedSearch={handleApplySavedSearch}
+        sortBy={sortBy}
+        sortDirection={sortDirection}
+        disabled={isSearching}
+      />
 
-      <div className={filtersOpen ? 'gap-4 lg:grid lg:grid-cols-[minmax(0,1fr)_320px]' : ''}>
+      <div className="flex min-w-0 flex-col gap-4">
         <div className={`flex min-w-0 flex-col gap-4${selected.length > 0 ? 'pb-24' : ''}`}>
           <FilterChips
             draft={form}
@@ -587,22 +565,6 @@ function ScannerContent() {
             </div>
           )}
         </div>
-        {isDesktop && filtersOpen && (
-          <div className="hidden lg:block">
-            <ScannerFiltersPanel
-              variant="docked"
-              open={filtersOpen}
-              onOpenChange={setFiltersOpen}
-              draft={form}
-              onApply={applyDraft}
-              onResetFilters={handleResetFilters}
-              onApplySavedSearch={handleApplySavedSearch}
-              sortBy={sortBy}
-              sortDirection={sortDirection}
-              disabled={isSearching}
-            />
-          </div>
-        )}
       </div>
 
       <AddToTraderGroupModal

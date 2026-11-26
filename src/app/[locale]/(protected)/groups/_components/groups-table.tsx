@@ -26,6 +26,7 @@ export interface GroupsTableProps {
   onToggleFavorite: (id: string, next: boolean) => void;
   onEdit?: (g: GroupListItem) => void;
   onDelete?: (g: GroupListItem) => void;
+  onRowClick?: (g: GroupListItem) => void;
 }
 
 export function GroupsTable({
@@ -34,6 +35,7 @@ export function GroupsTable({
   onToggleFavorite,
   onEdit,
   onDelete,
+  onRowClick,
 }: GroupsTableProps) {
   const t = useTranslations('groups');
   if (isLoading)
@@ -72,12 +74,19 @@ export function GroupsTable({
           groups.map((row) => {
             const favorite = !!row.is_favorite;
             return (
-              <TableRow key={row.id}>
-                <TableCell className="w-10">
+              <TableRow
+                key={row.id}
+                className={cn('border-b', onRowClick && 'hover:bg-muted/40 cursor-pointer')}
+                onClick={() => onRowClick?.(row)}
+              >
+                <TableCell className="p-2">
                   <button
                     type="button"
                     aria-label={t('favorite')}
-                    onClick={() => onToggleFavorite(row.id, !favorite)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onToggleFavorite(row.id, !favorite);
+                    }}
                     className="text-muted-foreground hover:text-foreground"
                   >
                     <Star className={cn('h-4 w-4', favorite && 'text-warning fill-current')} />
@@ -117,7 +126,10 @@ export function GroupsTable({
                     <button
                       type="button"
                       aria-label={`${t('edit')} ${row.name}`}
-                      onClick={() => onEdit?.(row)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEdit?.(row);
+                      }}
                       className="text-muted-foreground hover:text-foreground"
                     >
                       <Pencil className="h-4 w-4" />
@@ -125,7 +137,10 @@ export function GroupsTable({
                     <button
                       type="button"
                       aria-label={`${t('delete')} ${row.name}`}
-                      onClick={() => onDelete?.(row)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDelete?.(row);
+                      }}
                       className="text-muted-foreground hover:text-destructive"
                     >
                       <Trash2 className="h-4 w-4" />

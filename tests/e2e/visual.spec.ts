@@ -83,7 +83,7 @@ test.describe('Visual desktop', () => {
     await expect(page.locator('main')).toHaveScreenshot('scanner-default.png', SHOT);
   });
 
-  test('filter sheet open', async ({ page }) => {
+  test('filter modal open', async ({ page }) => {
     await freezeClock(page);
     await mockGroups(page);
     await page.route('**/api/v1/traders/search', (route) =>
@@ -101,7 +101,7 @@ test.describe('Visual desktop', () => {
     await expect(page.getByRole('button', { name: 'Apply', exact: true })).toBeVisible();
     await expect(page.getByText('Smart Money')).toBeVisible();
     await settle(page);
-    await expect(page).toHaveScreenshot('scanner-sheet-open.png', SHOT);
+    await expect(page).toHaveScreenshot('scanner-filter-modal-open.png', SHOT);
   });
 
   test('scanner results', async ({ page }) => {

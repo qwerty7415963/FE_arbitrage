@@ -11,6 +11,7 @@ import type { GroupListItem, GroupsOverview, TraderGroup } from '@/types/trader'
 import { useAuthGate } from '@/hooks/use-auth-gate';
 import { useAuthStore } from '@/lib/stores/auth';
 import { ConnectWalletButton } from '@/components/shared/auth/connect-wallet-button';
+import { useRouter } from '@/i18n/navigation';
 import { GroupForm } from './_components/group-form';
 import { DeleteGroupDialog } from './_components/delete-group-dialog';
 import { GroupsOverviewStats } from './_components/groups-overview-stats';
@@ -22,6 +23,7 @@ export default function GroupsPage() {
   const te = useTranslations();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const setConnectModalOpen = useAuthStore((s) => s.setConnectModalOpen);
+  const router = useRouter();
 
   const [groups, setGroups] = useState<GroupListItem[]>([]);
   const [overview, setOverview] = useState<GroupsOverview | null>(null);
@@ -234,6 +236,7 @@ export default function GroupsPage() {
                 groups={groups}
                 isLoading={isLoading && groups.length === 0}
                 onToggleFavorite={handleToggleFavorite}
+                onRowClick={(g) => router.push(`/groups/${g.id}`)}
                 onEdit={(g: GroupListItem) => {
                   setEditing(g as unknown as TraderGroup);
                   setFormOpen(true);

@@ -65,6 +65,5 @@ test.describe('Scanner empty results', () => {
     await applyFilters(page, '999999');
     await expect(page.getByText('No traders found')).toBeVisible();
     await expect(page.getByText('An error occurred, please try again')).toHaveCount(0);
-    await expect(page.getByText(/0 results/)).toBeVisible();
   });
 });
