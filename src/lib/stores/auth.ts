@@ -238,6 +238,8 @@ export const useAuthStore = create<AuthState>()(
       },
 
       initialize: async () => {
+        if (get().isInitialized || get().isLoading) return;
+        set({ isLoading: true });
         if (hasTokens()) {
           set({ isLoading: true });
           try {
@@ -264,6 +266,7 @@ export const useAuthStore = create<AuthState>()(
             address: null,
             chainId: null,
             isInitialized: true,
+            isLoading: false,
           });
         }
       },

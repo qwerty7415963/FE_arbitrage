@@ -173,11 +173,11 @@ function GroupsPageContent() {
             })}
           </div>
 
-          <div className={cn(activeView === 'following' ? '' : 'hidden')}>
+          <div className={cn('flex flex-col gap-4', activeView === 'following' ? '' : 'hidden')}>
             <FollowingSection />
           </div>
 
-          <div className={cn(activeView === 'groups' ? '' : 'hidden')}>
+          <div className={cn('flex flex-col gap-4', activeView === 'groups' ? '' : 'hidden')}>
             {error ? (
               gate === 'expired' ? (
                 <div className="border-warning/30 bg-warning-subtle text-warning rounded-md border p-3 text-sm">
