@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { cn } from 'cn';
 import { useWalletTab } from '@/hooks/use-wallet-tab';
@@ -51,6 +51,7 @@ export function WalletTabs({
 }: WalletTabsProps) {
   const t = useTranslations('traders');
   const { tab, setTab } = useWalletTab();
+  const tablistRef = useRef<HTMLDivElement | null>(null);
   const [positionSort, setPositionSort] = useState<PositionSortKey>(DEFAULT_POSITION_SORT);
   const [positionDir, setPositionDir] = useState<SortDirection>(DEFAULT_POSITION_DIR);
 
@@ -76,7 +77,8 @@ export function WalletTabs({
   return (
     <div id="wallet-tabs" className="flex scroll-mt-4 flex-col gap-3">
       <div
-        className="bg-surface border-border-subtle flex flex-wrap gap-1 rounded-xl border p-1.5"
+        ref={tablistRef}
+        className="bg-surface border-border-subtle flex [scrollbar-width:none] gap-1 overflow-x-auto rounded-xl border p-1.5 [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
         role="tablist"
         aria-label={t('walletTabs')}
       >
@@ -86,13 +88,24 @@ export function WalletTabs({
             <button
               key={tabId}
               type="button"
+              ref={
+                active
+                  ? (el) => {
+                      if (!el || !tablistRef.current) return;
+                      const parent = tablistRef.current;
+                      if (typeof parent.scrollTo !== 'function') return;
+                      const left = el.offsetLeft - parent.offsetLeft;
+                      parent.scrollTo({ left: Math.max(0, left - 8), behavior: 'smooth' });
+                    }
+                  : undefined
+              }
               role="tab"
               aria-selected={active}
               aria-controls={`wallet-panel-${tabId}`}
               id={`wallet-tab-${tabId}`}
               onClick={() => setTab(tabId)}
               className={cn(
-                'rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
+                'shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
                 active
                   ? 'bg-primary text-primary-foreground'
                   : 'text-muted-foreground hover:bg-muted hover:text-foreground',

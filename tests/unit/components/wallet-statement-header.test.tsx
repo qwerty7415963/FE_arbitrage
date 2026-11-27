@@ -4,6 +4,11 @@ import { NextIntlClientProvider } from 'next-intl';
 import { WalletStatementHeader } from '@/app/[locale]/(protected)/traders/[address]/_components/wallet-statement-header';
 import type { OpenPosition, PeriodMetrics, PositionSummary, RegistryEntry } from '@/types/trader';
 import enMessages from '@/messages/en.json';
+vi.mock('@/i18n/navigation', () => ({
+  Link: ({ children, href }: { children: React.ReactNode; href: string }) => (
+    <a href={href}>{children}</a>
+  ),
+}));
 
 const registry: RegistryEntry = {
   wallet_address: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
@@ -104,7 +109,6 @@ function renderHeader(props: Partial<React.ComponentProps<typeof WalletStatement
         positions={[position('BTC', 1500), position('ETH', -200)]}
         metrics={metrics}
         lastUpdated="2024-01-02T01:00:00Z"
-        onAdd={vi.fn()}
         {...props}
       />
     </NextIntlClientProvider>,
@@ -174,14 +178,35 @@ describe('WalletStatementHeader', () => {
     expect(container.querySelector('details')).toHaveAttribute('open');
   });
 
-  it('calls onAdd from the labeled action button', () => {
+  it('shows Follow and calls onToggleFollow when not followed', () => {
     stubMatchMedia(false);
-    const onAdd = vi.fn();
-    renderHeader({ onAdd });
-    const button = screen.getByRole('button', { name: 'Add to group' });
-    expect(button).toHaveTextContent(/Add to group/);
+    const onToggleFollow = vi.fn();
+    renderHeader({ onToggleFollow });
+    const button = screen.getByRole('button', { name: 'Follow' });
     fireEvent.click(button);
-    expect(onAdd).toHaveBeenCalledTimes(1);
+    expect(onToggleFollow).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows Unfollow, alias, group chips and rename when followed', () => {
+    stubMatchMedia(false);
+    const onToggleFollow = vi.fn();
+    const onRename = vi.fn();
+    renderHeader({
+      isFollowed: true,
+      notifyEnabled: true,
+      alias: 'Alpha Wallet',
+      inGroups: [{ id: 'g1', name: 'Main' }],
+      onToggleFollow,
+      onRename,
+    });
+    expect(screen.getByRole('heading', { name: 'Alpha Wallet' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Unfollow' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Main' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Rename wallet' }));
+    const input = screen.getByRole('textbox', { name: 'Rename wallet' });
+    fireEvent.change(input, { target: { value: 'Beta' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+    expect(onRename).toHaveBeenCalledWith('Beta');
   });
 
   it('renders the ready status line with last updated, as-of and partial marker', () => {

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ApiError } from '@/infrastructure/api-client';
 import { mapErrorCode } from '@/lib/error-mapping';
@@ -259,7 +260,7 @@ export default function GroupsComparePage() {
 
   if (isLoadingGroups) {
     return (
-      <div className="flex flex-1 flex-col gap-4 p-4 lg:p-6">
+      <div className="flex flex-1 flex-col gap-4">
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-24 w-full" />
       </div>
@@ -268,7 +269,7 @@ export default function GroupsComparePage() {
 
   if (gate === 'unauthenticated') {
     return (
-      <div className="flex flex-1 flex-col gap-4 p-4 lg:p-6">
+      <div className="flex flex-1 flex-col gap-4">
         <h1 className="text-2xl font-bold">{t('compare')}</h1>
         <div className="text-muted-foreground py-12 text-center">
           <p>{t('authRequired')}</p>
@@ -282,7 +283,7 @@ export default function GroupsComparePage() {
 
   if (groupsError) {
     return (
-      <div className="flex flex-1 flex-col gap-4 p-4 lg:p-6">
+      <div className="flex flex-1 flex-col gap-4">
         <div className="bg-destructive/10 text-destructive rounded-md p-3 text-sm">
           {groupsError instanceof ApiError
             ? te(mapErrorCode(groupsError.code), { defaultValue: te('errors.unknown') })
@@ -298,7 +299,7 @@ export default function GroupsComparePage() {
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4 lg:p-6">
+    <div className="flex flex-1 flex-col gap-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">{t('compare')}</h1>
         <Link href="/groups">
@@ -331,8 +332,7 @@ export default function GroupsComparePage() {
                 key={g.id}
                 className="flex items-center gap-2 rounded border px-2 py-1 text-sm"
               >
-                <input
-                  type="checkbox"
+                <Checkbox
                   checked={isSelected}
                   onChange={() => toggleSelect(g.id)}
                   disabled={!isSelected && selected.length >= 10}

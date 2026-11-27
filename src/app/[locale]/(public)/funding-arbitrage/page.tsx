@@ -10,6 +10,7 @@ import { getVenues, getFundingArbitrage } from '@/services/funding-arbitrage';
 import type { Venue, ArbitragePair, SortOption } from '@/types/funding-arbitrage';
 import { VenueSelector } from './venue-selector';
 import { FundingTable } from './funding-table';
+import { FundingMobileList } from './funding-mobile-list';
 import { Pagination } from '@/components/shared/pagination';
 
 const PAGE_SIZE = 10;
@@ -88,7 +89,7 @@ export default function FundingArbitragePage() {
   );
 
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4 lg:p-6">
+    <div className="flex flex-1 flex-col gap-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">{t('title')}</h1>
         {isAuthenticated && address && (
@@ -136,7 +137,10 @@ export default function FundingArbitragePage() {
         </div>
       ) : (
         <>
-          <FundingTable pairs={pairs} />
+          <div className="hidden lg:block">
+            <FundingTable pairs={pairs} />
+          </div>
+          <FundingMobileList pairs={pairs} />
 
           <Pagination
             currentPage={currentPage}

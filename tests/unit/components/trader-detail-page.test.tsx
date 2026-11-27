@@ -12,6 +12,7 @@ import {
   listTraderGroups,
 } from '@/services/traders';
 import { useTraderActivity } from '@/hooks/use-trader-activity';
+import { followWallets } from '@/services/follows';
 import type { TraderDetail } from '@/types/trader';
 import enMessages from '@/messages/en.json';
 
@@ -41,10 +42,34 @@ vi.mock('@/services/traders', () => ({
 vi.mock('@/hooks/use-trader-activity', () => ({
   useTraderActivity: vi.fn(),
 }));
-
-vi.mock('@/lib/stores/auth', () => ({
-  useAuthStore: { getState: () => ({ requireAuth: () => true }) },
+vi.mock('@/i18n/navigation', () => ({
+  Link: ({ children, href }: { children: React.ReactNode; href: string }) => (
+    <a href={href}>{children}</a>
+  ),
 }));
+
+vi.mock('@/services/follows', () => ({
+  getFollowStatus: vi.fn().mockResolvedValue({
+    is_followed: false,
+    notify_enabled: false,
+    alias: null,
+    display_name: 'Smart Money',
+    in_groups: [],
+  }),
+  getFollowKeys: vi.fn().mockResolvedValue([]),
+  followWallets: vi.fn(),
+  unfollowWallets: vi.fn(),
+  updateFollow: vi.fn(),
+  setFollowNotify: vi.fn(),
+  getFollowOverview: vi.fn(),
+  listFollowedWallets: vi.fn(),
+}));
+
+vi.mock('@/lib/stores/auth', () => {
+  const state = { requireAuth: () => true, isAuthenticated: true };
+  const useAuthStore = (selector: (s: typeof state) => unknown) => selector(state);
+  return { useAuthStore: Object.assign(useAuthStore, { getState: () => state }) };
+});
 
 const detail: TraderDetail = {
   registry: {
@@ -217,14 +242,14 @@ describe('TraderDetailPage (contract v1.2 live, no sync)', () => {
     expect(await screen.findByRole('heading', { name: 'Smart Money' })).toBeInTheDocument();
   });
 
-  it('goes back and opens add-to-group modal', async () => {
+  it('goes back and follows the wallet', async () => {
     const user = userEvent.setup();
     renderPage();
     await screen.findByRole('heading', { name: 'Smart Money' });
     await user.click(screen.getByRole('button', { name: 'Back to scanner' }));
     expect(nav.back).toHaveBeenCalled();
-    await user.click(screen.getByRole('button', { name: 'Add to group' }));
-    expect(await screen.findByText('Add wallets to group')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Follow' }));
+    expect(followWallets).toHaveBeenCalledTimes(1);
   });
 
   it('pushes the stored scan when going back', async () => {

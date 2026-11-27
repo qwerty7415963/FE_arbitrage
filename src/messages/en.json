@@ -37,11 +37,12 @@
   },
   "navigation": {
     "fundingArbitrage": "Funding Arbitrage",
-    "groups": "Groups",
+    "groups": "Watchlist",
     "scanner": "Trader Scanner",
     "settings": "Settings",
     "logout": "Logout",
-    "overview": "Overview"
+    "overview": "Overview",
+    "mainNav": "Main navigation"
   },
   "wallet": {
     "connect": "Connect Wallet",
@@ -53,7 +54,9 @@
     "connectRequiredSubtitle": "This action requires a connected wallet. Connect to continue."
   },
   "groups": {
-    "title": "Groups",
+    "title": "Watchlist",
+    "followingTitle": "Following",
+    "noFollowing": "No followed wallets yet.",
     "create": "Create",
     "createTitle": "Create group",
     "editTitle": "Edit group",
@@ -262,6 +265,11 @@
   },
   "traders": {
     "title": "Trader Scanner",
+    "follow": "Follow",
+    "unfollow": "Unfollow",
+    "renameWallet": "Rename wallet",
+    "renameWalletHint": "Leave empty to use the public display name.",
+    "following": "Following",
     "sparkline": "sparkline",
     "sparklineEmpty": "sparkline empty",
     "venue": "Venue",
@@ -837,7 +845,8 @@
       "scanner": "Scanner",
       "funding": "Funding",
       "howItWorks": "How it works",
-      "faq": "FAQ"
+      "faq": "FAQ",
+      "menu": "Menu"
     },
     "hero": {
       "eyebrow": "Signal desk",

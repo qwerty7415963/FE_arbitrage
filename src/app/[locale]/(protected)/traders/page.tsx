@@ -30,6 +30,8 @@ import { ScannerFiltersPanel } from './_components/scanner-filters-panel';
 import { FilterChips } from './_components/filter-chips';
 import { deriveActiveFilters } from './_components/filter-chips';
 import { TraderTable } from '@/components/shared/traders/trader-table';
+import { useFollowKeys, useFollowMutations } from '@/hooks/use-follows';
+import { TraderMobileList } from './_components/trader-mobile-list';
 import { AddToTraderGroupModal } from '@/components/shared/traders/add-to-trader-group-modal';
 import { saveSavedSearch } from '@/lib/trader-saved-searches';
 import {
@@ -101,6 +103,18 @@ function ScannerContent() {
   const [error, setError] = useState<SearchError | null>(null);
   const [canRetry, setCanRetry] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
+  const followKeys = useFollowKeys();
+  const { follow, unfollow } = useFollowMutations();
+  const followedSet = new Set((followKeys.data ?? []).map((k) => k.wallet_address.toLowerCase()));
+  const aliasByWallet = new Map(
+    (followKeys.data ?? [])
+      .filter((k) => !!k.alias)
+      .map((k) => [k.wallet_address.toLowerCase(), k.alias as string]),
+  );
+  const displayRows = rows.map((r) => {
+    const alias = aliasByWallet.get(r.wallet_address.toLowerCase());
+    return alias ? { ...r, display_name: alias } : r;
+  });
   const [addOpen, setAddOpen] = useState(false);
   const [addMembers, setAddMembers] = useState<MemberInput[]>([]);
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -500,11 +514,27 @@ function ScannerContent() {
             <div
               role="status"
               aria-live="polite"
-              className="bg-popover/95 fixed bottom-4 left-1/2 z-40 flex max-w-[calc(100vw-2rem)] -translate-x-1/2 flex-wrap items-center justify-center gap-2 rounded-full border px-3 py-2 shadow-lg backdrop-blur max-sm:right-0 max-sm:bottom-0 max-sm:left-0 max-sm:max-w-none max-sm:translate-x-0 max-sm:justify-between max-sm:rounded-none max-sm:border-x-0 max-sm:border-b-0"
+              className="bg-popover/95 fixed bottom-[calc(var(--bottom-nav-height)+var(--safe-area-bottom)+0.75rem)] left-1/2 z-40 flex max-w-[calc(100vw-2rem)] -translate-x-1/2 flex-wrap items-center justify-center gap-2 rounded-full border px-3 py-2 shadow-lg backdrop-blur max-sm:right-0 max-sm:bottom-[calc(var(--bottom-nav-height)+var(--safe-area-bottom))] max-sm:left-0 max-sm:max-w-none max-sm:translate-x-0 max-sm:justify-between max-sm:rounded-none max-sm:border-x-0 max-sm:border-b-0"
             >
               <span className="text-sm font-medium">
                 {t('selectedCount', { count: selected.length })}
               </span>
+              {isAuthenticated && (
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    const byAddress = new Map(rows.map((r) => [r.wallet_address, r]));
+                    follow.mutate({
+                      wallets: selected.map((a) => ({
+                        venue: byAddress.get(a)?.venue ?? 'hyperliquid',
+                        wallet_address: a,
+                      })),
+                    });
+                  }}
+                >
+                  {t('follow')}
+                </Button>
+              )}
               {isAuthenticated && (
                 <Button size="sm" onClick={() => openAddForAddresses(selected)}>
                   <PlusIcon className="mr-2 h-4 w-4" />
@@ -526,12 +556,22 @@ function ScannerContent() {
           ) : (
             rows.length > 0 && (
               <>
-                <TraderTable
-                  rows={rows}
+                <div className="hidden lg:block">
+                  <TraderTable
+                    rows={displayRows}
+                    period={form.period}
+                    sortBy={sortBy}
+                    sortDirection={sortDirection}
+                    onSortChange={handleSortChange}
+                    selectable
+                    selected={selected}
+                    onSelect={setSelected}
+                    onView={(row) => router.push(`/${locale}/traders/${row.wallet_address}`)}
+                  />
+                </div>
+                <TraderMobileList
+                  rows={displayRows}
                   period={form.period}
-                  sortBy={sortBy}
-                  sortDirection={sortDirection}
-                  onSortChange={handleSortChange}
                   selectable
                   selected={selected}
                   onSelect={setSelected}

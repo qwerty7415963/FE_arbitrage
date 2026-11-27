@@ -115,7 +115,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4 lg:p-6">
+    <div className="flex flex-1 flex-col gap-4">
       <h1 className="text-2xl font-bold">{t('title')}</h1>
 
       <div className="rounded-lg border p-4">

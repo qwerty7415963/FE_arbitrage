@@ -450,9 +450,30 @@
   }
 }
 
-/* App density: base 17px. */
+/* App density: base 17px desktop, 16px mobile. */
 html {
   font-size: 17px;
+}
+@media (max-width: 639px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+:root {
+  --sticky-left: 0rem;
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-right: env(safe-area-inset-right, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-left: env(safe-area-inset-left, 0px);
+  --bottom-nav-height: 4.5rem;
+}
+
+@media (pointer: coarse) {
+  .touch-target {
+    min-height: 2.75rem;
+    min-width: 2.75rem;
+  }
 }
 
 /* Header controls keep their original 16px-based sizing. */

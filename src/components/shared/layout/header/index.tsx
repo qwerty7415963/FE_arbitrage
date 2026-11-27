@@ -1,8 +1,5 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { useAppStore } from '@/lib/stores/app';
-import { MenuIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { ConnectWalletButton } from '@/components/shared/auth/connect-wallet-button';
@@ -10,35 +7,27 @@ import { LanguageSwitcher } from '@/components/shared/language-switcher';
 import { ThemeToggle } from '@/components/shared/theme/theme-toggle';
 
 export function Header() {
-  const { toggleSidebar } = useAppStore();
   const t = useTranslations('common');
 
   return (
-    <header className="bg-background flex h-16 items-center border-b px-4 lg:px-6">
-      <Button
-        variant="ghost"
-        size="icon"
-        className="lg:hidden"
-        onClick={toggleSidebar}
-        aria-label={t('menu')}
-      >
-        <MenuIcon className="h-5 w-5" />
-      </Button>
+    <header className="bg-background flex h-14 items-center border-b px-3 lg:h-16 lg:px-6">
+      <Link href="/" className="flex shrink-0 items-center gap-2">
+        <div className="bg-primary text-primary-foreground flex h-8 w-8 items-center justify-center rounded-md">
+          <span className="text-sm font-bold">A</span>
+        </div>
+        <span className="text-base font-semibold lg:text-lg">{t('appName')}</span>
+      </Link>
 
-      <div className="flex flex-1 items-center justify-between">
-        <Link href="/" className="flex items-center gap-2 lg:hidden">
-          <div className="bg-primary text-primary-foreground flex h-8 w-8 items-center justify-center rounded-md">
-            <span className="text-sm font-bold">A</span>
-          </div>
-          <span className="text-lg font-semibold">{t('appName')}</span>
-        </Link>
-
-        <div className="preserve-control-size ml-auto hidden items-center gap-2 lg:flex">
+      <div className="ml-auto flex items-center gap-1 lg:gap-2">
+        <div className="preserve-control-size language-switcher lg:hidden">
+          <LanguageSwitcher />
+        </div>
+        <ThemeToggle />
+        <ConnectWalletButton />
+        <div className="preserve-control-size hidden items-center gap-2 lg:flex">
           <div className="language-switcher">
             <LanguageSwitcher />
           </div>
-          <ThemeToggle />
-          <ConnectWalletButton />
         </div>
       </div>
     </header>

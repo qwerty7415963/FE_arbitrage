@@ -111,18 +111,15 @@ describe('TraderTable', () => {
     expect(screen.getByRole('columnheader', { name: 'PF' })).not.toContainHTML('button');
   });
 
-  it('selects rows and calls view/add actions', async () => {
+  it('selects rows and opens detail on row click', async () => {
     const user = userEvent.setup();
     const onSelect = vi.fn();
     const onView = vi.fn();
-    const onAdd = vi.fn();
-    renderTable({ selectable: true, selected: [], onSelect, onView, onAdd });
+    renderTable({ selectable: true, selected: [], onSelect, onView });
     await user.click(screen.getByRole('checkbox', { name: `Select ${row.wallet_address}` }));
     expect(onSelect).toHaveBeenCalledWith([row.wallet_address]);
-    await user.click(screen.getByRole('button', { name: 'View' }));
+    await user.click(screen.getByText('Smart Money'));
     expect(onView).toHaveBeenCalledWith(row);
-    await user.click(screen.getByRole('button', { name: 'Add to group' }));
-    expect(onAdd).toHaveBeenCalledWith(row);
   });
 
   it('prefixes negative PnL with a minus sign instead of color only', () => {
@@ -146,22 +143,22 @@ describe('TraderTable', () => {
     expect(bodyRows[1]).toHaveTextContent('2');
   });
 
-  it('right-aligns numeric cells with tabular figures', () => {
+  it('centers numeric cells with tabular figures', () => {
     renderTable();
     const pnlCell = screen.getByText('+$12.35K').closest('td');
-    expect(pnlCell?.className).toMatch('text-right');
+    expect(pnlCell?.className).toMatch('text-center');
     expect(pnlCell?.className).toMatch('tabular-nums');
   });
 
-  it('right-aligns numeric headers above numeric cells', () => {
+  it('centers numeric headers above numeric cells', () => {
     renderTable();
     const pnlHeader = screen.getByRole('columnheader', { name: 'PnL' });
-    expect(pnlHeader.className).toMatch('text-right');
+    expect(pnlHeader.className).toMatch('text-center');
     const pfHeader = screen.getByRole('columnheader', { name: 'PF' });
-    expect(pfHeader.className).toMatch('text-right');
+    expect(pfHeader.className).toMatch('text-center');
   });
 
-  it('shows opacity-100 on all row checkboxes when one row is selected', () => {
+  it('always shows all row checkboxes on desktop', () => {
     const second = { ...row, wallet_address: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb' };
     renderTable({
       selectable: true,
@@ -171,14 +168,9 @@ describe('TraderTable', () => {
     });
     const checkedBox = screen.getByRole('checkbox', { name: `Select ${row.wallet_address}` });
     const otherBox = screen.getByRole('checkbox', { name: `Select ${second.wallet_address}` });
-    expect(checkedBox).toHaveClass('opacity-100');
-    expect(otherBox).toHaveClass('opacity-100');
-  });
-
-  it('does not show opacity-100 on a row checkbox when selection is empty', () => {
-    renderTable({ selectable: true, selected: [], onSelect: vi.fn() });
-    const box = screen.getByRole('checkbox', { name: `Select ${row.wallet_address}` });
-    expect(box).not.toHaveClass('opacity-100');
-    expect(box.className).toMatch(/md:opacity-0/);
+    expect(checkedBox).toBeVisible();
+    expect(otherBox).toBeVisible();
+    expect(checkedBox.parentElement?.className).not.toMatch(/md:opacity-0/);
+    expect(otherBox.parentElement?.className).not.toMatch(/md:opacity-0/);
   });
 });

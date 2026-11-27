@@ -40,7 +40,7 @@ function MarketDetailContent() {
 
   if (detail.isLoading && !detail.data) {
     return (
-      <div className="flex flex-col gap-4 p-4 lg:p-6" role="status" aria-label={t('loading')}>
+      <div className="flex flex-col gap-4" role="status" aria-label={t('loading')}>
         <Skeleton className="h-16 w-full rounded-xl" />
         <Skeleton className="h-24 w-full rounded-xl" />
         <Skeleton className="h-64 w-full rounded-xl" />
@@ -50,7 +50,7 @@ function MarketDetailContent() {
 
   if (detail.isError) {
     return (
-      <div className="flex flex-col items-start gap-3 p-4 lg:p-6">
+      <div className="flex flex-col items-start gap-3">
         <p className="text-destructive text-sm">{t('marketDetail.error')}</p>
         <button
           type="button"
@@ -64,7 +64,7 @@ function MarketDetailContent() {
   }
 
   return (
-    <div data-testid="market-detail-page" className="flex flex-col gap-4 p-4 lg:p-6">
+    <div data-testid="market-detail-page" className="flex flex-col gap-4">
       <nav className="text-sm">
         <Link href="/traders" className="text-muted-foreground hover:text-foreground">
           ← {t('title')}

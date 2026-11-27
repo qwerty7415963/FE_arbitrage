@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { cn } from 'cn';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Sheet, SheetClose, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { validateDraftFields, type TraderSearchError } from '@/lib/trader-validation';
@@ -379,8 +380,7 @@ export function ScannerFiltersPanel({
         {renderPair('volume')}
         {renderPair('tradeCount')}
         <label className="flex items-center gap-2 text-xs">
-          <input
-            type="checkbox"
+          <Checkbox
             checked={local.ranges.tradeCount.min === '30'}
             disabled={disabled}
             onChange={(e) => {
@@ -482,7 +482,7 @@ export function ScannerFiltersPanel({
         disabled={disabled}
       />
 
-      <div className="mt-auto flex gap-2">
+      <div className="bg-elevated sticky bottom-0 -mx-4 mt-auto flex gap-2 border-t px-4 py-3">
         <Button type="submit" disabled={disabled}>
           {t('filterSheet.apply')}
         </Button>

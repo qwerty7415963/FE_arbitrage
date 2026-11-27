@@ -16,6 +16,8 @@ import { GroupForm } from './_components/group-form';
 import { DeleteGroupDialog } from './_components/delete-group-dialog';
 import { GroupsOverviewStats } from './_components/groups-overview-stats';
 import { GroupsTable } from './_components/groups-table';
+import { FollowingSection } from './_components/following-section';
+import { GroupsMobileList } from './_components/groups-mobile-list';
 
 export default function GroupsPage() {
   const t = useTranslations('groups');
@@ -113,7 +115,7 @@ export default function GroupsPage() {
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4 lg:p-6">
+    <div className="flex flex-1 flex-col gap-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">{t('title')}</h1>
         <Button
@@ -152,6 +154,8 @@ export default function GroupsPage() {
               </div>
             )
           ) : null}
+
+          <FollowingSection />
 
           <GroupsOverviewStats
             totalGroups={overview?.total_groups ?? meta.total}
@@ -231,22 +235,37 @@ export default function GroupsPage() {
               </Button>
             </div>
           ) : (
-            <div className="overflow-x-auto rounded-lg border">
-              <GroupsTable
+            <>
+              <div className="hidden overflow-x-auto rounded-lg border lg:block">
+                <GroupsTable
+                  groups={groups}
+                  isLoading={isLoading && groups.length === 0}
+                  onToggleFavorite={handleToggleFavorite}
+                  onRowClick={(g) => router.push(`/groups/${g.id}`)}
+                  onEdit={(g: GroupListItem) => {
+                    setEditing(g as unknown as TraderGroup);
+                    setFormOpen(true);
+                  }}
+                  onDelete={(g: GroupListItem) => {
+                    setDeleting(g as unknown as TraderGroup);
+                    setDeleteOpen(true);
+                  }}
+                />
+              </div>
+              <GroupsMobileList
                 groups={groups}
-                isLoading={isLoading && groups.length === 0}
-                onToggleFavorite={handleToggleFavorite}
                 onRowClick={(g) => router.push(`/groups/${g.id}`)}
-                onEdit={(g: GroupListItem) => {
+                onToggleFavorite={handleToggleFavorite}
+                onEdit={(g) => {
                   setEditing(g as unknown as TraderGroup);
                   setFormOpen(true);
                 }}
-                onDelete={(g: GroupListItem) => {
+                onDelete={(g) => {
                   setDeleting(g as unknown as TraderGroup);
                   setDeleteOpen(true);
                 }}
               />
-            </div>
+            </>
           )}
 
           {meta.total_pages > 1 && (

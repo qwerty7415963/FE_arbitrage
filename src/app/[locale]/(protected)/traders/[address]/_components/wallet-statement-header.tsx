@@ -4,6 +4,15 @@ import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { cn } from 'cn';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Link } from '@/i18n/navigation';
 import { CopyAddress } from '@/components/shared/traders/copy-address';
 import {
   formatDateTimeUtc,
@@ -22,7 +31,15 @@ import type {
   PositionSummary,
   RegistryEntry,
 } from '@/types/trader';
-import { ChevronDownIcon, TrophyIcon, UserPlusIcon } from 'lucide-react';
+import {
+  BellIcon,
+  BellOffIcon,
+  ChevronDownIcon,
+  PencilIcon,
+  TrophyIcon,
+  UserRoundCheckIcon,
+  UserRoundPlusIcon,
+} from 'lucide-react';
 
 const NULL_GLYPH = '—';
 
@@ -54,7 +71,14 @@ export interface WalletStatementHeaderProps {
   lastUpdated: string | null;
   live?: string;
   wsStatus?: string;
-  onAdd: () => void;
+  onAdd?: () => void;
+  isFollowed?: boolean | null;
+  notifyEnabled?: boolean;
+  alias?: string | null;
+  inGroups?: { id: string; name: string }[];
+  onToggleFollow?: () => void;
+  onToggleNotify?: () => void;
+  onRename?: (alias: string) => void;
 }
 
 function BalanceItem({
@@ -84,9 +108,18 @@ export function WalletStatementHeader({
   live,
   wsStatus,
   onAdd,
+  isFollowed,
+  notifyEnabled,
+  alias,
+  inGroups = [],
+  onToggleFollow,
+  onToggleNotify,
+  onRename,
 }: WalletStatementHeaderProps) {
   const t = useTranslations('traders');
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [renameOpen, setRenameOpen] = useState(false);
+  const [aliasDraft, setAliasDraft] = useState(alias ?? '');
 
   useEffect(() => {
     if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return;
@@ -104,7 +137,8 @@ export function WalletStatementHeader({
     return () => query.removeListener(onChange);
   }, []);
 
-  const title = registry.display_name ?? shortAddress(registry.wallet_address);
+  const title =
+    (alias && alias.trim()) || registry.display_name || shortAddress(registry.wallet_address);
   const initial = (title.trim().charAt(0) || '?').toUpperCase();
   const updatedAgo = lastUpdated ? formatRelativeTime(lastUpdated) : null;
 
@@ -197,18 +231,68 @@ export function WalletStatementHeader({
                     <TrophyIcon className="h-3.5 w-3.5" aria-hidden />
                   </span>
                 )}
+                {inGroups.map((g) => (
+                  <Link
+                    key={g.id}
+                    href={`/groups/${g.id}`}
+                    className="bg-muted text-foreground hover:bg-interactive-hover rounded-full px-2 py-0.5 text-xs font-medium"
+                  >
+                    {g.name}
+                  </Link>
+                ))}
               </div>
             </div>
-            <Button
-              type="button"
-              variant="outline"
-              size="default"
-              onClick={onAdd}
-              className="shrink-0"
-            >
-              <UserPlusIcon className="size-4" aria-hidden />
-              {t('addToGroup')}
-            </Button>
+          </div>
+
+          <div className="flex shrink-0 items-center gap-1">
+            {onToggleFollow && (
+              <Button
+                type="button"
+                variant={isFollowed ? 'outline' : 'default'}
+                size="default"
+                onClick={onToggleFollow}
+                aria-label={isFollowed ? t('unfollow') : t('follow')}
+                className="shrink-0"
+              >
+                {isFollowed ? (
+                  <UserRoundCheckIcon className="size-4" aria-hidden />
+                ) : (
+                  <UserRoundPlusIcon className="size-4" aria-hidden />
+                )}
+                <span className="hidden sm:inline">{isFollowed ? t('unfollow') : t('follow')}</span>
+              </Button>
+            )}
+            {isFollowed && onToggleNotify && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label={notifyEnabled ? 'Mute Telegram alerts' : 'Enable Telegram alerts'}
+                title={notifyEnabled ? 'Telegram alerts on' : 'Telegram alerts off'}
+                onClick={onToggleNotify}
+              >
+                {notifyEnabled ? (
+                  <BellIcon className="size-4" aria-hidden />
+                ) : (
+                  <BellOffIcon className="size-4" aria-hidden />
+                )}
+              </Button>
+            )}
+            {isFollowed && onRename && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label={t('renameWallet')}
+                title={t('renameWallet')}
+                onClick={() => {
+                  setAliasDraft(alias ?? '');
+                  setRenameOpen(true);
+                }}
+              >
+                <PencilIcon className="size-4" aria-hidden />
+              </Button>
+            )}
           </div>
 
           <p className="text-muted-foreground text-xs">
@@ -304,6 +388,39 @@ export function WalletStatementHeader({
           value={accountLeverage === null ? NULL_GLYPH : `${formatDecimal(accountLeverage)}×`}
         />
       </dl>
+
+      <Dialog open={renameOpen} onOpenChange={setRenameOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{t('renameWallet')}</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col gap-2">
+            <Input
+              autoFocus
+              value={aliasDraft}
+              maxLength={100}
+              placeholder={registry.display_name ?? shortAddress(registry.wallet_address)}
+              onChange={(e) => setAliasDraft(e.target.value)}
+              aria-label={t('renameWallet')}
+            />
+            <p className="text-muted-foreground text-xs">{t('renameWalletHint')}</p>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="ghost" onClick={() => setRenameOpen(false)}>
+              {t('cancel')}
+            </Button>
+            <Button
+              type="button"
+              onClick={() => {
+                onRename?.(aliasDraft.trim());
+                setRenameOpen(false);
+              }}
+            >
+              {t('save')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }

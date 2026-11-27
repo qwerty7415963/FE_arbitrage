@@ -77,11 +77,7 @@ export function OverviewTab(props: OverviewTabProps) {
 
   if (isLoading) {
     return (
-      <div
-        className="flex flex-1 flex-col gap-4 p-4 lg:p-6"
-        role="status"
-        aria-label={t('loading')}
-      >
+      <div className="flex flex-1 flex-col gap-4" role="status" aria-label={t('loading')}>
         <Skeleton className="h-8 w-48" />
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 11 }).map((_, i) => (
@@ -94,7 +90,7 @@ export function OverviewTab(props: OverviewTabProps) {
 
   if (isError) {
     return (
-      <div className="flex flex-1 flex-col items-center gap-3 p-4 lg:p-6">
+      <div className="flex flex-1 flex-col items-center gap-3">
         <p className="text-destructive text-sm">{t('error')}</p>
         <button
           type="button"
@@ -112,7 +108,7 @@ export function OverviewTab(props: OverviewTabProps) {
   const empty = !data || (pnlBuckets.length === 0 && accountBuckets.length === 0);
 
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4 lg:p-6">
+    <div className="flex flex-1 flex-col gap-4">
       <header className="flex flex-col gap-1">
         <h1 className="text-xl font-semibold">{t('title')}</h1>
         <p className="text-muted-foreground text-sm">{t('subtitle')}</p>

@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { NextIntlClientProvider } from 'next-intl';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import ScannerPage from '@/app/[locale]/(protected)/traders/page';
 import { listTraderGroups, searchTraders } from '@/services/traders';
 import type { PeriodMetrics } from '@/types/trader';
@@ -64,10 +65,13 @@ const ROW_A = makeRow('0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
 const ROW_B = makeRow('0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb');
 
 function renderPage() {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
-    <NextIntlClientProvider locale="en" messages={enMessages}>
-      <ScannerPage />
-    </NextIntlClientProvider>,
+    <QueryClientProvider client={client}>
+      <NextIntlClientProvider locale="en" messages={enMessages}>
+        <ScannerPage />
+      </NextIntlClientProvider>
+    </QueryClientProvider>,
   );
 }
 

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ApiError } from '@/infrastructure/api-client';
 import { mapErrorCode } from '@/lib/error-mapping';
@@ -234,11 +235,7 @@ export function GroupAlertsPanel({ groupId }: GroupAlertsPanelProps) {
           <h3 className="text-base font-semibold">{t('alertHistory')}</h3>
           <div className="flex items-center gap-2">
             <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={unreadOnly}
-                onChange={(e) => setUnreadOnly(e.target.checked)}
-              />
+              <Checkbox checked={unreadOnly} onChange={(e) => setUnreadOnly(e.target.checked)} />
               <span>{t('unreadOnly')}</span>
             </label>
             <Button variant="outline" size="sm" onClick={handleMarkAllRead}>

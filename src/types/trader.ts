@@ -123,6 +123,7 @@ export interface TraderGroup {
   name: string;
   description: string | null;
   member_count: number;
+  followed_count?: number;
   notify_enabled: boolean;
 }
 
@@ -133,6 +134,7 @@ export interface GroupListItem {
   is_favorite: boolean;
   notify_enabled: boolean;
   member_count: number;
+  followed_count?: number;
   account_value: number | null;
   unrealized_pnl: number | null;
   roi: number | null;
@@ -408,6 +410,7 @@ export interface TraderMember {
   alias: string | null;
   note: string | null;
   metrics: PeriodMetrics | null;
+  is_followed?: boolean;
 }
 
 export type PositionSide = 'LONG' | 'SHORT';
@@ -1265,4 +1268,143 @@ export interface WatchedMarket {
   sort_order: number;
   created_at: string;
   updated_at: string;
+}
+
+export interface FollowKey {
+  venue: string;
+  wallet_address: string;
+  alias?: string | null;
+}
+
+export interface FollowedWallet {
+  venue_id: string;
+  venue: string;
+  wallet_address: string;
+  display_name: string | null;
+  alias?: string | null;
+  notify_enabled: boolean;
+  followed_at: string;
+  in_groups: string[];
+  account_value: number | null;
+  unrealized_pnl: number | null;
+  roi: number | null;
+  volume: number | null;
+  open_positions: number;
+  last_trade_at: string | null;
+  updated_at: string;
+  data_status: DataStatus;
+  pnl: number | null;
+  realized_pnl: number | null;
+  win_rate: number | null;
+  trade_count: number | null;
+  profit_factor: number | null;
+  max_drawdown_pct: number | null;
+}
+
+export interface FollowOverview {
+  following_count: number;
+  groups_count: number;
+  unique_wallets: number;
+  overlap_wallets: number;
+  group_only_wallets: number;
+  account_value: number | null;
+  unrealized_pnl: number | null;
+  partial: boolean;
+  as_of: string;
+}
+
+export type FollowFilter = 'all' | 'in_groups' | 'not_in_groups' | 'missing_data' | 'stale';
+
+export interface FollowKey {
+  venue: string;
+  wallet_address: string;
+  alias?: string | null;
+}
+
+export interface FollowedWallet {
+  venue_id: string;
+  venue: string;
+  wallet_address: string;
+  display_name: string | null;
+  alias?: string | null;
+  notify_enabled: boolean;
+  followed_at: string;
+  in_groups: string[];
+  account_value: number | null;
+  unrealized_pnl: number | null;
+  roi: number | null;
+  volume: number | null;
+  open_positions: number;
+  last_trade_at: string | null;
+  updated_at: string;
+  data_status: DataStatus;
+  pnl: number | null;
+  realized_pnl: number | null;
+  win_rate: number | null;
+  trade_count: number | null;
+  profit_factor: number | null;
+  max_drawdown_pct: number | null;
+}
+
+export interface FollowOverview {
+  following_count: number;
+  groups_count: number;
+  unique_wallets: number;
+  overlap_wallets: number;
+  group_only_wallets: number;
+  account_value: number | null;
+  unrealized_pnl: number | null;
+  partial: boolean;
+  as_of: string;
+}
+
+export interface FollowKey {
+  venue: string;
+  wallet_address: string;
+  alias?: string | null;
+}
+
+export interface FollowedWallet {
+  venue_id: string;
+  venue: string;
+  wallet_address: string;
+  display_name: string | null;
+  alias?: string | null;
+  notify_enabled: boolean;
+  followed_at: string;
+  in_groups: string[];
+  account_value: number | null;
+  unrealized_pnl: number | null;
+  roi: number | null;
+  volume: number | null;
+  open_positions: number;
+  last_trade_at: string | null;
+  updated_at: string;
+  data_status: DataStatus;
+  pnl: number | null;
+  realized_pnl: number | null;
+  win_rate: number | null;
+  trade_count: number | null;
+  profit_factor: number | null;
+  max_drawdown_pct: number | null;
+}
+
+export interface FollowOverview {
+  following_count: number;
+  groups_count: number;
+  unique_wallets: number;
+  overlap_wallets: number;
+  group_only_wallets: number;
+  account_value: number | null;
+  unrealized_pnl: number | null;
+  partial: boolean;
+  as_of: string;
+}
+
+export interface FollowStatus {
+  is_followed: boolean;
+  notify_enabled: boolean;
+  alias: string | null;
+  display_name: string | null;
+  in_groups: { id: string; name: string }[];
 }

@@ -3,6 +3,7 @@
 import { useAppStore } from '@/lib/stores/app';
 import { Sidebar } from './sidebar';
 import { Header } from './header';
+import { MobileBottomNav } from './mobile-bottom-nav';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { ConnectWalletModal } from '@/components/shared/auth/connect-wallet-modal';
@@ -19,7 +20,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   const t = useTranslations('common');
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex h-dvh overflow-hidden">
       {/* Desktop Sidebar */}
       <div className="hidden lg:flex lg:w-64 lg:shrink-0">
         <Sidebar />
@@ -47,9 +48,12 @@ export function AppLayout({ children }: AppLayoutProps) {
             </Button>
           </div>
         )}
-        <main className="flex-1 overflow-y-auto p-4 lg:p-6">{children}</main>
+        <main className="flex-1 overflow-y-auto p-4 pb-[calc(var(--bottom-nav-height)+var(--safe-area-bottom)+1rem)] lg:p-6 lg:pb-6">
+          {children}
+        </main>
       </div>
 
+      <MobileBottomNav />
       <ConnectWalletModal />
     </div>
   );

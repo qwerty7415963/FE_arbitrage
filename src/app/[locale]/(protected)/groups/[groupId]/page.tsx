@@ -19,6 +19,7 @@ import {
   updateTraderGroup,
 } from '@/services/traders';
 import { useAuthStore } from '@/lib/stores/auth';
+import { useFollowMutations } from '@/hooks/use-follows';
 import { useTelegramStatus } from '@/hooks/use-telegram';
 import { useAuthGate } from '@/hooks/use-auth-gate';
 import { ConnectWalletButton } from '@/components/shared/auth/connect-wallet-button';
@@ -32,7 +33,15 @@ import {
   formatUsd,
 } from '@/lib/trader-format';
 import type { GroupPositionsResponse, GroupStats, TraderGroup, TraderMember } from '@/types/trader';
-import { CheckIcon, PencilIcon, RadarIcon, Trash2Icon, XIcon } from 'lucide-react';
+import {
+  CheckIcon,
+  PencilIcon,
+  RadarIcon,
+  Trash2Icon,
+  XIcon,
+  UserRoundCheckIcon,
+  UserRoundPlusIcon,
+} from 'lucide-react';
 import { GroupForm } from '../_components/group-form';
 import { DeleteGroupDialog } from '../_components/delete-group-dialog';
 import { GroupPerformanceChart } from './_components/group-performance-chart';
@@ -50,6 +59,7 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
   const tc = useTranslations('common');
   const te = useTranslations();
   const router = useRouter();
+  const { follow, unfollow } = useFollowMutations();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const setConnectModalOpen = useAuthStore((s) => s.setConnectModalOpen);
   const [group, setGroup] = useState<TraderGroup | null>(null);
@@ -60,6 +70,7 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
   const [deleteOpen, setDeleteOpen] = useState(false);
 
   const [search, setSearch] = useState('');
+  const [followFilter, setFollowFilter] = useState<'all' | 'following' | 'not_following'>('all');
   const [members, setMembers] = useState<TraderMember[]>([]);
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [editAlias, setEditAlias] = useState('');
@@ -196,14 +207,17 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
   }, [groupId, isAuthenticated]);
 
   const filtered = useMemo(() => {
+    let list = members;
+    if (followFilter === 'following') list = list.filter((m) => m.is_followed);
+    if (followFilter === 'not_following') list = list.filter((m) => !m.is_followed);
     const needle = search.trim().toLowerCase();
-    if (!needle) return members;
-    return members.filter((m) =>
+    if (!needle) return list;
+    return list.filter((m) =>
       [m.wallet_address, m.display_name, m.alias, m.note]
         .filter(Boolean)
         .some((v) => (v as string).toLowerCase().includes(needle)),
     );
-  }, [members, search]);
+  }, [members, search, followFilter]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const page = Math.min(currentPage, totalPages);
@@ -287,7 +301,7 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
 
   if (isLoadingGroup) {
     return (
-      <div className="flex flex-1 flex-col gap-4 p-4 lg:p-6">
+      <div className="flex flex-1 flex-col gap-4">
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-24 w-full" />
       </div>
@@ -296,7 +310,7 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
 
   if (groupGate === 'expired') {
     return (
-      <div className="flex flex-1 flex-col gap-4 p-4 lg:p-6">
+      <div className="flex flex-1 flex-col gap-4">
         <div className="border-warning/30 bg-warning-subtle text-warning rounded-md border p-3 text-sm">
           {t('sessionExpired')}{' '}
           <Button variant="link" size="sm" onClick={() => setConnectModalOpen(true)}>
@@ -309,7 +323,7 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
 
   if (groupGate === 'unauthenticated') {
     return (
-      <div className="flex flex-1 flex-col gap-4 p-4 lg:p-6">
+      <div className="flex flex-1 flex-col gap-4">
         <h1 className="text-2xl font-bold">{t('title')}</h1>
         <div className="text-muted-foreground py-12 text-center">
           <p>{t('authRequired')}</p>
@@ -323,7 +337,7 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
 
   if (groupError || !group) {
     return (
-      <div className="flex flex-1 flex-col gap-4 p-4 lg:p-6">
+      <div className="flex flex-1 flex-col gap-4">
         <div className="bg-destructive/10 text-destructive rounded-md p-3 text-sm">
           {groupError ? groupErrorMessage : t('notFound')}{' '}
           <Button variant="link" size="sm" onClick={fetchGroup}>
@@ -335,8 +349,8 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4 lg:p-6">
-      <div className="flex items-center justify-between">
+    <div className="flex flex-1 flex-col gap-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold">{group.name}</h1>
           {group.description && (
@@ -395,7 +409,11 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
         </div>
       </div>
 
-      <div className="flex gap-2 border-b pb-1" role="tablist" aria-label={t('title')}>
+      <div
+        className="flex [scrollbar-width:none] gap-2 overflow-x-auto border-b pb-1 [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+        role="tablist"
+        aria-label={t('title')}
+      >
         {(['overview', 'positions', 'members', 'activity', 'alerts'] as const).map((id) => (
           <Button
             key={id}
@@ -403,6 +421,7 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
             aria-selected={tab === id}
             variant={tab === id ? 'default' : 'ghost'}
             size="sm"
+            className="shrink-0"
             onClick={() => {
               setTab(id);
               router.replace(`/groups/${groupId}?tab=${id}`);
@@ -691,6 +710,18 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
               placeholder={t('searchPlaceholder')}
               className="w-56"
             />
+            <select
+              aria-label="Follow filter"
+              value={followFilter}
+              onChange={(e) =>
+                setFollowFilter(e.target.value as 'all' | 'following' | 'not_following')
+              }
+              className="bg-background h-8 rounded-md border px-2 text-sm"
+            >
+              <option value="all">All</option>
+              <option value="following">Following</option>
+              <option value="not_following">Not following</option>
+            </select>
             <Link href={`/traders?group=${group.id}`}>
               <Button variant="outline" size="sm">
                 <RadarIcon className="mr-2 h-4 w-4" />
@@ -831,6 +862,30 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
                                   onClick={() => startEdit(m)}
                                 >
                                   <PencilIcon className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon-xs"
+                                  aria-label={m.is_followed ? 'Unfollow' : 'Follow'}
+                                  onClick={() => {
+                                    if (m.is_followed) {
+                                      unfollow.mutate([
+                                        { venue: m.venue, wallet_address: m.wallet_address },
+                                      ]);
+                                    } else {
+                                      follow.mutate({
+                                        wallets: [
+                                          { venue: m.venue, wallet_address: m.wallet_address },
+                                        ],
+                                      });
+                                    }
+                                  }}
+                                >
+                                  {m.is_followed ? (
+                                    <UserRoundCheckIcon className="h-4 w-4" />
+                                  ) : (
+                                    <UserRoundPlusIcon className="h-4 w-4" />
+                                  )}
                                 </Button>
                                 <Button
                                   variant="ghost"

@@ -96,7 +96,12 @@ export function GroupsTable({
                   <div className="font-medium">{row.name}</div>
                   <div className="text-muted-foreground text-xs">{row.description ?? '—'}</div>
                 </TableCell>
-                <TableCell className="text-right tabular-nums">{row.member_count}</TableCell>
+                <TableCell className="text-right tabular-nums">
+                  {row.member_count}
+                  <div className="text-muted-foreground text-xs">
+                    {row.followed_count ?? 0} followed
+                  </div>
+                </TableCell>
                 <TableCell className="text-right tabular-nums">
                   {formatUsd(row.account_value) ?? '—'}
                 </TableCell>

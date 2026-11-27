@@ -4,7 +4,7 @@ import { useTranslations } from 'next-intl';
 import { useQueryClient } from '@tanstack/react-query';
 import type { QueryClient } from '@tanstack/react-query';
 import { cn } from 'cn';
-import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Table,
   TableBody,
@@ -29,7 +29,7 @@ import type {
 } from '@/types/trader';
 import { DEFAULT_TRADER_PERIOD } from '@/types/trader';
 import { fetchTraderDetail } from '@/services/traders';
-import { ArrowDownIcon, ArrowUpDownIcon, ArrowUpIcon, EyeIcon, UserPlusIcon } from 'lucide-react';
+import { ArrowDownIcon, ArrowUpDownIcon, ArrowUpIcon } from 'lucide-react';
 import { CopyAddress } from './copy-address';
 import { LongShortBar } from './long-short-bar';
 
@@ -72,7 +72,6 @@ export interface TraderTableProps {
   selected?: string[];
   onSelect?: (addresses: string[]) => void;
   onView?: (row: PeriodMetrics) => void;
-  onAdd?: (row: PeriodMetrics) => void;
 }
 
 export function TraderTable({
@@ -86,7 +85,6 @@ export function TraderTable({
   selected,
   onSelect,
   onView,
-  onAdd,
 }: TraderTableProps) {
   const t = useTranslations('traders');
   const selectedAddresses = selected ?? [];
@@ -130,12 +128,12 @@ export function TraderTable({
       <TableHead
         key={column}
         aria-sort={active ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
-        className="text-right"
+        className="text-center"
       >
         <button
           type="button"
           onClick={() => onSortChange(column)}
-          className="inline-flex w-full items-center justify-end gap-1 hover:underline"
+          className="inline-flex w-full items-center justify-center gap-1 hover:underline"
         >
           {label}
           {sortIndicator(column)}
@@ -153,27 +151,24 @@ export function TraderTable({
         <TableHeader className="bg-surface-secondary static">
           <TableRow>
             {selectable && (
-              <TableHead className="bg-surface-secondary">
-                <input
-                  type="checkbox"
+              <TableHead className="bg-surface-secondary text-center">
+                <Checkbox
                   aria-label={t('selectAll')}
                   checked={allSelected}
                   onChange={toggleAll}
                   onClick={(e) => e.stopPropagation()}
-                  className="h-4 w-4 md:opacity-0 md:group-hover:opacity-100 md:focus-within:opacity-100 md:focus:opacity-100"
                 />
               </TableHead>
             )}
-            <TableHead className="bg-card w-10 text-right tabular-nums">
+            <TableHead className="bg-card w-10 text-center tabular-nums">
               <span className="sr-only">{t('colRank')}</span>
             </TableHead>
             <TableHead className="bg-surface border-border-subtle sticky left-0 border-r">
               {t('colTrader')}
             </TableHead>
             {SORTABLE_COLUMNS.map((c) => sortableHead(c.key, t(c.labelKey)))}
-            <TableHead className="text-right">{t('colProfitFactor')}</TableHead>
-            <TableHead className="text-right">{t('colLongShortWr')}</TableHead>
-            {(onView || onAdd) && <TableHead />}
+            <TableHead className="text-center">{t('colProfitFactor')}</TableHead>
+            <TableHead className="text-center">{t('colLongShortWr')}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -219,23 +214,16 @@ export function TraderTable({
                 }}
               >
                 {selectable && (
-                  <TableCell>
-                    <input
-                      type="checkbox"
+                  <TableCell className="text-center">
+                    <Checkbox
                       aria-label={t('selectRow', { address: row.wallet_address })}
                       checked={selectedAddresses.includes(row.wallet_address)}
                       onChange={() => toggleOne(row.wallet_address)}
                       onClick={(e) => e.stopPropagation()}
-                      className={cn(
-                        'h-4 w-4',
-                        selectionActive || selectedAddresses.includes(row.wallet_address)
-                          ? 'opacity-100'
-                          : 'md:opacity-0 md:group-hover:opacity-100 md:focus-within:opacity-100 md:focus:opacity-100',
-                      )}
                     />
                   </TableCell>
                 )}
-                <TableCell className="text-right tabular-nums">{index + 1}</TableCell>
+                <TableCell className="text-center tabular-nums">{index + 1}</TableCell>
                 <TableCell className="bg-surface border-border-subtle sticky left-0 border-r">
                   <div className="flex items-center gap-3">
                     <div className="bg-surface-tertiary text-text-primary flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold">
@@ -264,7 +252,7 @@ export function TraderTable({
                 </TableCell>
                 <TableCell
                   className={cn(
-                    'text-right font-medium tabular-nums opacity-[0.88]',
+                    'text-center font-medium tabular-nums opacity-[0.88]',
                     (pnl ?? 0) >= 0 ? 'text-financial-positive' : 'text-destructive',
                   )}
                 >
@@ -272,58 +260,24 @@ export function TraderTable({
                     ? NULL_DISPLAY
                     : `${pnl > 0 ? '+' : ''}${formatUsd(pnl)}`}
                 </TableCell>
-                <TableCell className="text-right tabular-nums">
+                <TableCell className="text-center tabular-nums">
                   {display(formatSignedPercent(row.roi))}
                 </TableCell>
-                <TableCell className="text-right tabular-nums">
+                <TableCell className="text-center tabular-nums">
                   {display(formatPercent(row.win_rate))}
                 </TableCell>
-                <TableCell className="text-right tabular-nums">
+                <TableCell className="text-center tabular-nums">
                   {display(formatUsd(row.volume))}
                 </TableCell>
-                <TableCell className="text-right tabular-nums">
+                <TableCell className="text-center tabular-nums">
                   {display(formatInteger(row.trade_count))}
                 </TableCell>
-                <TableCell className="text-muted-foreground text-right tabular-nums">
+                <TableCell className="text-muted-foreground text-center tabular-nums">
                   {display(formatDecimal(row.profit_factor))}
                 </TableCell>
-                <TableCell className="text-muted-foreground text-right tabular-nums">
+                <TableCell className="text-muted-foreground text-center tabular-nums">
                   <LongShortBar longPct={longPct} shortPct={shortPct} />
                 </TableCell>
-                {(onView || onAdd) && (
-                  <TableCell onClick={(e) => e.stopPropagation()} className="text-right">
-                    <div className="flex justify-end gap-1">
-                      {onView && (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onView(row);
-                          }}
-                          aria-label={t('view')}
-                        >
-                          <EyeIcon className="h-4 w-4" aria-hidden />
-                          {t('view')}
-                        </Button>
-                      )}
-                      {onAdd && (
-                        <button
-                          type="button"
-                          className="hover:bg-muted rounded p-1 opacity-100 transition-opacity md:pointer-events-none md:opacity-0 md:group-hover:pointer-events-auto md:group-hover:opacity-100 md:focus:pointer-events-auto md:focus:opacity-100"
-                          aria-label={t('addToGroup')}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onAdd(row);
-                          }}
-                        >
-                          <UserPlusIcon className="h-4 w-4" aria-hidden />
-                        </button>
-                      )}
-                    </div>
-                  </TableCell>
-                )}
               </TableRow>
             );
           })}

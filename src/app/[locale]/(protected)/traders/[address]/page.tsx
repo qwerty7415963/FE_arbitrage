@@ -69,7 +69,7 @@ export default async function TraderDetailPage({
   return (
     <Suspense
       fallback={
-        <div className="flex flex-col gap-4 p-4 lg:p-6" role="status" aria-label={t('loading')}>
+        <div className="flex flex-col gap-4" role="status" aria-label={t('loading')}>
           <Skeleton className="h-40 w-full rounded-xl" />
           <Skeleton className="h-10 w-full" />
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">

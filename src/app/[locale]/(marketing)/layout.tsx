@@ -1,5 +1,6 @@
 ﻿import { getTranslations } from 'next-intl/server';
 import { LanguageSwitcher } from '@/components/shared/language-switcher';
+import { MarketingMobileNav } from './_components/marketing-mobile-nav';
 import { Logo } from '@/components/shared/brand/logo';
 import { Link } from '@/i18n/navigation';
 
@@ -38,6 +39,7 @@ export default async function MarketingLayout({ children }: { children: React.Re
               {t('nav.faq')}
             </a>
           </nav>
+          <MarketingMobileNav />
           <div className="preserve-control-size language-switcher">
             <LanguageSwitcher />
           </div>

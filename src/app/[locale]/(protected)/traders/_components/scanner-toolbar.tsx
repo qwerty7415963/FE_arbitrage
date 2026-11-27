@@ -82,7 +82,7 @@ export const ScannerToolbar = forwardRef<HTMLDivElement, ScannerToolbarProps>(
     return (
       <div
         ref={ref}
-        className="bg-background border-border-subtle sticky top-0 z-20 -mx-4 border-b px-4 py-3 backdrop-blur lg:-mx-6 lg:px-6"
+        className="bg-background border-border-subtle sticky -top-4 z-20 -mx-4 border-b px-4 py-3 backdrop-blur lg:-top-6 lg:-mx-6 lg:px-6"
       >
         <div className="flex flex-col gap-3">
           <div className="flex flex-wrap items-center gap-2">

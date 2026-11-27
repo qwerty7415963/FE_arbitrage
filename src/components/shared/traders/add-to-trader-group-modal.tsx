@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
@@ -18,6 +19,7 @@ import { ApiError } from '@/infrastructure/api-client';
 import { useAuthStore } from '@/lib/stores/auth';
 import { isValidWalletAddress } from '@/lib/trader-validation';
 import { addGroupMembers, createTraderGroup, listTraderGroups } from '@/services/traders';
+import { followWallets } from '@/services/follows';
 import { GROUP_NAME_MAX_RUNES, type MemberInput, type TraderGroup } from '@/types/trader';
 import { Loader2Icon, PlusIcon } from 'lucide-react';
 
@@ -63,6 +65,7 @@ export function AddToTraderGroupModal({
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [added, setAdded] = useState<number | null>(null);
+  const [followToo, setFollowToo] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [prevOpen, setPrevOpen] = useState(open);
 
@@ -146,6 +149,13 @@ export function AddToTraderGroupModal({
     try {
       const res = await addGroupMembers(selectedGroupId, submitMembers);
       setAdded(res.added);
+      if (followToo && submitMembers.length > 0) {
+        try {
+          await followWallets(submitMembers);
+        } catch {
+          // ignore follow errors; group add already succeeded
+        }
+      }
       onSuccess?.();
     } catch (err) {
       setError(err instanceof Error ? te('errors.unknown') : t('unknownError'));
@@ -230,6 +240,10 @@ export function AddToTraderGroupModal({
               ))}
             </div>
           )}
+          <label className="flex items-center gap-2 text-sm">
+            <Checkbox checked={followToo} onChange={(e) => setFollowToo(e.target.checked)} />
+            <span>Also follow these wallets</span>
+          </label>
           <div className="flex gap-2">
             <Input
               value={newName}

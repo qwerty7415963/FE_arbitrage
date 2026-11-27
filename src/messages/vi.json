@@ -37,11 +37,12 @@
   },
   "navigation": {
     "fundingArbitrage": "Funding Arbitrage",
-    "groups": "Nhóm",
+    "groups": "Danh sách theo dõi",
     "scanner": "Máy quét trader",
     "settings": "Cài đặt",
     "logout": "Đăng xuất",
-    "overview": "Tổng quan"
+    "overview": "Tổng quan",
+    "mainNav": "Điều hướng chính"
   },
   "wallet": {
     "connect": "Kết nối ví",
@@ -836,8 +837,9 @@
     "nav": {
       "scanner": "Scanner",
       "funding": "Funding",
-      "howItWorks": "Cách hoạt động",
-      "faq": "FAQ"
+      "howItWorks": "C�ch ho?t d?ng",
+      "faq": "FAQ",
+      "menu": "Menu"
     },
     "hero": {
       "eyebrow": "Signal desk",

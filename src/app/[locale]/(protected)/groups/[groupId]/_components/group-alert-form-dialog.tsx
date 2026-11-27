@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
@@ -353,24 +354,15 @@ export function GroupAlertFormDialog({
 
           <div className="flex flex-col gap-2">
             <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={enabled}
-                onChange={(e) => setEnabled(e.target.checked)}
-              />
+              <Checkbox checked={enabled} onChange={(e) => setEnabled(e.target.checked)} />
               <span>{t('enabled')}</span>
             </label>
             <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={notifyInApp}
-                onChange={(e) => setNotifyInApp(e.target.checked)}
-              />
+              <Checkbox checked={notifyInApp} onChange={(e) => setNotifyInApp(e.target.checked)} />
               <span>{t('notifyInApp')}</span>
             </label>
             <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
+              <Checkbox
                 checked={notifyTelegram}
                 onChange={(e) => setNotifyTelegram(e.target.checked)}
               />

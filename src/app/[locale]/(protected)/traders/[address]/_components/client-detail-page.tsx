@@ -8,6 +8,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ApiError } from '@/infrastructure/api-client';
 import { useTraderActivity } from '@/hooks/use-trader-activity';
 import { useTraderDetail } from '@/hooks/use-trader-detail';
+import { useFollowStatus, useWalletFollowActions } from '@/hooks/use-follows';
+import { useAuthStore } from '@/lib/stores/auth';
 
 import { readLastScan } from '@/lib/trader-url-state';
 import { isValidWalletAddress } from '@/lib/trader-validation';
@@ -15,10 +17,8 @@ import { WalletTabs } from './wallet-tabs';
 import { ActivityFeed } from './activity-feed';
 import { WalletStatementHeader } from './wallet-statement-header';
 import { WalletPerformanceStrip } from './wallet-performance-strip';
-import { AddToTraderGroupModal } from '@/components/shared/traders/add-to-trader-group-modal';
 import {
   DEFAULT_TRADER_PERIOD,
-  type MemberInput,
   type PerformanceSnapshot,
   type PositionSnapshot,
   type TraderDetail,
@@ -48,7 +48,6 @@ export default function ClientDetailPage({
   const address = addressProp ?? params.address ?? '';
 
   const [period, setPeriod] = useState<TraderPeriod>(periodProp ?? DEFAULT_TRADER_PERIOD);
-  const [addOpen, setAddOpen] = useState(false);
   const [positionsSnapshot, setPositionsSnapshot] = useState<PositionSnapshot | null>(null);
   const addressValid = isValidWalletAddress(address);
   const wallet = addressValid ? address.toLowerCase() : '';
@@ -63,6 +62,14 @@ export default function ClientDetailPage({
     initialData: initialDetail ?? undefined,
   });
   const activity = useTraderActivity(wallet);
+  const venue = detail?.registry?.venue ?? '';
+  const followStatus = useFollowStatus(venue, wallet);
+  const { follow, unfollow, toggleNotify, rename } = useWalletFollowActions(venue, wallet);
+  const requireAuth = useAuthStore((s) => s.requireAuth);
+  const isFollowed = followStatus.data ? followStatus.data.is_followed : undefined;
+  const notifyEnabled = followStatus.data?.notify_enabled ?? false;
+  const walletAlias = followStatus.data?.alias ?? null;
+  const inGroups = followStatus.data?.in_groups ?? [];
 
   const error: DetailError | null =
     detailError instanceof ApiError && detailError.status === 404
@@ -84,12 +91,9 @@ export default function ClientDetailPage({
       router.back();
     }
   }
-  const members: MemberInput[] = registry
-    ? [{ venue: registry.venue, wallet_address: registry.wallet_address }]
-    : [];
 
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4 lg:p-6">
+    <div className="flex flex-1 flex-col gap-4">
       <nav aria-label="breadcrumb" className="flex flex-wrap items-center gap-1.5 text-sm">
         <Button variant="ghost" size="sm" onClick={handleBack}>
           <ArrowLeftIcon className="mr-1 h-4 w-4" />
@@ -139,7 +143,27 @@ export default function ClientDetailPage({
               metrics={metrics}
               lastUpdated={lastUpdated}
               live={activity.live}
-              onAdd={() => setAddOpen(true)}
+              isFollowed={isFollowed}
+              notifyEnabled={notifyEnabled}
+              alias={walletAlias}
+              inGroups={inGroups}
+              onToggleFollow={() => {
+                if (!requireAuth()) return;
+                const venue = registry.venue;
+                if (isFollowed) {
+                  unfollow.mutate();
+                } else {
+                  follow.mutate({});
+                }
+              }}
+              onToggleNotify={() => {
+                if (!requireAuth()) return;
+                toggleNotify.mutate(!notifyEnabled);
+              }}
+              onRename={(nextAlias) => {
+                if (!requireAuth()) return;
+                rename.mutate(nextAlias);
+              }}
             />
 
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
@@ -170,13 +194,6 @@ export default function ClientDetailPage({
           </div>
         )
       )}
-
-      <AddToTraderGroupModal
-        open={addOpen}
-        onOpenChange={setAddOpen}
-        members={members}
-        onSuccess={() => setAddOpen(false)}
-      />
     </div>
   );
 }
