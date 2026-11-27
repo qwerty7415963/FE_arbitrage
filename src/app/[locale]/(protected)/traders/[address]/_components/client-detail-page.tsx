@@ -9,8 +9,10 @@ import { ApiError } from '@/infrastructure/api-client';
 import { useTraderActivity } from '@/hooks/use-trader-activity';
 import { useTraderDetail } from '@/hooks/use-trader-detail';
 import { useFollowStatus, useWalletFollowActions } from '@/hooks/use-follows';
-import { useQueryClient } from '@tanstack/react-query';
+import { useUnfollowConfirm } from '@/hooks/use-unfollow-confirm';
+import { UnfollowConfirmDialog } from '@/components/shared/traders/unfollow-confirm-dialog';
 import { useAuthStore } from '@/lib/stores/auth';
+import { useTelegramStatus } from '@/hooks/use-telegram';
 
 import { readLastScan } from '@/lib/trader-url-state';
 import { isValidWalletAddress } from '@/lib/trader-validation';
@@ -18,11 +20,8 @@ import { WalletTabs } from './wallet-tabs';
 import { ActivityFeed } from './activity-feed';
 import { WalletStatementHeader } from './wallet-statement-header';
 import { WalletPerformanceStrip } from './wallet-performance-strip';
-import { AddToTraderGroupModal } from '@/components/shared/traders/add-to-trader-group-modal';
 import {
   DEFAULT_TRADER_PERIOD,
-  type FollowStatus,
-  type MemberInput,
   type PerformanceSnapshot,
   type PositionSnapshot,
   type TraderDetail,
@@ -53,7 +52,6 @@ export default function ClientDetailPage({
 
   const [period, setPeriod] = useState<TraderPeriod>(periodProp ?? DEFAULT_TRADER_PERIOD);
   const [positionsSnapshot, setPositionsSnapshot] = useState<PositionSnapshot | null>(null);
-  const [addOpen, setAddOpen] = useState(false);
   const addressValid = isValidWalletAddress(address);
   const wallet = addressValid ? address.toLowerCase() : '';
   const {
@@ -67,15 +65,20 @@ export default function ClientDetailPage({
     initialData: initialDetail ?? undefined,
   });
   const activity = useTraderActivity(wallet);
-  const qc = useQueryClient();
   const venue = detail?.registry?.venue ?? '';
   const followStatus = useFollowStatus(venue, wallet);
   const { follow, unfollow, toggleNotify, rename } = useWalletFollowActions(venue, wallet);
+  const unfollowConfirm = useUnfollowConfirm();
   const requireAuth = useAuthStore((s) => s.requireAuth);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const telegramStatus = useTelegramStatus({ enabled: isAuthenticated });
   const isFollowed = followStatus.data ? followStatus.data.is_followed : undefined;
   const notifyEnabled = followStatus.data?.notify_enabled ?? false;
   const walletAlias = followStatus.data?.alias ?? null;
   const inGroups = followStatus.data?.in_groups ?? [];
+  const telegramConnected = Boolean(
+    followStatus.data?.telegram_connected || telegramStatus.data?.connected,
+  );
 
   const error: DetailError | null =
     detailError instanceof ApiError && detailError.status === 404
@@ -153,17 +156,15 @@ export default function ClientDetailPage({
               notifyEnabled={notifyEnabled}
               alias={walletAlias}
               inGroups={inGroups}
-              followedAt={followStatus.data?.followed_at ?? null}
-              telegramConnected={followStatus.data?.telegram_connected ?? false}
-              onAddToGroup={() => {
-                if (!requireAuth()) return;
-                setAddOpen(true);
-              }}
+              telegramConnected={telegramConnected}
               onToggleFollow={() => {
                 if (!requireAuth()) return;
                 const venue = registry.venue;
                 if (isFollowed) {
-                  unfollow.mutate();
+                  unfollowConfirm.requestUnfollow(
+                    { venue, wallet, label: walletAlias || registry?.display_name || wallet },
+                    () => unfollow.mutate(),
+                  );
                 } else {
                   follow.mutate({});
                 }
@@ -175,25 +176,6 @@ export default function ClientDetailPage({
               onRename={(nextAlias: string) => {
                 if (!requireAuth()) return;
                 rename.mutate(nextAlias);
-              }}
-            />
-
-            <AddToTraderGroupModal
-              open={addOpen}
-              onOpenChange={setAddOpen}
-              members={[{ venue, wallet_address: wallet } as MemberInput]}
-              onSuccess={(result) => {
-                if (result?.groupId) {
-                  const group = {
-                    id: result.groupId,
-                    name: result.groupName ?? result.groupId,
-                  };
-                  qc.setQueryData<FollowStatus>(['follow-status', venue, wallet], (prev) => {
-                    if (!prev) return prev;
-                    if (prev.in_groups.some((g) => g.id === group.id)) return prev;
-                    return { ...prev, in_groups: [...prev.in_groups, group] };
-                  });
-                }
               }}
             />
 
@@ -225,24 +207,13 @@ export default function ClientDetailPage({
           </div>
         )
       )}
-      <AddToTraderGroupModal
-        open={addOpen}
-        onOpenChange={setAddOpen}
-        members={
-          registry ? [{ venue: registry.venue, wallet_address: registry.wallet_address }] : []
-        }
-        onSuccess={(result) => {
-          if (result?.groupId && result?.groupName) {
-            const current = followStatus.data;
-            if (current && !current.in_groups.some((g) => g.id === result.groupId)) {
-              qc.setQueryData(['follow-status', detail?.registry?.venue ?? 'hyperliquid', wallet], {
-                ...current,
-                in_groups: [...current.in_groups, { id: result.groupId, name: result.groupName }],
-              });
-            }
-          }
-          setAddOpen(false);
-        }}
+
+      <UnfollowConfirmDialog
+        target={unfollowConfirm.target}
+        skipChecked={unfollowConfirm.skipChecked}
+        onSkipChange={unfollowConfirm.setSkipChecked}
+        onConfirm={unfollowConfirm.confirm}
+        onCancel={unfollowConfirm.cancel}
       />
     </div>
   );

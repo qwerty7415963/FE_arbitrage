@@ -5,7 +5,12 @@ import { NextIntlClientProvider } from 'next-intl';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import GroupsPage from '@/app/[locale]/(protected)/groups/page';
 import GroupDetailPage from '@/app/[locale]/(protected)/groups/[groupId]/page';
-import { getTraderGroup, listGroupMembers, listTraderGroups } from '@/services/traders';
+import {
+  getTraderGroup,
+  listGroupMembers,
+  listTraderGroups,
+  listTraderGroupsDetailed,
+} from '@/services/traders';
 import { getStatus } from '@/services/telegram';
 import enMessages from '@/messages/en.json';
 
@@ -19,6 +24,7 @@ vi.mock('@/services/traders', () => ({
   getTraderGroup: vi.fn(),
   listGroupMembers: vi.fn(),
   listTraderGroups: vi.fn(),
+  listTraderGroupsDetailed: vi.fn(),
   createTraderGroup: vi.fn(),
   updateTraderGroup: vi.fn(),
   deleteTraderGroup: vi.fn(),
@@ -29,6 +35,10 @@ vi.mock('@/services/telegram', () => ({
   getStatus: vi.fn(),
   createLink: vi.fn(),
   unlink: vi.fn(),
+}));
+vi.mock('next/navigation', () => ({
+  useSearchParams: () => new URLSearchParams('view=groups'),
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
 }));
 vi.mock('@/i18n/navigation', () => ({
   Link: ({ children, href }: { children: React.ReactNode; href: string }) => (
@@ -41,27 +51,23 @@ vi.mock('@/lib/stores/auth', () => {
   return { useAuthStore: Object.assign(useAuthStore, { getState: () => authState }) };
 });
 vi.mock('@/services/follows', () => ({
-  listFollowedWallets: vi
-    .fn()
-    .mockResolvedValue({
-      items: [],
-      meta: { total: 0, page: 1, total_pages: 1, limit: 20 },
-      as_of: '',
-    }),
+  listFollowedWallets: vi.fn().mockResolvedValue({
+    items: [],
+    meta: { total: 0, page: 1, total_pages: 1, limit: 20 },
+    as_of: '',
+  }),
   getFollowKeys: vi.fn().mockResolvedValue([]),
-  getFollowOverview: vi
-    .fn()
-    .mockResolvedValue({
-      following_count: 0,
-      groups_count: 0,
-      unique_wallets: 0,
-      overlap_wallets: 0,
-      group_only_wallets: 0,
-      account_value: null,
-      unrealized_pnl: null,
-      partial: false,
-      as_of: new Date().toISOString(),
-    }),
+  getFollowOverview: vi.fn().mockResolvedValue({
+    following_count: 0,
+    groups_count: 0,
+    unique_wallets: 0,
+    overlap_wallets: 0,
+    group_only_wallets: 0,
+    account_value: null,
+    unrealized_pnl: null,
+    partial: false,
+    as_of: new Date().toISOString(),
+  }),
   followWallets: vi.fn().mockResolvedValue({ followed: 0, skipped: 0 }),
   unfollowWallets: vi.fn().mockResolvedValue({ unfollowed: 0 }),
   setFollowNotify: vi.fn().mockResolvedValue(undefined),
@@ -115,6 +121,7 @@ describe('Groups auth gate', () => {
     vi.mocked(getTraderGroup).mockReset();
     vi.mocked(listGroupMembers).mockReset();
     vi.mocked(listTraderGroups).mockReset();
+    vi.mocked(listTraderGroupsDetailed).mockReset();
     vi.mocked(getStatus).mockReset();
     vi.mocked(getStatus).mockResolvedValue({
       connected: false,
@@ -130,16 +137,20 @@ describe('Groups auth gate', () => {
 
     expect(screen.getByRole('heading', { name: 'Watchlist' })).toBeInTheDocument();
     expect(await screen.findByRole('button', { name: 'Connect stub' })).toBeInTheDocument();
-    expect(listTraderGroups).not.toHaveBeenCalled();
+    expect(listTraderGroupsDetailed).not.toHaveBeenCalled();
     expect(getStatus).not.toHaveBeenCalled();
   });
 
   it('groups list fetches once authentication becomes available', async () => {
-    vi.mocked(listTraderGroups).mockResolvedValue(groups as unknown as never);
+    vi.mocked(listTraderGroupsDetailed).mockResolvedValue({
+      items: groups,
+      meta: { total: groups.length, page: 1, total_pages: 1 },
+      as_of: '',
+    } as unknown as never);
     const tree = renderList();
 
     await screen.findByRole('button', { name: 'Connect stub' });
-    expect(listTraderGroups).not.toHaveBeenCalled();
+    expect(listTraderGroupsDetailed).not.toHaveBeenCalled();
 
     authState.isAuthenticated = true;
     tree.rerender(
@@ -152,7 +163,7 @@ describe('Groups auth gate', () => {
       </QueryClientProvider>,
     );
 
-    await waitFor(() => expect(listTraderGroups).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(listTraderGroupsDetailed).toHaveBeenCalledTimes(1));
     expect(await screen.findByText('Main')).toBeInTheDocument();
   });
 

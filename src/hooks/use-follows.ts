@@ -6,14 +6,16 @@ import { ApiError } from '@/infrastructure/api-client';
 import { mapErrorCode } from '@/lib/error-mapping';
 import { useTranslations } from 'next-intl';
 import {
+  followWallet,
   followWallets,
   getFollowKeys,
   getFollowOverview,
   getFollowStatus,
   listFollowedWallets,
   setFollowNotify,
+  unfollowWallet,
   unfollowWallets,
-  updateFollow,
+  updateFollowPreferences,
 } from '@/services/follows';
 import { useAuthStore } from '@/lib/stores/auth';
 import type { FollowStatus } from '@/types/trader';
@@ -85,7 +87,7 @@ export function useWalletFollowActions(venue: string, wallet: string) {
 
   const follow = useMutation({
     mutationFn: ({ notifyEnabled }: { notifyEnabled?: boolean } = {}) =>
-      followWallets([{ venue, wallet_address: wallet }], notifyEnabled),
+      followWallet(venue, wallet, notifyEnabled),
     onMutate: async () => {
       await qc.cancelQueries({ queryKey: statusKey });
       const prev = snapshot();
@@ -121,7 +123,7 @@ export function useWalletFollowActions(venue: string, wallet: string) {
   });
 
   const unfollow = useMutation({
-    mutationFn: () => unfollowWallets([{ venue, wallet_address: wallet }]),
+    mutationFn: () => unfollowWallet(venue, wallet),
     onMutate: async () => {
       await qc.cancelQueries({ queryKey: statusKey });
       const prev = snapshot();
@@ -181,7 +183,7 @@ export function useWalletFollowActions(venue: string, wallet: string) {
   });
 
   const rename = useMutation({
-    mutationFn: (alias: string) => updateFollow(venue, wallet, { alias }),
+    mutationFn: (alias: string) => updateFollowPreferences(venue, wallet, { alias }),
     onMutate: async (alias: string) => {
       const prev = snapshot();
       setOptimistic((cur) => ({
@@ -252,7 +254,7 @@ export function useFollowMutations() {
       address: string;
       alias?: string;
       notifyEnabled?: boolean;
-    }) => updateFollow(venue, address, { alias, notify_enabled: notifyEnabled }),
+    }) => updateFollowPreferences(venue, address, { alias, notify_enabled: notifyEnabled }),
     onSuccess: invalidate,
     onError: reportError,
   });

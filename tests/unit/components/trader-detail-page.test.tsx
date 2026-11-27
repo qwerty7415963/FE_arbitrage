@@ -12,7 +12,7 @@ import {
   listTraderGroups,
 } from '@/services/traders';
 import { useTraderActivity } from '@/hooks/use-trader-activity';
-import { followWallets } from '@/services/follows';
+import { followWallet, unfollowWallet, updateFollowPreferences } from '@/services/follows';
 import type { TraderDetail } from '@/types/trader';
 import enMessages from '@/messages/en.json';
 
@@ -57,7 +57,9 @@ vi.mock('@/services/follows', () => ({
     in_groups: [],
   }),
   getFollowKeys: vi.fn().mockResolvedValue([]),
-  followWallets: vi.fn(),
+  followWallet: vi.fn(),
+  unfollowWallet: vi.fn(),
+  updateFollowPreferences: vi.fn(),
   unfollowWallets: vi.fn(),
   updateFollow: vi.fn(),
   setFollowNotify: vi.fn(),
@@ -245,7 +247,7 @@ describe('TraderDetailPage (contract v1.2 live, no sync)', () => {
   it('rolls back the follow button when follow fails', async () => {
     const user = userEvent.setup();
     let rejectFollow: (reason?: unknown) => void = () => {};
-    vi.mocked(followWallets).mockImplementationOnce(
+    vi.mocked(followWallet).mockImplementationOnce(
       () =>
         new Promise((_resolve, reject) => {
           rejectFollow = reject;
@@ -267,7 +269,7 @@ describe('TraderDetailPage (contract v1.2 live, no sync)', () => {
     await user.click(screen.getByRole('button', { name: 'Back to scanner' }));
     expect(nav.back).toHaveBeenCalled();
     await user.click(screen.getByRole('button', { name: 'Follow' }));
-    expect(followWallets).toHaveBeenCalledTimes(1);
+    expect(followWallet).toHaveBeenCalledTimes(1);
   });
 
   it('pushes the stored scan when going back', async () => {

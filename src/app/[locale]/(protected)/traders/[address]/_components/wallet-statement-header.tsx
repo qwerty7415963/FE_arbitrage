@@ -78,9 +78,7 @@ export interface WalletStatementHeaderProps {
   notifyEnabled?: boolean;
   alias?: string | null;
   inGroups?: { id: string; name: string }[];
-  followedAt?: string | null;
   telegramConnected?: boolean;
-  onAddToGroup?: () => void;
   onToggleFollow?: () => void;
   onToggleNotify?: () => void;
   onRename?: (alias: string) => void;
@@ -119,12 +117,10 @@ export function WalletStatementHeader({
   notifyEnabled,
   alias,
   inGroups = [],
-  followedAt,
   telegramConnected = false,
   onToggleFollow,
   onToggleNotify,
   onRename,
-  onAddToGroup,
 }: WalletStatementHeaderProps) {
   const t = useTranslations('traders');
   const isUpdating = !!(isRefreshing || refreshing);
@@ -243,51 +239,22 @@ export function WalletStatementHeader({
                     <TrophyIcon className="h-3.5 w-3.5" aria-hidden />
                   </span>
                 )}
+                {isFollowed && (
+                  <span className="bg-primary-subtle text-primary-text rounded-full px-2 py-0.5 text-xs font-medium">
+                    {t('following')}
+                  </span>
+                )}
                 {inGroups.map((g) => (
                   <Link
                     key={g.id}
                     href={`/groups/${g.id}`}
-                    className="bg-muted text-foreground hover:bg-interactive-hover rounded-full px-2 py-0.5 text-xs font-medium"
+                    title={g.name}
+                    aria-label={g.name}
+                    className="bg-muted text-foreground hover:bg-interactive-hover inline-block max-w-[12rem] truncate rounded-full px-2 py-0.5 text-xs font-medium"
                   >
                     {g.name}
                   </Link>
                 ))}
-
-                {isFollowed ? (
-                  <p className="text-muted-foreground text-xs">
-                    {followedAt
-                      ? t('followingSince', { time: formatRelativeTime(followedAt) ?? '' })
-                      : t('following')}
-                    {' · '}
-                    {notifyEnabled && telegramConnected ? t('alertsOn') : t('alertsOff')}
-                    {!telegramConnected ? (
-                      <>
-                        {' · '}
-                        <Link href="/settings" className="text-primary-text hover:underline">
-                          {t('connectTelegram')}
-                        </Link>
-                      </>
-                    ) : null}
-                    {inGroups.length === 0 ? (
-                      <>
-                        {' · '}
-                        {onAddToGroup ? (
-                          <button
-                            type="button"
-                            onClick={onAddToGroup}
-                            className="text-primary-text hover:underline"
-                          >
-                            {t('notInAnyGroup')} · {t('addToGroupLink')}
-                          </button>
-                        ) : (
-                          <span>{t('notInAnyGroup')}</span>
-                        )}
-                      </>
-                    ) : null}
-                  </p>
-                ) : inGroups.length > 0 ? (
-                  <p className="text-muted-foreground text-xs">{t('notFollowing')}</p>
-                ) : null}
               </div>
             </div>
           </div>

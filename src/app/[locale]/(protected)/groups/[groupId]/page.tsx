@@ -19,6 +19,8 @@ import {
   updateTraderGroup,
 } from '@/services/traders';
 import { useAuthStore } from '@/lib/stores/auth';
+import { useUnfollowConfirm } from '@/hooks/use-unfollow-confirm';
+import { UnfollowConfirmDialog } from '@/components/shared/traders/unfollow-confirm-dialog';
 import { useFollowMutations } from '@/hooks/use-follows';
 import { useTelegramStatus } from '@/hooks/use-telegram';
 import { useAuthGate } from '@/hooks/use-auth-gate';
@@ -59,6 +61,7 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
   const tc = useTranslations('common');
   const te = useTranslations();
   const router = useRouter();
+  const unfollowConfirm = useUnfollowConfirm();
   const { follow, unfollow } = useFollowMutations();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const setConnectModalOpen = useAuthStore((s) => s.setConnectModalOpen);
@@ -869,9 +872,17 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
                                   aria-label={m.is_followed ? 'Unfollow' : 'Follow'}
                                   onClick={() => {
                                     if (m.is_followed) {
-                                      unfollow.mutate(
-                                        [{ venue: m.venue, wallet_address: m.wallet_address }],
-                                        { onSuccess: () => fetchMembers() },
+                                      unfollowConfirm.requestUnfollow(
+                                        {
+                                          venue: m.venue,
+                                          wallet: m.wallet_address,
+                                          label: m.display_name ?? m.wallet_address,
+                                        },
+                                        () =>
+                                          unfollow.mutate(
+                                            [{ venue: m.venue, wallet_address: m.wallet_address }],
+                                            { onSuccess: () => fetchMembers() },
+                                          ),
                                       );
                                     } else {
                                       follow.mutate(
@@ -929,6 +940,13 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
         onOpenChange={setDeleteOpen}
         group={group}
         onSuccess={() => router.push('/groups')}
+      />
+      <UnfollowConfirmDialog
+        target={unfollowConfirm.target}
+        skipChecked={unfollowConfirm.skipChecked}
+        onSkipChange={unfollowConfirm.setSkipChecked}
+        onConfirm={unfollowConfirm.confirm}
+        onCancel={unfollowConfirm.cancel}
       />
     </div>
   );

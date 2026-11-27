@@ -17,7 +17,9 @@ import {
 import { useFollowedWallets, useFollowMutations } from '@/hooks/use-follows';
 import { AddToTraderGroupModal } from '@/components/shared/traders/add-to-trader-group-modal';
 import type { FollowedWallet, MemberInput } from '@/types/trader';
-import { BellIcon, BellOffIcon, UserPlusIcon, XIcon } from 'lucide-react';
+import { BellIcon, BellOffIcon, FolderPlusIcon, XIcon } from 'lucide-react';
+import { UnfollowConfirmDialog } from '@/components/shared/traders/unfollow-confirm-dialog';
+import { useUnfollowConfirm } from '@/hooks/use-unfollow-confirm';
 
 export function FollowingSection() {
   const t = useTranslations('groups');
@@ -27,6 +29,7 @@ export function FollowingSection() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [addOpen, setAddOpen] = useState(false);
+  const unfollowConfirm = useUnfollowConfirm();
   const [addMembers, setAddMembers] = useState<MemberInput[]>([]);
 
   const { data, isLoading } = useFollowedWallets({
@@ -47,19 +50,16 @@ export function FollowingSection() {
 
   return (
     <section className="flex flex-col gap-3">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-lg font-semibold">{t('followingTitle', { default: 'Following' })}</h2>
-        <div className="flex gap-2">
-          <Input
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(1);
-            }}
-            placeholder={t('searchGroups')}
-            className="h-8 w-48"
-          />
-        </div>
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        <Input
+          value={search}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setPage(1);
+          }}
+          placeholder={t('searchWallets', { default: 'Search wallets' })}
+          className="h-8 w-48"
+        />
       </div>
 
       {isLoading ? (
@@ -144,18 +144,27 @@ export function FollowingSection() {
                           <button
                             type="button"
                             aria-label="Add to group"
+                            title="Add to group"
                             onClick={() => openAdd(row)}
                             className="hover:bg-muted rounded p-1"
                           >
-                            <UserPlusIcon className="h-4 w-4" />
+                            <FolderPlusIcon className="h-4 w-4" />
                           </button>
                           <button
                             type="button"
                             aria-label="Unfollow"
                             onClick={() =>
-                              unfollow.mutate([
-                                { venue: row.venue, wallet_address: row.wallet_address },
-                              ])
+                              unfollowConfirm.requestUnfollow(
+                                {
+                                  venue: row.venue,
+                                  wallet: row.wallet_address,
+                                  label: row.alias ?? row.display_name ?? row.wallet_address,
+                                },
+                                () =>
+                                  unfollow.mutate([
+                                    { venue: row.venue, wallet_address: row.wallet_address },
+                                  ]),
+                              )
                             }
                             className="hover:bg-muted rounded p-1"
                           >
@@ -226,12 +235,22 @@ export function FollowingSection() {
                       onClick={() => openAdd(row)}
                       className="hover:bg-muted rounded p-2"
                     >
-                      <UserPlusIcon className="h-4 w-4" />
+                      <FolderPlusIcon className="h-4 w-4" />
                     </button>
                     <button
                       type="button"
                       onClick={() =>
-                        unfollow.mutate([{ venue: row.venue, wallet_address: row.wallet_address }])
+                        unfollowConfirm.requestUnfollow(
+                          {
+                            venue: row.venue,
+                            wallet: row.wallet_address,
+                            label: row.alias ?? row.display_name ?? row.wallet_address,
+                          },
+                          () =>
+                            unfollow.mutate([
+                              { venue: row.venue, wallet_address: row.wallet_address },
+                            ]),
+                        )
                       }
                       className="hover:bg-muted rounded p-2"
                     >
@@ -244,6 +263,14 @@ export function FollowingSection() {
           </ul>
         </>
       )}
+
+      <UnfollowConfirmDialog
+        target={unfollowConfirm.target}
+        skipChecked={unfollowConfirm.skipChecked}
+        onSkipChange={unfollowConfirm.setSkipChecked}
+        onConfirm={unfollowConfirm.confirm}
+        onCancel={unfollowConfirm.cancel}
+      />
 
       <AddToTraderGroupModal
         open={addOpen}

@@ -11,7 +11,7 @@ export function Header() {
 
   return (
     <header className="bg-background flex h-14 items-center border-b px-3 lg:h-16 lg:px-6">
-      <Link href="/" className="flex shrink-0 items-center gap-2">
+      <Link href="/" className="flex shrink-0 items-center gap-2 lg:hidden">
         <div className="bg-primary text-primary-foreground flex h-8 w-8 items-center justify-center rounded-md">
           <span className="text-sm font-bold">A</span>
         </div>

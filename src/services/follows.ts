@@ -76,21 +76,51 @@ export async function unfollowWallets(wallets: MemberInput[]): Promise<{ unfollo
 }
 
 export async function getFollowStatus(venue: string, wallet: string): Promise<FollowStatus> {
-  const sp = new URLSearchParams({ venue, wallet });
-  const res = await apiClient<ApiResponse<FollowStatus>>(`${BASE}/status?${sp.toString()}`);
+  const res = await apiClient<ApiResponse<FollowStatus>>(
+    `${BASE}/${encodeURIComponent(venue)}/${encodeURIComponent(wallet)}`,
+  );
   if (!res.data) throw new Error('No data returned');
   return res.data;
 }
 
-export async function updateFollow(
+export async function followWallet(
+  venue: string,
+  wallet: string,
+  notifyEnabled?: boolean,
+): Promise<{ followed: number; skipped: number }> {
+  const res = await apiClient<ApiResponse<{ followed: number; skipped: number }>>(
+    `${BASE}/${encodeURIComponent(venue)}/${encodeURIComponent(wallet)}`,
+    {
+      method: 'PUT',
+      body: JSON.stringify(notifyEnabled === undefined ? {} : { notify_enabled: notifyEnabled }),
+    },
+  );
+  return { followed: res.data?.followed ?? 0, skipped: res.data?.skipped ?? 0 };
+}
+
+export async function unfollowWallet(
+  venue: string,
+  wallet: string,
+): Promise<{ unfollowed: number }> {
+  const res = await apiClient<ApiResponse<{ unfollowed: number }>>(
+    `${BASE}/${encodeURIComponent(venue)}/${encodeURIComponent(wallet)}`,
+    { method: 'DELETE' },
+  );
+  return { unfollowed: res.data?.unfollowed ?? 0 };
+}
+
+export async function updateFollowPreferences(
   venue: string,
   address: string,
   input: { notify_enabled?: boolean; alias?: string },
 ): Promise<void> {
-  await apiClient(`${BASE}/${encodeURIComponent(venue)}/${encodeURIComponent(address)}`, {
-    method: 'PATCH',
-    body: JSON.stringify(input),
-  });
+  await apiClient(
+    `${BASE}/${encodeURIComponent(venue)}/${encodeURIComponent(address)}/preferences`,
+    {
+      method: 'PATCH',
+      body: JSON.stringify(input),
+    },
+  );
 }
 
 export async function setFollowNotify(
@@ -98,5 +128,5 @@ export async function setFollowNotify(
   address: string,
   notifyEnabled: boolean,
 ): Promise<void> {
-  await updateFollow(venue, address, { notify_enabled: notifyEnabled });
+  await updateFollowPreferences(venue, address, { notify_enabled: notifyEnabled });
 }
