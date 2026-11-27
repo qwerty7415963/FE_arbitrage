@@ -1407,4 +1407,6 @@ export interface FollowStatus {
   alias: string | null;
   display_name: string | null;
   in_groups: { id: string; name: string }[];
+  followed_at?: string;
+  telegram_connected?: boolean;
 }

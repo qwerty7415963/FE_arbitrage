@@ -134,6 +134,12 @@ describe('WalletTabs', () => {
       isLoading: false,
       error: null,
       refetch: vi.fn(),
+      isRefreshing: false,
+      refreshing: false,
+      isUpdating: false,
+      updating: false,
+      zeroCount: 0,
+      zeroCounter: 0,
     });
   });
 

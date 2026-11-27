@@ -869,15 +869,19 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
                                   aria-label={m.is_followed ? 'Unfollow' : 'Follow'}
                                   onClick={() => {
                                     if (m.is_followed) {
-                                      unfollow.mutate([
-                                        { venue: m.venue, wallet_address: m.wallet_address },
-                                      ]);
+                                      unfollow.mutate(
+                                        [{ venue: m.venue, wallet_address: m.wallet_address }],
+                                        { onSuccess: () => fetchMembers() },
+                                      );
                                     } else {
-                                      follow.mutate({
-                                        wallets: [
-                                          { venue: m.venue, wallet_address: m.wallet_address },
-                                        ],
-                                      });
+                                      follow.mutate(
+                                        {
+                                          wallets: [
+                                            { venue: m.venue, wallet_address: m.wallet_address },
+                                          ],
+                                        },
+                                        { onSuccess: () => fetchMembers() },
+                                      );
                                     }
                                   }}
                                 >

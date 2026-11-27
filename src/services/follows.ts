@@ -9,7 +9,7 @@ import type {
   MemberInput,
 } from '@/types/trader';
 
-const BASE = '/v1/trader-follows';
+const BASE = '/api/v1/trader-follows';
 
 export async function listFollowedWallets(
   params: {

@@ -30,7 +30,7 @@ interface AddToTraderGroupModalProps {
   onOpenChange: (open: boolean) => void;
   members: MemberInput[];
   defaultGroupId?: string;
-  onSuccess?: () => void;
+  onSuccess?: (result?: { groupId?: string; groupName?: string }) => void;
 }
 
 function parsePasted(raw: string): { valid: string[]; invalid: number } {
@@ -156,7 +156,8 @@ export function AddToTraderGroupModal({
           // ignore follow errors; group add already succeeded
         }
       }
-      onSuccess?.();
+      const selectedGroup = groups.find((g) => g.id === selectedGroupId);
+      onSuccess?.({ groupId: selectedGroupId, groupName: selectedGroup?.name });
     } catch (err) {
       setError(err instanceof Error ? te('errors.unknown') : t('unknownError'));
     } finally {

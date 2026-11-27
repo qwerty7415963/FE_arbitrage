@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { NextIntlClientProvider } from 'next-intl';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -240,6 +240,24 @@ describe('TraderDetailPage (contract v1.2 live, no sync)', () => {
     expect(await screen.findByText('Trader not found')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Retry' }));
     expect(await screen.findByRole('heading', { name: 'Smart Money' })).toBeInTheDocument();
+  });
+
+  it('rolls back the follow button when follow fails', async () => {
+    const user = userEvent.setup();
+    let rejectFollow: (reason?: unknown) => void = () => {};
+    vi.mocked(followWallets).mockImplementationOnce(
+      () =>
+        new Promise((_resolve, reject) => {
+          rejectFollow = reject;
+        }),
+    );
+    renderPage();
+    await screen.findByRole('heading', { name: 'Smart Money' });
+    const follow = await screen.findByRole('button', { name: 'Follow' });
+    await user.click(follow);
+    expect(await screen.findByRole('button', { name: 'Unfollow' })).toBeInTheDocument();
+    rejectFollow(new ApiError(500, 'COMMON-901', 'failed'));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Follow' })).toBeInTheDocument());
   });
 
   it('goes back and follows the wallet', async () => {

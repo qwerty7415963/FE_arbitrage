@@ -58,6 +58,17 @@ export function useTraderOrders(
           page = { status: d.status ?? status, rows: d.rows ?? [] };
         }
         if (page) {
+          if (Array.isArray(page.rows) && page.rows.length === 0) {
+            const cached = queryClient.getQueryData<OrdersPage>([
+              'trader-orders',
+              wallet,
+              status,
+              limit,
+            ]);
+            if (cached && Array.isArray(cached.rows) && cached.rows.length > 0) {
+              return;
+            }
+          }
           queryClient.setQueryData<OrdersPage>(['trader-orders', wallet, status, limit], page);
         }
       },

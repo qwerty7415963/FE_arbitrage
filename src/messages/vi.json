@@ -55,6 +55,8 @@
   },
   "groups": {
     "title": "Nhóm",
+    "followingTitle": "Đang theo dõi",
+    "noFollowing": "Chưa có ví đang theo dõi.",
     "create": "Tạo mới",
     "createTitle": "Tạo nhóm",
     "editTitle": "Sửa nhóm",
@@ -379,6 +381,18 @@
     "deleteSavedSearch": "Xóa {name}",
     "backToScanner": "Về trang quét",
     "walletDetail": "Chi tiết ví",
+    "following": "Đang theo dõi",
+    "follow": "Theo dõi",
+    "unfollow": "Bỏ theo dõi",
+    "renameWallet": "Đổi tên ví",
+    "renameWalletHint": "Để trống để dùng tên hiển thị công khai.",
+    "notFollowing": "Chưa theo dõi",
+    "followingSince": "Theo dõi từ {time}",
+    "alertsOn": "Cảnh báo bật",
+    "alertsOff": "Cảnh báo tắt",
+    "connectTelegram": "Kết nối Telegram",
+    "notInAnyGroup": "Chưa thuộc nhóm nào",
+    "addToGroupLink": "Thêm vào nhóm",
     "marketDetail": {
       "title": "Chi tiết thị trường",
       "markPrice": "Giá mark",
@@ -837,7 +851,7 @@
     "nav": {
       "scanner": "Scanner",
       "funding": "Funding",
-      "howItWorks": "C�ch ho?t d?ng",
+      "howItWorks": "Cách hoạt động",
       "faq": "FAQ",
       "menu": "Menu"
     },

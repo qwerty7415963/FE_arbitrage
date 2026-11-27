@@ -71,11 +71,16 @@ export interface WalletStatementHeaderProps {
   lastUpdated: string | null;
   live?: string;
   wsStatus?: string;
+  isRefreshing?: boolean;
+  refreshing?: boolean;
   onAdd?: () => void;
   isFollowed?: boolean | null;
   notifyEnabled?: boolean;
   alias?: string | null;
   inGroups?: { id: string; name: string }[];
+  followedAt?: string | null;
+  telegramConnected?: boolean;
+  onAddToGroup?: () => void;
   onToggleFollow?: () => void;
   onToggleNotify?: () => void;
   onRename?: (alias: string) => void;
@@ -107,16 +112,22 @@ export function WalletStatementHeader({
   lastUpdated,
   live,
   wsStatus,
+  isRefreshing,
+  refreshing,
   onAdd,
   isFollowed,
   notifyEnabled,
   alias,
   inGroups = [],
+  followedAt,
+  telegramConnected = false,
   onToggleFollow,
   onToggleNotify,
   onRename,
+  onAddToGroup,
 }: WalletStatementHeaderProps) {
   const t = useTranslations('traders');
+  const isUpdating = !!(isRefreshing || refreshing);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [renameOpen, setRenameOpen] = useState(false);
   const [aliasDraft, setAliasDraft] = useState(alias ?? '');
@@ -192,6 +203,7 @@ export function WalletStatementHeader({
 
   const statusParts = [
     syncBadge,
+    isUpdating ? t('updating') : null,
     metrics ? t(metrics.data_status === 'error' ? 'statusError' : 'statusReady') : null,
     updatedAgo ? t('lastUpdated', { time: updatedAgo }) : null,
     metrics?.metrics_as_of
@@ -240,6 +252,42 @@ export function WalletStatementHeader({
                     {g.name}
                   </Link>
                 ))}
+
+                {isFollowed ? (
+                  <p className="text-muted-foreground text-xs">
+                    {followedAt
+                      ? t('followingSince', { time: formatRelativeTime(followedAt) ?? '' })
+                      : t('following')}
+                    {' · '}
+                    {notifyEnabled && telegramConnected ? t('alertsOn') : t('alertsOff')}
+                    {!telegramConnected ? (
+                      <>
+                        {' · '}
+                        <Link href="/settings" className="text-primary-text hover:underline">
+                          {t('connectTelegram')}
+                        </Link>
+                      </>
+                    ) : null}
+                    {inGroups.length === 0 ? (
+                      <>
+                        {' · '}
+                        {onAddToGroup ? (
+                          <button
+                            type="button"
+                            onClick={onAddToGroup}
+                            className="text-primary-text hover:underline"
+                          >
+                            {t('notInAnyGroup')} · {t('addToGroupLink')}
+                          </button>
+                        ) : (
+                          <span>{t('notInAnyGroup')}</span>
+                        )}
+                      </>
+                    ) : null}
+                  </p>
+                ) : inGroups.length > 0 ? (
+                  <p className="text-muted-foreground text-xs">{t('notFollowing')}</p>
+                ) : null}
               </div>
             </div>
           </div>
@@ -270,6 +318,7 @@ export function WalletStatementHeader({
                 aria-label={notifyEnabled ? 'Mute Telegram alerts' : 'Enable Telegram alerts'}
                 title={notifyEnabled ? 'Telegram alerts on' : 'Telegram alerts off'}
                 onClick={onToggleNotify}
+                disabled={!telegramConnected}
               >
                 {notifyEnabled ? (
                   <BellIcon className="size-4" aria-hidden />

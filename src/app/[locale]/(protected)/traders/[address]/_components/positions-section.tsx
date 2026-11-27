@@ -32,6 +32,8 @@ export interface PositionsSectionProps {
   sort?: PositionSortKey;
   dir?: SortDirection;
   onSortChange?: (sort: PositionSortKey) => void;
+  isRefreshing?: boolean;
+  refreshing?: boolean;
 }
 
 function formatUsdOrDash(value: number | null): string {
@@ -55,7 +57,10 @@ export function PositionsSection({
   sort,
   dir = 'asc',
   onSortChange,
+  isRefreshing,
+  refreshing,
 }: PositionsSectionProps) {
+  const isUpdating = !!(isRefreshing || refreshing);
   const t = useTranslations('traders');
 
   function sortableHead(
@@ -172,6 +177,11 @@ export function PositionsSection({
         })}
       </p>
       {status === 'error' && <p className="text-destructive text-xs">{t('statusError')}</p>}
+      {isUpdating && (
+        <p className="text-muted-foreground inline-flex items-center gap-1 text-xs">
+          {t('updating')}
+        </p>
+      )}
 
       {positions.length === 0 ? (
         <p className="text-muted-foreground text-sm">{t('noOpenPositions')}</p>

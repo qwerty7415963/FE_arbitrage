@@ -65,6 +65,12 @@ export function useWalletFollowActions(venue: string, wallet: string) {
   const qc = useQueryClient();
   const toast = useToast();
   const te = useTranslations();
+  const errorText = (err: unknown) => {
+    if (!(err instanceof ApiError)) return te('errors.unknown');
+    const fallback = err.message || te('errors.unknown');
+    const key = mapErrorCode(err.code);
+    return key && key !== 'errors.unknown' ? te(key, { defaultValue: fallback }) : fallback;
+  };
   const statusKey = ['follow-status', venue, wallet] as const;
 
   const snapshot = () => qc.getQueryData<FollowStatus>(statusKey);
@@ -81,6 +87,7 @@ export function useWalletFollowActions(venue: string, wallet: string) {
     mutationFn: ({ notifyEnabled }: { notifyEnabled?: boolean } = {}) =>
       followWallets([{ venue, wallet_address: wallet }], notifyEnabled),
     onMutate: async () => {
+      await qc.cancelQueries({ queryKey: statusKey });
       const prev = snapshot();
       setOptimistic((cur) => ({
         is_followed: true,
@@ -92,9 +99,18 @@ export function useWalletFollowActions(venue: string, wallet: string) {
       return { prev };
     },
     onError: (err, _vars, ctx) => {
-      rollback(ctx?.prev);
-      const code = err instanceof ApiError ? err.code : undefined;
-      toast.showError(te(mapErrorCode(code), { defaultValue: te('errors.unknown') }));
+      if (ctx?.prev) {
+        rollback(ctx.prev);
+      } else {
+        qc.setQueryData<FollowStatus>(statusKey, {
+          is_followed: false,
+          notify_enabled: false,
+          alias: null,
+          display_name: null,
+          in_groups: [],
+        });
+      }
+      toast.showError(errorText(err));
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['follow-keys'] });
@@ -107,6 +123,7 @@ export function useWalletFollowActions(venue: string, wallet: string) {
   const unfollow = useMutation({
     mutationFn: () => unfollowWallets([{ venue, wallet_address: wallet }]),
     onMutate: async () => {
+      await qc.cancelQueries({ queryKey: statusKey });
       const prev = snapshot();
       setOptimistic((cur) => ({
         is_followed: false,
@@ -118,9 +135,18 @@ export function useWalletFollowActions(venue: string, wallet: string) {
       return { prev };
     },
     onError: (err, _vars, ctx) => {
-      rollback(ctx?.prev);
-      const code = err instanceof ApiError ? err.code : undefined;
-      toast.showError(te(mapErrorCode(code), { defaultValue: te('errors.unknown') }));
+      if (ctx?.prev) {
+        rollback(ctx.prev);
+      } else {
+        qc.setQueryData<FollowStatus>(statusKey, {
+          is_followed: true,
+          notify_enabled: false,
+          alias: null,
+          display_name: null,
+          in_groups: [],
+        });
+      }
+      toast.showError(errorText(err));
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['follow-keys'] });
@@ -145,8 +171,7 @@ export function useWalletFollowActions(venue: string, wallet: string) {
     },
     onError: (err, _vars, ctx) => {
       rollback(ctx?.prev);
-      const code = err instanceof ApiError ? err.code : undefined;
-      toast.showError(te(mapErrorCode(code), { defaultValue: te('errors.unknown') }));
+      toast.showError(errorText(err));
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['follow-keys'] });
@@ -170,8 +195,7 @@ export function useWalletFollowActions(venue: string, wallet: string) {
     },
     onError: (err, _vars, ctx) => {
       rollback(ctx?.prev);
-      const code = err instanceof ApiError ? err.code : undefined;
-      toast.showError(te(mapErrorCode(code), { defaultValue: te('errors.unknown') }));
+      toast.showError(errorText(err));
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['follow-keys'] });
@@ -184,6 +208,17 @@ export function useWalletFollowActions(venue: string, wallet: string) {
 
 export function useFollowMutations() {
   const qc = useQueryClient();
+  const toast = useToast();
+  const te = useTranslations();
+  const errorText = (err: unknown) => {
+    if (!(err instanceof ApiError)) return te('errors.unknown');
+    const fallback = err.message || te('errors.unknown');
+    const key = mapErrorCode(err.code);
+    return key && key !== 'errors.unknown' ? te(key, { defaultValue: fallback }) : fallback;
+  };
+  const reportError = (err: unknown) => {
+    toast.showError(errorText(err));
+  };
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: ['follow-keys'] });
     qc.invalidateQueries({ queryKey: ['follow-overview'] });
@@ -199,10 +234,12 @@ export function useFollowMutations() {
       notifyEnabled?: boolean;
     }) => followWallets(wallets, notifyEnabled),
     onSuccess: invalidate,
+    onError: reportError,
   });
   const unfollow = useMutation({
     mutationFn: (wallets: Parameters<typeof unfollowWallets>[0]) => unfollowWallets(wallets),
     onSuccess: invalidate,
+    onError: reportError,
   });
   const updateMeta = useMutation({
     mutationFn: ({
@@ -217,6 +254,7 @@ export function useFollowMutations() {
       notifyEnabled?: boolean;
     }) => updateFollow(venue, address, { alias, notify_enabled: notifyEnabled }),
     onSuccess: invalidate,
+    onError: reportError,
   });
   const toggleNotify = useMutation({
     mutationFn: ({
@@ -229,6 +267,7 @@ export function useFollowMutations() {
       notifyEnabled: boolean;
     }) => setFollowNotify(venue, address, notifyEnabled),
     onSuccess: invalidate,
+    onError: reportError,
   });
   return { follow, unfollow, toggleNotify, updateMeta };
 }
