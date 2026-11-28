@@ -810,7 +810,8 @@
     "INVALID_ALERT_TYPE": "Invalid alert type",
     "INVALID_ALERT_PARAMS": "Invalid alert parameters",
     "COMPARE_TOO_FEW": "Select at least 2 groups",
-    "COMPARE_TOO_MANY": "Select at most 10 groups"
+    "COMPARE_TOO_MANY": "Select at most 10 groups",
+    "AUTH-017": "Captcha verification failed"
   },
   "fundingArbitrage": {
     "title": "Funding Arbitrage",

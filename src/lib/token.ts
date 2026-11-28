@@ -1,37 +1,50 @@
-const ACCESS_TOKEN_KEY = 'access_token';
-const REFRESH_TOKEN_KEY = 'refresh_token';
+let accessToken: string | null = null;
+
+// Remove legacy localStorage token keys on boot (no tokens in localStorage).
+if (typeof window !== 'undefined') {
+  try {
+    window.localStorage.removeItem('access_token');
+    window.localStorage.removeItem('refresh_token');
+  } catch {
+    // ignore
+  }
+}
 
 export function getAccessToken(): string | null {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem(ACCESS_TOKEN_KEY);
+  return accessToken;
 }
 
-export function setAccessToken(token: string): void {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem(ACCESS_TOKEN_KEY, token);
+export function setAccessToken(token: string | null): void {
+  accessToken = token;
 }
 
+// Backward-compatible aliases; refresh token is never stored client-side.
 export function getRefreshToken(): string | null {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem(REFRESH_TOKEN_KEY);
+  return null;
 }
 
-export function setRefreshToken(token: string): void {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem(REFRESH_TOKEN_KEY, token);
+export function setRefreshToken(_token: string): void {
+  void _token;
+  // no-op: refresh token lives in httpOnly cookie
 }
 
-export function setTokens(accessToken: string, refreshToken: string): void {
-  setAccessToken(accessToken);
-  setRefreshToken(refreshToken);
+export function setTokens(accessTokenValue: string, _refreshToken?: string): void {
+  void _refreshToken;
+  accessToken = accessTokenValue;
 }
 
 export function clearTokens(): void {
-  if (typeof window === 'undefined') return;
-  localStorage.removeItem(ACCESS_TOKEN_KEY);
-  localStorage.removeItem(REFRESH_TOKEN_KEY);
+  accessToken = null;
+}
+
+export function clearAccessToken(): void {
+  accessToken = null;
 }
 
 export function hasTokens(): boolean {
-  return !!getAccessToken() && !!getRefreshToken();
+  return !!accessToken;
+}
+
+export function hasAccessToken(): boolean {
+  return !!accessToken;
 }

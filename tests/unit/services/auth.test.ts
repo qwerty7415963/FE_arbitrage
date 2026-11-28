@@ -31,23 +31,22 @@ describe('auth service', () => {
   });
 
   describe('refresh', () => {
-    it('calls POST /auth/refresh with refresh_token', async () => {
+    it('calls POST /auth/refresh without body', async () => {
       const mockResponse = {
         success: true,
         data: {
           access_token: 'new-access',
-          refresh_token: 'new-refresh',
           expires_at: 456,
           user: { id: '1', email: 'test@test.com', role: 'user', status: 'active', created_at: '' },
         },
       };
       vi.mocked(apiClient.apiClientNoAuth).mockResolvedValue(mockResponse);
 
-      const result = await authService.refresh('old-refresh-token');
+      const result = await authService.refresh();
 
       expect(apiClient.apiClientNoAuth).toHaveBeenCalledWith('/api/v1/auth/refresh', {
         method: 'POST',
-        body: JSON.stringify({ refresh_token: 'old-refresh-token' }),
+        credentials: 'include',
       });
       expect(result).toEqual(mockResponse.data);
     });
@@ -61,6 +60,7 @@ describe('auth service', () => {
 
       expect(apiClient.apiClient).toHaveBeenCalledWith('/api/v1/auth/logout', {
         method: 'POST',
+        credentials: 'include',
       });
     });
   });
@@ -106,6 +106,7 @@ describe('auth service', () => {
       expect(apiClient.apiClientNoAuth).toHaveBeenCalledWith('/api/v1/auth/wallet/verify', {
         method: 'POST',
         body: JSON.stringify({ message: 'msg', signature: '0x sig' }),
+        credentials: 'include',
       });
       expect(result).toEqual(mockResponse.data);
     });

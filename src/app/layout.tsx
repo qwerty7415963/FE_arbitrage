@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import { headers } from 'next/headers';
 import Script from 'next/script';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
@@ -30,7 +31,9 @@ export const viewport: Viewport = {
 
 const themeInitScript = `(function(){try{var stored=localStorage.getItem('hyperscan.theme');var mode='dark';if(stored){try{var parsed=JSON.parse(stored);if(parsed&&parsed.state&&parsed.state.mode){mode=parsed.state.mode;}else if(typeof parsed==='string'){mode=parsed;}}catch(e){mode=stored;}}var resolved=mode;if(mode==='system'){resolved=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}document.documentElement.classList.toggle('dark',resolved==='dark');document.documentElement.style.colorScheme=resolved;}catch(e){}})();`;
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const nonce = (await headers()).get('x-nonce') ?? undefined;
+
   return (
     <html
       suppressHydrationWarning
@@ -40,6 +43,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Script
           id="theme-init"
           strategy="beforeInteractive"
+          nonce={nonce}
           dangerouslySetInnerHTML={{ __html: themeInitScript }}
         />
         {children}

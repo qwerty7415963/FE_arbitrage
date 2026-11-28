@@ -130,7 +130,6 @@ describe('apiClient', () => {
     vi.mocked(tokenLib.getRefreshToken).mockReturnValue('refresh-token');
     vi.mocked(authService.refresh).mockResolvedValue({
       access_token: 'new-access',
-      refresh_token: 'new-refresh',
       expires_at: 123,
       user: { id: '1', email: 'a@b.com', role: 'user', status: 'active', created_at: '' },
     });
@@ -141,9 +140,8 @@ describe('apiClient', () => {
 
     const result = await apiClient('/test');
 
-    expect(authService.refresh).toHaveBeenCalledWith('refresh-token');
+    expect(authService.refresh).toHaveBeenCalled();
     expect(tokenLib.setAccessToken).toHaveBeenCalledWith('new-access');
-    expect(tokenLib.setRefreshToken).toHaveBeenCalledWith('new-refresh');
     expect(result).toEqual({ success: true, data: 'ok' });
   });
 
@@ -182,7 +180,6 @@ describe('apiClient', () => {
     vi.mocked(tokenLib.getRefreshToken).mockReturnValue('refresh-token');
     vi.mocked(authService.refresh).mockResolvedValue({
       access_token: 'new-access',
-      refresh_token: 'new-refresh',
       expires_at: 123,
       user: { id: '1', email: 'a@b.com', role: 'user', status: 'active', created_at: '' },
     });

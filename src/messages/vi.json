@@ -810,7 +810,8 @@
     "INVALID_ALERT_TYPE": "Loại cảnh báo không hợp lệ",
     "INVALID_ALERT_PARAMS": "Tham số cảnh báo không hợp lệ",
     "COMPARE_TOO_FEW": "Chọn ít nhất 2 nhóm",
-    "COMPARE_TOO_MANY": "Chọn tối đa 10 nhóm"
+    "COMPARE_TOO_MANY": "Chọn tối đa 10 nhóm",
+    "AUTH-017": "Xác minh captcha thất bại"
   },
   "fundingArbitrage": {
     "title": "Funding Arbitrage",

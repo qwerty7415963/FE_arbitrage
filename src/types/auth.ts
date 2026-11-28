@@ -1,10 +1,15 @@
 export interface RefreshRequest {
-  refresh_token: string;
+  refresh_token?: string;
+}
+
+export interface RegisterRequest {
+  email: string;
+  password: string;
+  captcha_token: string;
 }
 
 export interface AuthResponse {
   access_token: string;
-  refresh_token: string;
   expires_at: number;
   user: UserResponse;
 }

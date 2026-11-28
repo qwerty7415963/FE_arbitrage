@@ -5,7 +5,7 @@ import { injected, walletConnect } from 'wagmi/connectors';
 import { config } from '@/lib/wagmi';
 import { config as appConfig } from '@/config';
 import * as authService from '@/services/auth';
-import { setTokens, clearTokens, hasTokens } from '@/lib/token';
+import { setAccessToken, clearTokens } from '@/lib/token';
 import type { UserResponse } from '@/types/auth';
 
 declare global {
@@ -161,7 +161,7 @@ export const useAuthStore = create<AuthState>()(
             signature,
           });
 
-          setTokens(authData.access_token, authData.refresh_token);
+          setAccessToken(authData.access_token);
           set({
             address,
             chainId,
@@ -239,32 +239,44 @@ export const useAuthStore = create<AuthState>()(
 
       initialize: async () => {
         if (get().isInitialized || get().isLoading) return;
-        set({ isLoading: true });
-        if (hasTokens()) {
-          set({ isLoading: true });
+        if (typeof window !== 'undefined') {
           try {
-            const user = await authService.getMe();
-            const account = getAccount(config);
-            set({
-              user,
-              isAuthenticated: true,
-              authMethod: 'wallet',
-              address: account?.address ?? get().address ?? null,
-              chainId: account?.chainId ?? get().chainId ?? null,
-              isInitialized: true,
-              isLoading: false,
-            });
+            window.localStorage.removeItem('access_token');
+            window.localStorage.removeItem('refresh_token');
           } catch {
-            await get().clearSession();
-            set({
-              isInitialized: true,
-              isLoading: false,
-            });
+            // ignore
           }
-        } else {
+        }
+
+        set({ isLoading: true });
+        try {
+          const authData = await authService.refresh();
+          setAccessToken(authData.access_token);
+          const account = getAccount(config);
           set({
+            user: authData.user,
+            isAuthenticated: true,
+            authMethod: get().authMethod ?? 'wallet',
+            address: account?.address ?? get().address ?? null,
+            chainId: account?.chainId ?? get().chainId ?? null,
+            isInitialized: true,
+            isLoading: false,
+          });
+        } catch {
+          try {
+            await disconnect(config);
+          } catch {
+            // ignore
+          }
+          clearTokens();
+          set({
+            user: null,
             address: null,
             chainId: null,
+            isAuthenticated: false,
+            authMethod: null,
+            error: null,
+            isConnecting: false,
             isInitialized: true,
             isLoading: false,
           });
@@ -283,6 +295,7 @@ export const useAuthStore = create<AuthState>()(
             },
       ),
       partialize: (state) => ({
+        user: state.user,
         address: state.address,
         chainId: state.chainId,
         authMethod: state.authMethod,

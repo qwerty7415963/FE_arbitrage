@@ -1,6 +1,6 @@
 import { apiClient, apiClientNoAuth } from '@/infrastructure/api-client';
 import type { ApiResponse } from '@/types/api';
-import type { AuthResponse, UserResponse } from '@/types/auth';
+import type { AuthResponse, UserResponse, RegisterRequest } from '@/types/auth';
 import type {
   WalletNonceRequest,
   WalletVerifyRequest,
@@ -17,10 +17,10 @@ export async function getMe(): Promise<UserResponse> {
   return res.data;
 }
 
-export async function refresh(refreshToken: string): Promise<AuthResponse> {
+export async function refresh(): Promise<AuthResponse> {
   const res = await apiClientNoAuth<ApiResponse<AuthResponse>>(`${AUTH_BASE}/refresh`, {
     method: 'POST',
-    body: JSON.stringify({ refresh_token: refreshToken }),
+    credentials: 'include',
   });
   if (!res.data) throw new Error('No data returned');
   return res.data;
@@ -29,7 +29,18 @@ export async function refresh(refreshToken: string): Promise<AuthResponse> {
 export async function logout(): Promise<void> {
   await apiClient<ApiResponse<null>>(`${AUTH_BASE}/logout`, {
     method: 'POST',
+    credentials: 'include',
   });
+}
+
+export async function register(data: RegisterRequest): Promise<AuthResponse> {
+  const res = await apiClientNoAuth<ApiResponse<AuthResponse>>(`${AUTH_BASE}/register`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+    credentials: 'include',
+  });
+  if (!res.data) throw new Error('No data returned');
+  return res.data;
 }
 
 export async function getNonce(data: WalletNonceRequest): Promise<WalletNonce> {
@@ -45,6 +56,7 @@ export async function verifyWallet(data: WalletVerifyRequest): Promise<AuthRespo
   const res = await apiClientNoAuth<ApiResponse<AuthResponse>>(`${AUTH_BASE}/wallet/verify`, {
     method: 'POST',
     body: JSON.stringify(data),
+    credentials: 'include',
   });
   if (!res.data) throw new Error('No data returned');
   return res.data;

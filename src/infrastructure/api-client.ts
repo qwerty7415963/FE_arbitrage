@@ -1,12 +1,6 @@
 import { config } from '@/config';
 import { emitUnauthorized } from '@/lib/auth-events';
-import {
-  getAccessToken,
-  getRefreshToken,
-  setAccessToken,
-  setRefreshToken,
-  clearTokens,
-} from '@/lib/token';
+import { getAccessToken, setAccessToken, clearTokens } from '@/lib/token';
 import * as authService from '@/services/auth';
 
 const MSG_SESSION_EXPIRED = 'Session expired';
@@ -21,6 +15,7 @@ export class ApiError extends Error {
     public code: string,
     message: string,
     public requestId?: string,
+    public retryAfter?: number,
   ) {
     super(message);
     this.name = 'ApiError';
@@ -38,27 +33,79 @@ function getRequestLocale(): string {
 interface RequestOptions extends RequestInit {
   timeout?: number;
   auth?: boolean;
+  _retry?: boolean;
 }
 
-let isRefreshing = false;
-let failedQueue: Array<{
-  resolve: (token: string) => void;
-  reject: (error: Error) => void;
-}> = [];
+let refreshPromise: Promise<void> | null = null;
 
-function processQueue(error: Error | null, token: string | null) {
-  failedQueue.forEach((prom) => {
-    if (error) {
-      prom.reject(error);
+let broadcastChannel: BroadcastChannel | null = null;
+if (typeof BroadcastChannel !== 'undefined') {
+  try {
+    broadcastChannel = new BroadcastChannel('auth-token');
+    broadcastChannel.onmessage = (event: MessageEvent) => {
+      const data = event.data as { type?: string; token?: string } | null;
+      if (!data) return;
+      if (data.type === 'token' && data.token) {
+        setAccessToken(data.token);
+      } else if (data.type === 'logout') {
+        setAccessToken(null);
+      }
+    };
+  } catch {
+    broadcastChannel = null;
+  }
+}
+
+function broadcastToken(token: string) {
+  try {
+    broadcastChannel?.postMessage({ type: 'token', token });
+  } catch {
+    // ignore
+  }
+}
+
+async function performRefresh(): Promise<void> {
+  const data = await authService.refresh();
+  setAccessToken(data.access_token);
+  broadcastToken(data.access_token);
+}
+
+async function doRefresh(): Promise<void> {
+  if (refreshPromise) {
+    return refreshPromise;
+  }
+
+  refreshPromise = (async () => {
+    if (typeof navigator !== 'undefined' && navigator.locks) {
+      await navigator.locks.request('auth-refresh', async () => {
+        await performRefresh();
+      });
     } else {
-      prom.resolve(token!);
+      await performRefresh();
     }
-  });
-  failedQueue = [];
+  })();
+
+  try {
+    await refreshPromise;
+  } finally {
+    refreshPromise = null;
+  }
+}
+
+function parseRetryAfter(headers: Headers): number | undefined {
+  const raw = headers.get('Retry-After');
+  if (!raw) return undefined;
+  const seconds = Number(raw);
+  if (Number.isFinite(seconds)) return seconds;
+  const date = Date.parse(raw);
+  if (!Number.isNaN(date)) {
+    return Math.max(0, Math.ceil((date - Date.now()) / 1000));
+  }
+  return undefined;
 }
 
 export async function apiClient<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
-  const { timeout = 30000, auth = true, ...fetchOptions } = options;
+  const { timeout = 30000, auth = true, _retry, ...fetchOptions } = options;
 
   const token = getAccessToken();
 
@@ -89,39 +136,23 @@ export async function apiClient<T>(endpoint: string, options: RequestOptions = {
       ...fetchOptions,
       headers,
       signal: controller.signal,
+      credentials: 'include',
     });
 
     clearTimeout(timeoutId);
 
-    if (!response.ok) {
-      if (response.status === 401 && getRefreshToken()) {
-        if (isRefreshing) {
-          return new Promise<T>((resolve, reject) => {
-            failedQueue.push({ resolve: resolve as never, reject });
-          }).then(() => {
-            return apiClient<T>(endpoint, options);
-          });
-        }
-
-        isRefreshing = true;
-
-        try {
-          const refreshToken = getRefreshToken()!;
-          const data = await authService.refresh(refreshToken);
-          setAccessToken(data.access_token);
-          setRefreshToken(data.refresh_token);
-          processQueue(null, data.access_token);
-          return apiClient<T>(endpoint, options);
-        } catch (refreshError) {
-          processQueue(refreshError as Error, null);
-          clearTokens();
-          emitUnauthorized();
-          throw new ApiError(401, 'UNAUTHORIZED', MSG_SESSION_EXPIRED, requestId);
-        } finally {
-          isRefreshing = false;
-        }
+    if (response.status === 401 && !_retry) {
+      try {
+        await doRefresh();
+      } catch {
+        clearTokens();
+        emitUnauthorized();
+        throw new ApiError(401, 'UNAUTHORIZED', MSG_SESSION_EXPIRED, requestId);
       }
+      return apiClient<T>(endpoint, { ...options, _retry: true });
+    }
 
+    if (!response.ok) {
       if (response.status === 401) {
         emitUnauthorized();
       }
@@ -132,6 +163,7 @@ export async function apiClient<T>(endpoint: string, options: RequestOptions = {
         errorBody.error?.code || 'UNKNOWN_ERROR',
         errorBody.error?.message || MSG_UNKNOWN,
         requestId,
+        parseRetryAfter(response.headers),
       );
     }
 
@@ -163,7 +195,8 @@ export async function apiClientNoAuth<T>(
   endpoint: string,
   options: RequestOptions = {},
 ): Promise<T> {
-  const { timeout = 30000, ...fetchOptions } = options;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { timeout = 30000, _retry, ...fetchOptions } = options;
 
   const headers = new Headers(fetchOptions.headers);
   headers.set('Content-Type', 'application/json');
@@ -180,6 +213,7 @@ export async function apiClientNoAuth<T>(
       ...fetchOptions,
       headers,
       signal: controller.signal,
+      credentials: 'include',
     });
 
     clearTimeout(timeoutId);
@@ -191,6 +225,7 @@ export async function apiClientNoAuth<T>(
         errorBody.error?.code || 'UNKNOWN_ERROR',
         errorBody.error?.message || MSG_UNKNOWN,
         requestId,
+        parseRetryAfter(response.headers),
       );
     }
 
