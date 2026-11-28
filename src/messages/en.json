@@ -64,8 +64,6 @@
     "unfollowConfirmBody": "This wallet stays in its groups. Only your Following list changes.",
     "unfollowSkipConfirm": "Don't ask again",
     "remove": "Remove",
-    "followingTitle": "Following",
-    "noFollowing": "No followed wallets yet.",
     "create": "Create",
     "createTitle": "Create group",
     "editTitle": "Edit group",
